@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+{% block title %}{{ pet.pet_name }} — Details{% endblock %}
+
+{% block content %}
+<style>
+/* ---------- Premium Pet Detail Styles ---------- */
+/* Variables */
+:root{
+  --bg: linear-gradient(180deg,#081025,#0d1b2b);
+  --card-bg: rgba(255,255,255,0.03);
+  --glass-border: rgba(255,255,255,0.06);
+  --muted: #9fb0c7;
+  --accent: #5ea8ff;
+  --accent-2:#6ff3d1;
+  --radius:16px;
+  --shadow: 0 12px 42px rgba(2,6,23,0.6);
+}
+
+/* Page wrapper */
+.pet-page {
+  min-height: 72vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:36px 18px;
+  box-sizing:border-box;
+}
+
+/* Card */
+.pet-card {
+  width:100%;
+  max-width:980px;
+  display:grid;
+  grid-template-columns: 1fr 420px;
+  gap:26px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius: var(--radius);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow);
+  padding: 22px;
+  align-items:start;
+  overflow:hidden;
+}
+
+/* Responsive stack */
+@media (max-width:900px){
+  .pet-card { grid-template-columns: 1fr; padding:18px; gap:16px; }
+}
+
+/* Left (image + summary) */
+.pet-media {
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  align-items:center;
+}
+
+/* Image container with subtle frame */
+.pet-image-wrap {
+  width:100%;
+  border-radius:12px;
+  overflow:hidden;
+  background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+  border:1px solid rgba(255,255,255,0.03);
+  height:480px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+}
+
+@media (max-width:900px){
+  .pet-image-wrap { height:360px; }
+}
+
+.pet-image-wrap img {
+  width:100%; height:100%; object-fit:cover; display:block; transition: transform .25s ease;
+}
+.pet-image-wrap img:hover { transform: scale(1.02); }
+
+/* placeholder */
+.pet-placeholder {
+  display:flex; align-items:center; justify-content:center;
+  color:var(--muted);
+  font-weight:700;
+  font-size:1.05rem;
+  padding:20px;
+}
+
+/* Quick stats bar */
+.pet-stats {
+  width:100%;
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin-top:6px;
+}
+.stat-pill {
+  background: rgba(255,255,255,0.02);
+  padding:8px 12px;
+  border-radius:999px;
+  font-weight:700;
+  color:var(--muted);
+  border:1px solid rgba(255,255,255,0.02);
+}
+
+/* Right column (details + actions) */
+.pet-details {
+  padding:6px 2px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+/* Title and meta */
+.pet-title {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  justify-content:space-between;
+}
+.pet-title h2 {
+  margin:0; font-size:1.6rem; font-weight:800;
+}
+.owner-badge {
+  font-size:0.95rem;
+  color:var(--muted);
+  background: rgba(255,255,255,0.02);
+  padding:8px 12px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.02);
+}
+
+/* Description list */
+.pet-meta {
+  background: rgba(255,255,255,0.01);
+  padding:12px;
+  border-radius:10px;
+  color:var(--muted);
+  line-height:1.7;
+}
+
+/* Action area */
+.pet-actions {
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+.btn {
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:700;
+  border: none;
+}
+.btn-primary {
+  background: linear-gradient(90deg,var(--accent),var(--accent-2));
+  color:#042033;
+  box-shadow: 0 8px 24px rgba(94,168,255,0.12);
+}
+.btn-outline {
+  background:transparent;
+  color:var(--muted);
+  border:1px solid rgba(255,255,255,0.04);
+}
+.btn-danger {
+  background:#ef4444; color:white;
+}
+
+/* small utility */
+.muted { color:var(--muted); font-size:0.95rem; }
+.center { text-align:center; }
+
+/* Lightbox overlay */
+.lightbox {
+  position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+  background: rgba(0,0,0,0.8); z-index:1200;
+}
+.lightbox img { max-width:92%; max-height:92%; border-radius:12px; box-shadow: 0 14px 60px rgba(0,0,0,0.6); }
+.lightbox.show { display:flex; animation: fadeIn .18s ease; }
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+</style>
+
+<div class="pet-page" role="main">
+  <article class="pet-card" aria-labelledby="pet-name-{{ pet.pet_id }}">
+    <!-- LEFT: media -->
+    <div class="pet-media">
+      <div class="pet-image-wrap" id="pet-image-wrap">
+        {% if pet.pet_img %}
+          {% set img_filename = pet.pet_img if '/' in pet.pet_img else ('user_images/' ~ pet.pet_img) %}
+          <img id="pet-main-img" src="{{ url_for('main.media', filename=img_filename) }}" alt="{{ pet.pet_name }}">
+        {% else %}
+          <div class="pet-placeholder">No photo available</div>
+        {% endif %}
+      </div>
+
+      <div class="pet-stats" aria-hidden="true">
+        <div class="stat-pill">Type: {{ pet.pet_type or "—" }}</div>
+        <div class="stat-pill">Age: {{ pet.pet_age or "—" }}</div>
+        <div class="stat-pill">Colour: {{ pet.pet_colour or "—" }}</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: details -->
+    <div class="pet-details">
+      <div class="pet-title">
+        <h2 id="pet-name-{{ pet.pet_id }}">{{ pet.pet_name }}</h2>
+        <div class="owner-badge">
+          Owner: 
+          {% if pet.owner %}
+            {{ pet.owner.user_name }}
+          {% else %}
+            {{ pet.pet_owner_id }}
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="pet-meta" role="region" aria-label="Pet information">
+        <p><strong class="muted">Licence:</strong> {{ pet.pet_licence_id or "—" }}</p>
+        <p><strong class="muted">Gender:</strong> {{ pet.pet_male_female.value if pet.pet_male_female else "—" }}</p>
+        <p><strong class="muted">Additional notes:</strong> {% if pet.pet_bio %}{{ pet.pet_bio }}{% else %}No additional details provided.{% endif %}</p>
+      </div>
+
+      <div class="pet-actions" role="toolbar" aria-label="Actions">
+        <a class="btn btn-primary" href="{{ url_for('main.pets_list') }}">Back to list</a>
+        <a class="btn btn-outline" href="{{ url_for('main.edit_pet', pet_id=pet.pet_id) }}">Edit</a>
+        <form method="post" action="{{ url_for('main.delete_pet', pet_id=pet.pet_id) }}" style="display:inline;" onsubmit="return confirm('Delete this pet?');">
+          <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+        <button id="share-btn" class="btn btn-outline" onclick="navigator.share?.({ title: '{{ pet.pet_name }}', text: 'Check out {{ pet.pet_name }} for adoption!', url: window.location.href }) || alert('Share not supported')">Share</button>
+      </div>
+
+      <div class="center" style="margin-top:8px;">
+        <small class="muted">Posted: {{ pet.created_at.strftime('%b %d, %Y') if pet.created_at else '—' }}</small>
+      </div>
+    </div>
+  </article>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-hidden="true" onclick="hideLightbox()">
+  <img id="lightbox-img" src="" alt="Enlarged photo">
+</div>
+
+<script>
+/* Lightweight interactions: lightbox + keyboard escape + image fallback */
+(function(){
+  const img = document.getElementById('pet-main-img');
+  const lightbox = document.getElementById('lightbox');
+  const lbImg = document.getElementById('lightbox-img');
+
+  function showLightbox(src, alt){
+    lbImg.src = src;
+    lbImg.alt = alt || 'Photo';
+    lightbox.classList.add('show');
+    lightbox.setAttribute('aria-hidden','false');
+    document.body.style.overflow = 'hidden';
+  }
+  window.hideLightbox = function(){
+    lightbox.classList.remove('show');
+    lightbox.setAttribute('aria-hidden','true');
+    lbImg.src = '';
+    document.body.style.overflow = '';
+  }
+
+  if(img){
+    img.addEventListener('click', function(e){
+      showLightbox(e.target.src, e.target.alt);
+    });
+    img.addEventListener('error', function(){
+      img.style.display = 'none';
+      const placeholder = document.createElement('div');
+      placeholder.className = 'pet-placeholder';
+      placeholder.textContent = 'Image unavailable';
+      document.getElementById('pet-image-wrap').appendChild(placeholder);
+    });
+  }
+
+  // close on ESC
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && lightbox.classList.contains('show')) hideLightbox();
+  });
+
+})();
+</script>
+
+{% endblock %}

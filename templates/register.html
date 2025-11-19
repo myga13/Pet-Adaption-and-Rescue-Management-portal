@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<style>
+/* -----------------------------
+   Refined Animated Register Page
+   - Reduced bio height
+   - smoother, softer animations
+   ----------------------------- */
+
+:root{
+  --bg-a: #eef7ff;
+  --bg-b: #f8fbf6;
+  --card-bg: rgba(255,255,255,0.96);
+  --accent: #4da3ff;
+  --accent-2: #7be5c7;
+  --muted: #7f8aa4;
+  --text: #04182a;
+  --danger: #e05454;
+  --radius: 14px;
+  --shadow: 0 18px 40px rgba(10,24,48,0.06);
+  --focus-ring: rgba(77,163,255,0.14);
+}
+
+/* Page backdrop */
+body {
+  background:
+    radial-gradient(520px 260px at 6% 12%, rgba(77,163,255,0.05), transparent 12%),
+    radial-gradient(480px 220px at 92% 86%, rgba(123,224,199,0.03), transparent 12%),
+    linear-gradient(180deg, var(--bg-a), var(--bg-b));
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  color: var(--text);
+  padding: 28px;
+}
+
+/* Card with gentle "spring" entrance */
+.register-wrapper{
+  max-width: 720px;
+  margin: 12px auto;
+  padding: 30px;
+  border-radius: 16px;
+  background: var(--card-bg);
+  border: 1px solid rgba(8,20,40,0.04);
+  backdrop-filter: blur(8px) saturate(110%);
+  box-shadow: var(--shadow);
+  transform-origin: center;
+  animation: cardPop 420ms cubic-bezier(.2,.9,.3,1);
+  position: relative;
+  overflow: visible;
+}
+
+/* entrance easing (subtle pop) */
+@keyframes cardPop {
+  0% { opacity: 0; transform: translateY(10px) scale(.996); }
+  60% { transform: translateY(-6px) scale(1.003); opacity: 1; }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* crisp animated top stripe (slow, smooth) */
+.register-wrapper::before{
+  content: "";
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  top: -6px;
+  height: 6px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  background-size: 240% 100%;
+  animation: slowShift 12s linear infinite;
+  filter: blur(6px);
+  opacity: .95;
+}
+@keyframes slowShift { 0% { background-position: 0% 50% } 50% { background-position: 100% 50% } 100% { background-position: 0% 50% } }
+
+/* Header */
+.register-title{ text-align:center; margin-bottom:10px; font-size:1.8rem; font-weight:800; }
+.register-sub{ text-align:center; color:var(--muted); margin-bottom:18px; font-weight:600 }
+
+/* layout */
+.form-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+.form-col-full{ grid-column: 1 / -1; }
+
+/* Labels */
+label{ display:block; margin-bottom:8px; color:var(--muted); font-weight:700; font-size:0.95rem; text-transform:uppercase; letter-spacing:.6px }
+
+/* Modern inputs: transparent with animated underline */
+.form-control{
+  width:100%;
+  padding:10px 12px;
+  border-radius:10px;
+  border: none;
+  background: rgba(255,255,255,0.72);
+  font-size:15px;
+  color:var(--text);
+  outline:none;
+  box-shadow: inset 0 -1px 0 rgba(8,20,40,0.03);
+  position:relative;
+  transition: transform .12s cubic-bezier(.2,.9,.2,1), box-shadow .14s ease;
+}
+
+/* animated underline using pseudo-element */
+.form-control-wrapper{ position:relative; }
+.form-control-wrapper::after{
+  content: "";
+  position: absolute;
+  left: 12px; right: 12px; bottom: 6px;
+  height: 3px; border-radius: 3px;
+  background: linear-gradient(90deg, rgba(77,163,255,0.9), rgba(123,224,199,0.85));
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform .36s cubic-bezier(.2,.9,.2,1), opacity .28s ease;
+  opacity: .0;
+  pointer-events:none;
+}
+
+/* focus: lift + underline reveal */
+.form-control:focus{ transform: translateY(-3px); box-shadow: 0 12px 30px var(--focus-ring); }
+.form-control:focus + .form-control-wrapper::after{ transform: scaleX(1); opacity: 1; }
+
+/* Place the wrapper after the input in markup, so the underline pseudo can be targeted */
+
+/* Reduced height for bio textarea (requested) */
+textarea.form-control{ min-height:68px; max-height:180px; resize:vertical; padding:12px; }
+
+/* file preview row */
+.file-row{ display:flex; gap:12px; align-items:center; }
+.file-preview{
+  width:76px; height:76px; border-radius:10px; background: linear-gradient(180deg,#fff,#f6f6f6);
+  display:grid; place-items:center; overflow:hidden; border:1px solid rgba(0,0,0,0.04);
+  box-shadow: 0 8px 20px rgba(10,24,48,0.04);
+}
+.file-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+/* helper */
+.helper{ font-size:0.92rem; color:var(--muted); margin-top:6px; }
+
+/* button */
+.btn-submit{
+  display:inline-block; width:100%; padding:12px 16px; border-radius:12px; border:none; cursor:pointer;
+  font-weight:900; text-transform:uppercase; letter-spacing:1px;
+  background: linear-gradient(180deg,#7bb4ff,#4d8fe8);
+  color:#04213b; box-shadow: 0 14px 40px rgba(60,90,160,0.08);
+  position:relative; overflow:hidden; transition: transform .12s ease, box-shadow .12s ease;
+}
+.btn-submit::after{
+  content:""; position:absolute; inset:0; pointer-events:none; transform: translateX(-110%);
+  background: linear-gradient(120deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  mix-blend-mode: overlay; transition: transform .8s cubic-bezier(.2,.9,.2,1);
+}
+.btn-submit:hover::after{ transform: translateX(0%); opacity:1 }
+.btn-submit:active{ transform: translateY(1px) }
+
+/* loading */
+.btn-submit.loading{ pointer-events:none; animation: pulse 1.2s infinite; opacity:.98 }
+@keyframes pulse{ 0%{ transform:none } 50%{ transform: translateY(-3px) } 100%{ transform:none } }
+
+/* invalid */
+.form-control.invalid{ box-shadow: 0 6px 20px rgba(224,84,84,0.06); border-radius:10px; animation: shake .36s cubic-bezier(.36,.07,.19,.97); }
+@keyframes shake{ 0%{ transform: translateX(0) } 20%{ transform: translateX(-6px) } 40%{ transform: translateX(6px) } 60%{ transform: translateX(-4px) } 80%{ transform: translateX(4px) } 100%{ transform: translateX(0) } }
+
+/* responsive */
+@media (max-width:720px){ .form-grid{ grid-template-columns:1fr } .file-preview{ width:64px; height:64px } }
+
+/* reduced motion respect */
+@media (prefers-reduced-motion: reduce){
+  .register-wrapper, .register-wrapper::before, .form-control, .btn-submit{ animation:none; transition:none; transform:none }
+  .form-control-wrapper::after{ transition:none }
+}
+</style>
+
+<div class="register-wrapper" role="region" aria-labelledby="registerTitle">
+  <h1 id="registerTitle" class="register-title">Create your account</h1>
+  <div class="register-sub">Join the Pet Rescue community — add your details below</div>
+
+  <form method="post" enctype="multipart/form-data" id="registerForm" novalidate>
+    {{ form.hidden_tag() }}
+
+    <div class="form-grid">
+      <div>
+        <label for="{{ form.user_name.id }}">{{ form.user_name.label }}</label>
+        {{ form.user_name(class="form-control", id=form.user_name.id, placeholder="Enter username") }}
+        <span class="form-control-wrapper" aria-hidden="true"></span>
+        {% for e in form.user_name.errors %}<div class="helper" style="color:var(--danger)">{{ e }}</div>{% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.phone_number.id }}">{{ form.phone_number.label }}</label>
+        {{ form.phone_number(class="form-control", id=form.phone_number.id, placeholder="e.g. +1 555 555 555") }}
+        <span class="form-control-wrapper" aria-hidden="true"></span>
+        {% for e in form.phone_number.errors %}<div class="helper" style="color:var(--danger)">{{ e }}</div>{% endfor %}
+      </div>
+
+      <div class="form-col-full">
+        <label for="{{ form.user_bio.id }}">{{ form.user_bio.label }}</label>
+        {{ form.user_bio(class="form-control", id=form.user_bio.id, placeholder="Short bio about you", rows=3) }}
+        <span class="form-control-wrapper" aria-hidden="true"></span>
+        {% for e in form.user_bio.errors %}<div class="helper" style="color:var(--danger)">{{ e }}</div>{% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.city.id }}">{{ form.city.label }}</label>
+        {{ form.city(class="form-control", id=form.city.id, placeholder="City") }}
+        <span class="form-control-wrapper" aria-hidden="true"></span>
+      </div>
+
+      <div>
+        <label for="{{ form.state.id }}">{{ form.state.label }}</label>
+        {{ form.state(class="form-control", id=form.state.id, placeholder="State / Province") }}
+        <span class="form-control-wrapper" aria-hidden="true"></span>
+      </div>
+
+      <div>
+        <label for="{{ form.country.id }}">{{ form.country.label }}</label>
+        {{ form.country(class="form-control", id=form.country.id, placeholder="Country") }}
+        <span class="form-control-wrapper" aria-hidden="true"></span>
+      </div>
+
+      <div>
+        <label for="{{ form.address.id }}">{{ form.address.label }}</label>
+        {{ form.address(class="form-control", id=form.address.id, placeholder="Street address") }}
+        <span class="form-control-wrapper" aria-hidden="true"></span>
+      </div>
+
+      <div>
+        <label for="{{ form.password.id }}">{{ form.password.label }}</label>
+        {{ form.password(class="form-control", id=form.password.id, placeholder="Choose a secure password") }}
+        <span class="form-control-wrapper" aria-hidden="true"></span>
+        {% for e in form.password.errors %}<div class="helper" style="color:var(--danger)">{{ e }}</div>{% endfor %}
+      </div>
+
+      <div class="form-col-full">
+        <label for="{{ form.user_img.id }}">{{ form.user_img.label }}</label>
+        <div class="file-row">
+          {{ form.user_img(class="form-control", id=form.user_img.id, accept="image/*", style="padding:8px") }}
+          <div class="file-preview" id="filePreview" aria-hidden="true">
+            <span style="color:var(--muted);font-weight:700;font-size:.85rem">No image</span>
+          </div>
+        </div>
+        <div class="helper">Accepted formats: JPG, PNG — max ~5MB</div>
+        {% for e in form.user_img.errors %}<div class="helper" style="color:var(--danger)">{{ e }}</div>{% endfor %}
+      </div>
+
+      <div class="form-col-full" style="margin-top:6px">
+        {{ form.submit(class="btn-submit", id="submitBtn") }}
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+/* Image preview + improved interaction */
+(function(){
+  const fileInput = document.getElementById('{{ form.user_img.id }}');
+  const preview = document.getElementById('filePreview');
+
+  function showPreview(file){
+    if(!file){
+      preview.innerHTML = '<span style="color:var(--muted);font-weight:700;font-size:.85rem">No image</span>';
+      return;
+    }
+    if(!file.type.startsWith('image/')){
+      preview.innerHTML = '<span style="color:var(--danger);font-weight:700">Invalid file</span>';
+      return;
+    }
+    const img = document.createElement('img');
+    img.alt = 'preview';
+    const reader = new FileReader();
+    reader.onload = function(e){ img.src = e.target.result; preview.innerHTML=''; preview.appendChild(img); };
+    reader.readAsDataURL(file);
+  }
+
+  if(fileInput){
+    fileInput.addEventListener('change', (e)=>{
+      const f = e.target.files && e.target.files[0];
+      showPreview(f);
+    });
+    if(fileInput.files && fileInput.files[0]) showPreview(fileInput.files[0]);
+  }
+
+  // input focus: add class to reveal underline (for keyboard focus too)
+  document.querySelectorAll('.form-control').forEach(inp=>{
+    inp.addEventListener('focus', ()=> {
+      const wrapper = inp.nextElementSibling;
+      if(wrapper && wrapper.classList.contains('form-control-wrapper')) wrapper.style.opacity = 1;
+    });
+    inp.addEventListener('blur', ()=> {
+      const wrapper = inp.nextElementSibling;
+      if(wrapper && wrapper.classList.contains('form-control-wrapper')) wrapper.style.opacity = '';
+    });
+  });
+
+  // submit validation + loading
+  const form = document.getElementById('registerForm');
+  const submit = document.getElementById('submitBtn');
+  if(form && submit){
+    form.addEventListener('submit', function(ev){
+      const user = document.getElementById('{{ form.user_name.id }}');
+      const pass = document.getElementById('{{ form.password.id }}');
+      let invalid = false;
+      [user, pass].forEach(el=>{
+        if(el && el.value.trim() === ''){
+          invalid = true;
+          el.classList.add('invalid');
+          setTimeout(()=> el.classList.remove('invalid'), 1400);
+        }
+      });
+      if(invalid){ ev.preventDefault(); const first = document.querySelector('.form-control.invalid'); if(first) first.focus(); return false; }
+
+      // loading state
+      submit.classList.add('loading');
+      const original = submit.innerText;
+      submit.innerText = 'CREATING...';
+      // fallback removal if not navigating
+      setTimeout(()=>{ submit.classList.remove('loading'); submit.innerText = original; }, 6000);
+    });
+  }
+})();
+</script>
+
+{% endblock %}

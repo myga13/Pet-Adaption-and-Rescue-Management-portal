@@ -1,0 +1,256 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}Pet Rescue{% endblock %}</title>
+
+  <style>
+    /* -------------------------
+         Modern Banner Styling + Profile Popover
+       -------------------------*/
+    :root{
+      --banner-h: 75px;
+      --accent-1: #4f7cff;
+      --accent-2: #7fafff;
+      --muted: rgba(255,255,255,0.85);
+      --glass: rgba(255,255,255,0.12);
+      --shadow: 0 8px 30px rgba(8,20,40,0.18);
+      --radius: 12px;
+    }
+
+    body { margin:0; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+
+    .banner {
+      width: 98%;
+      padding: 12px 20px;
+      height: var(--banner-h);
+      background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+      gap:12px;
+    }
+
+    .brand { font-size: 1.45rem; font-weight:700; display:flex; align-items:center; gap:12px; }
+    .brand .logo { width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#6ea8ff,#ffd67a); font-weight:800; color:#042033; box-shadow:0 6px 20px rgba(0,0,0,0.12) }
+
+    .nav-links { display:flex; gap:20px; align-items:center; }
+    .nav-links a { color:white; text-decoration:none; font-weight:600; opacity:.95; transition:opacity .18s ease; }
+    .nav-links a:hover{ opacity:.85; }
+
+    /* profile area */
+    .profile-area { display:flex; align-items:center; gap:0px; position:relative; }
+
+    .profile-btn{
+      display:inline-flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px; background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08); color:white; cursor:pointer; font-weight:700; user-select:none;
+      transition: transform .08s ease, background .12s ease;
+    }
+    .profile-btn:hover{ transform: translateY(-2px) }
+    .profile-avatar{
+      width:36px; height:36px; border-radius:10px; overflow:hidden; display:inline-grid; place-items:center; font-weight:800; color:#042033;
+      background: linear-gradient(90deg,#fff,#f7f7f7); box-shadow:0 6px 16px rgba(2,6,12,0.12);
+    }
+    .profile-name{ font-size:0.98rem; opacity: .98; white-space:nowrap; }
+
+    /* popover/modal */
+    .profile-popover {
+      position:absolute; right:0; top: calc(var(--banner-h) + 12px);
+      width:320px; max-width:calc(100vw - 40px);
+      background: white; color:#042033; border-radius:12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.28); border:1px solid rgba(2,6,23,0.06);
+      padding:14px; z-index:1200; display:none; transform-origin:top right;
+      transition: transform .18s cubic-bezier(.2,.9,.2,1), opacity .18s ease;
+    }
+    .profile-popover.show{ display:block; opacity:1; transform: translateY(0); }
+    .profile-popover.hideAnim{ opacity:0; transform: translateY(-6px); }
+
+    .popover-header{ display:flex; gap:12px; align-items:center; margin-bottom:8px; }
+    .popover-header .avatar-lg{ width:64px; height:64px; border-radius:10px; overflow:hidden; display:grid; place-items:center; background: #f3f6fb; border:1px solid rgba(0,0,0,0.04); }
+    .popover-body{ font-size:0.95rem; color:#334155; }
+    .meta { color:#64748b; font-weight:700; font-size:0.9rem; margin-top:6px }
+
+    .popover-actions{ display:flex; gap:8px; margin-top:12px; }
+    .btn-pop { flex:1; padding:10px 12px; font-weight:800; text-decoration:none; border-radius:8px; text-align:center; }
+    .btn-edit { background: linear-gradient(90deg,#7bb4ff,#6f8fd6); color:#042033; border:none; }
+    .btn-logout { background:transparent; border:1px solid rgba(2,6,23,0.06); color:#334155; }
+
+    /* small arrow */
+    .profile-popover::before{
+      content:""; position:absolute; right:18px; top:-8px; width:14px; height:14px; transform:rotate(45deg); background:white; border-left:1px solid rgba(2,6,23,0.04); border-top:1px solid rgba(2,6,23,0.04);
+    }
+
+    /* overlay for modal close on mobile */
+    .popover-overlay { position:fixed; inset:0; display:none; z-index:1100; }
+    .popover-overlay.show { display:block; }
+
+    /* responsive adjustments */
+    @media (max-width:720px){
+      .profile-popover{ right:12px; left:12px; top: calc(var(--banner-h) + 10px); width:auto; max-width:none; }
+    }
+
+    /* reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      .profile-popover{ transition:none; transform:none; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- TOP BANNER NAVBAR -->
+  <header class="banner" role="banner">
+    <div class="brand" aria-hidden="true">
+      <div class="logo">PA</div>
+      <div>Pet Rescue</div>
+    </div>
+
+    <nav class="nav-links" role="navigation" aria-label="Main navigation">
+      <a href="{{ url_for('main.register') }}">Register</a>
+      <a href="{{ url_for('main.user_list') }}">Users</a>
+      <a href="{{ url_for('main.pets_list') }}">Pets</a>
+      <a href="{{ url_for('main.login') }}">Login</a>
+    </nav>
+
+    <div class="profile-area" aria-hidden="{{ 'false' if g.user else 'true' }}">
+      {% if g.user %}
+        {# compute safe image path; do NOT call media if no filename #}
+        {% if g.user.user_img %}
+          {% set img_filename = g.user.user_img if '/' in g.user.user_img else ('user_images/' ~ g.user.user_img) %}
+        {% else %}
+          {% set img_filename = None %}
+        {% endif %}
+
+        <button id="profileBtn" class="profile-btn" aria-haspopup="dialog" aria-expanded="false" aria-controls="profilePopover">
+          <span class="profile-name">{{ g.user.user_name }}</span>
+          <span class="profile-avatar" aria-hidden="true">
+            {% if img_filename %}
+              <img src="{{ url_for('main.media', filename=img_filename) }}" alt="Avatar of {{ g.user.user_name }}" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'">
+            {% else %}
+              {# initials fallback #}
+              <span style="font-weight:800;color:#042033">{{ g.user.user_name[:1]|upper }}</span>
+            {% endif %}
+          </span>
+          
+        </button>
+
+        <div id="profilePopover" class="profile-popover" role="dialog" aria-modal="false" aria-labelledby="popoverTitle" aria-hidden="true">
+          <div class="popover-header">
+            <div class="avatar-lg" aria-hidden="true">
+              {% if img_filename %}
+                <img src="{{ url_for('main.media', filename=img_filename) }}" alt="Avatar of {{ g.user.user_name }}" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'">
+              {% else %}
+                <span style="font-weight:800;color:#042033;font-size:1.125rem">{{ g.user.user_name[:1]|upper }}</span>
+              {% endif %}
+            </div>
+            <div>
+              <div id="popoverTitle" style="font-weight:800;font-size:1.05rem">{{ g.user.user_name }}</div>
+              <div class="meta">{{ g.user.email or 'No email' }}</div>
+              <div class="meta" style="font-weight:600">{{ g.user.city or '' }}{% if g.user.city and g.user.country %}, {% endif %}{{ g.user.country or '' }}</div>
+            </div>
+          </div>
+
+          <div class="popover-body">
+            <div style="color:#475569;font-weight:700">{{ g.user.user_bio or 'No bio yet.' }}</div>
+            <div style="margin-top:8px;color:#64748b;font-size:0.9rem">
+              Phone: <strong style="color:#0b1220">{{ g.user.phone_number or '—' }}</strong>
+            </div>
+
+            <div class="popover-actions">
+              <a class="btn-pop btn-edit" href="{{ url_for('main.edit_user', user_id=g.user.user_id) }}">Edit Profile</a>
+              <a class="btn-pop btn-logout" href="{{ url_for('main.logout') }}">Logout</a>
+            </div>
+          </div>
+        </div>
+
+        <div id="popoverOverlay" class="popover-overlay" tabindex="-1" aria-hidden="true"></div>
+
+      {% else %}
+        <a class="profile-btn" href="{{ url_for('main.login') }}">Sign In</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <div style="margin-top: 18px;"></div>
+
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul style="max-width:1100px;margin:0 auto;padding:0 18px 12px 18px;list-style:none;">
+      {% for cat, msg in messages %}
+        <li style="background: #fff9; padding:8px 12px; border-radius:8px; margin-bottom:8px; max-width:1100px; border:1px solid rgba(0,0,0,0.04)"><strong>{{ cat }}</strong>: {{ msg }}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+
+<script>
+  (function(){
+    const btn = document.getElementById('profileBtn');
+    const pop = document.getElementById('profilePopover');
+    const overlay = document.getElementById('popoverOverlay');
+
+    if(!btn || !pop) return;
+
+    function openPopover(){
+      pop.classList.add('show');
+      pop.classList.remove('hideAnim');
+      pop.setAttribute('aria-hidden','false');
+      btn.setAttribute('aria-expanded','true');
+      overlay.classList.add('show');
+      overlay.setAttribute('aria-hidden','false');
+      // focus first actionable element inside popover for accessibility
+      const focusable = pop.querySelector('a, button, [tabindex]:not([tabindex="-1"])');
+      if(focusable) focusable.focus();
+      document.addEventListener('keydown', onKeydown);
+    }
+
+    function closePopover(){
+      // animate hide briefly if possible
+      pop.classList.add('hideAnim');
+      pop.setAttribute('aria-hidden','true');
+      btn.setAttribute('aria-expanded','false');
+      overlay.classList.remove('show');
+      overlay.setAttribute('aria-hidden','true');
+      // after animation remove show class
+      setTimeout(()=>{ pop.classList.remove('show'); pop.classList.remove('hideAnim'); }, 200);
+      btn.focus();
+      document.removeEventListener('keydown', onKeydown);
+    }
+
+    function onKeydown(e){
+      if(e.key === 'Escape') closePopover();
+      // trap focus inside popover? minimal: close on Escape only
+    }
+
+    btn.addEventListener('click', function(e){
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      if(expanded) closePopover(); else openPopover();
+    });
+
+    // close when clicking outside (overlay)
+    overlay.addEventListener('click', closePopover);
+
+    // close when clicking outside the popover (on document)
+    document.addEventListener('click', function(e){
+      if(!pop.contains(e.target) && !btn.contains(e.target) && pop.classList.contains('show')){
+        closePopover();
+      }
+    });
+
+    // accessibility: close on focusout if focus leaves popover and button
+    document.addEventListener('focusin', function(e){
+      if(!pop.contains(e.target) && !btn.contains(e.target) && pop.classList.contains('show')){
+        // small timeout to allow clicks to work
+        setTimeout(()=> { if(!pop.contains(document.activeElement) && !btn.contains(document.activeElement)) closePopover(); }, 50);
+      }
+    });
+
+  })();
+</script>
+</body>
+</html>

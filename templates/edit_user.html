@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}Edit Profile{% endblock %}
+
+{% block content %}
+<style>
+/* Edit profile page (matches app look) */
+:root{
+  --card-bg:#ffffff; --muted:#6b7c8c; --text:#071022; --accent:#5ea8ff; --radius:12px;
+}
+.container{ max-width:820px; margin:28px auto; padding:18px; font-family:Inter, system-ui, -apple-system,"Segoe UI",Roboto,Arial; color:var(--text); }
+.card{ background:var(--card-bg); border-radius:14px; padding:20px; border:1px solid rgba(8,20,40,0.04); box-shadow:0 12px 36px rgba(10,20,40,0.04); }
+.header{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
+.header h1{ margin:0; font-size:1.3rem; font-weight:800 }
+.form-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+.full{ grid-column:1/-1 }
+.label{ display:block; font-weight:700; margin-bottom:6px; color:var(--muted); text-transform:uppercase; font-size:.85rem }
+.input{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(8,20,40,0.06); background:transparent; font-size:15px; color:var(--text); outline:none }
+.textarea{ min-height:80px; resize:vertical; padding:12px; }
+.file-row{ display:flex; gap:12px; align-items:center }
+.preview{ width:96px; height:96px; border-radius:10px; overflow:hidden; background:#f3f6fb; border:1px solid rgba(0,0,0,0.04); display:grid; place-items:center }
+.small{ font-size:0.9rem; color:var(--muted); margin-top:6px }
+.actions{ display:flex; gap:10px; margin-top:14px; justify-content:flex-end }
+.btn{ padding:10px 14px; border-radius:10px; border:none; font-weight:800; cursor:pointer }
+.btn-save{ background: linear-gradient(90deg,var(--accent), #66f0d8); color:#042033 }
+.btn-cancel{ background:transparent; border:1px solid rgba(8,20,40,0.06); color:var(--muted) }
+.opt-remove{ background:transparent; border:1px dashed rgba(200,20,20,0.12); color:#b91c1c; padding:8px 10px; border-radius:8px; cursor:pointer }
+.note{ font-size:0.86rem; color:var(--muted); margin-top:8px }
+@media (max-width:720px){ .form-grid{ grid-template-columns: 1fr } .actions{ flex-direction:column-reverse; } .preview{ width:76px; height:76px } }
+</style>
+
+<div class="container">
+  <div class="card" role="region" aria-labelledby="edit-title">
+    <div class="header">
+      <h1 id="edit-title">Edit Profile</h1>
+      <div class="small">Update your public information</div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" id="editForm" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">
+        <div style="min-width:120px">
+          <label class="label">Current avatar</label>
+          <div class="file-row">
+            <div class="preview" id="previewBox" aria-hidden="true">
+              {% if g.user and g.user.user_img %}
+                {% set img_filename = g.user.user_img if '/' in g.user.user_img else ('user_images/' ~ g.user.user_img) %}
+                <img id="previewImg" src="{{ url_for('main.media', filename=img_filename) }}" alt="Current avatar" style="width:100%;height:100%;object-fit:cover;display:block" />
+              {% else %}
+                <span id="previewInitial" style="font-weight:800;color:#042033">{{ g.user.user_name[:1]|upper if g.user else '' }}</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div style="margin-top:10px">
+            <label class="label" for="{{ form.user_img.id }}">Change avatar</label>
+            {{ form.user_img(class="input", id=form.user_img.id, accept="image/*") }}
+            <div class="note">JPG/PNG/GIF — max ~5MB</div>
+            {% for e in form.user_img.errors %}<div class="small" style="color:#b91c1c">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div style="margin-top:8px">
+            <button type="button" id="removeImgBtn" class="opt-remove" {% if not g.user or not g.user.user_img %}style="display:none"{% endif %}>Remove image</button>
+          </div>
+        </div>
+
+        <div style="flex:1; min-width:260px">
+          <div class="form-grid">
+            <div>
+              <label class="label" for="{{ form.user_name.id }}">{{ form.user_name.label.text }}</label>
+              {{ form.user_name(class="input", id=form.user_name.id, placeholder="username") }}
+              {% for e in form.user_name.errors %}<div class="small" style="color:#b91c1c">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div>
+              <label class="label" for="{{ form.phone_number.id }}">{{ form.phone_number.label.text }}</label>
+              {{ form.phone_number(class="input", id=form.phone_number.id, placeholder="phone number") }}
+              {% for e in form.phone_number.errors %}<div class="small" style="color:#b91c1c">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="full">
+              <label class="label" for="{{ form.user_bio.id }}">{{ form.user_bio.label.text }}</label>
+              {{ form.user_bio(class="input textarea", id=form.user_bio.id, placeholder="Short bio", rows=3) }}
+              {% for e in form.user_bio.errors %}<div class="small" style="color:#b91c1c">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div>
+              <label class="label" for="{{ form.city.id }}">{{ form.city.label.text }}</label>
+              {{ form.city(class="input", id=form.city.id, placeholder="City") }}
+            </div>
+
+            <div>
+              <label class="label" for="{{ form.state.id }}">{{ form.state.label.text }}</label>
+              {{ form.state(class="input", id=form.state.id, placeholder="State / Province") }}
+            </div>
+
+            <div>
+              <label class="label" for="{{ form.country.id }}">{{ form.country.label.text }}</label>
+              {{ form.country(class="input", id=form.country.id, placeholder="Country") }}
+            </div>
+
+            <div class="full">
+              <label class="label" for="{{ form.address.id }}">{{ form.address.label.text }}</label>
+              {{ form.address(class="input", id=form.address.id, placeholder="Street address") }}
+            </div>
+
+            <div class="full">
+              <label class="label" for="{{ form.password.id }}">{{ form.password.label.text }}</label>
+              {{ form.password(class="input", id=form.password.id, placeholder="Leave blank to keep current password") }}
+              <div class="note">Fill only if you want to change your password.</div>
+              {% for e in form.password.errors %}<div class="small" style="color:#b91c1c">{{ e }}</div>{% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <a href="{{ url_for('main.user_list') }}" class="btn btn-cancel" role="button">Back</a>
+        {{ form.submit(class="btn btn-save", value="Save") }}
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Image preview + remove image helpers
+(function(){
+  const fileInput = document.getElementById('{{ form.user_img.id }}');
+  const previewBox = document.getElementById('previewBox');
+  const previewImg = document.getElementById('previewImg');
+  const previewInitial = document.getElementById('previewInitial');
+  const removeBtn = document.getElementById('removeImgBtn');
+
+  function showPreview(file){
+    if(!file){
+      // if no file selected, keep current preview (do nothing)
+      return;
+    }
+    if(!file.type.startsWith('image/')){
+      alert('Invalid file type — please choose an image.');
+      fileInput.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e){
+      if(previewImg){
+        previewImg.src = e.target.result;
+        previewImg.style.display = 'block';
+      } else {
+        const img = document.createElement('img');
+        img.id = 'previewImg';
+        img.src = e.target.result;
+        img.alt = 'Preview';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        previewBox.innerHTML = '';
+        previewBox.appendChild(img);
+      }
+      if(previewInitial) previewInitial.style.display = 'none';
+      // show remove button
+      removeBtn.style.display = 'inline-block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  if(fileInput){
+    fileInput.addEventListener('change', function(e){
+      const f = e.target.files && e.target.files[0];
+      showPreview(f);
+    });
+  }
+
+  // Remove image: this simply clears input and sets a hidden form flag so server can remove stored image
+  removeBtn && removeBtn.addEventListener('click', function(){
+    // create or toggle a hidden input to signal remove on server
+    let marker = document.getElementById('remove_image_marker');
+    if(!marker){
+      marker = document.createElement('input');
+      marker.type = 'hidden';
+      marker.name = 'remove_image';
+      marker.id = 'remove_image_marker';
+      marker.value = '1';
+      document.getElementById('editForm').appendChild(marker);
+    }
+    // clear file input and preview
+    if(fileInput) fileInput.value = '';
+    previewBox.innerHTML = '<span style="font-weight:800;color:#042033">{{ g.user.user_name[:1]|upper if g.user else "" }}</span>';
+    removeBtn.style.display = 'none';
+  });
+
+})();
+</script>
+{% endblock %}

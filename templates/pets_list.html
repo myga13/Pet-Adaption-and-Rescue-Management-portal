@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+{% block title %}Pets{% endblock %}
+
+{% block content %}
+<style>
+/* ---------- Polished Pets List (single-file) ---------- */
+:root{
+  --bg-1:#e3e9f7; --bg-2:#c4cfd9;
+  --card-bg: rgba(255,255,255,0.03);
+  --card-border: rgba(255,255,255,0.06);
+  --muted:#9fb0c7; --text:#eaf6ff;
+  --accent:#5ea8ff; --accent-2:#6ff3d1;
+  --danger:#ef4444;
+  --radius:14px; --gap:18px; --card-w:320px;
+  --shadow: 0 16px 50px rgba(130, 158, 133, 0.6);
+  --focus-ring: 0 8px 30px rgba(94,168,255,0.10);
+}
+body { background: radial-gradient(900px 450px at 8% 10%, rgba(231, 234, 239, 0.03), transparent 6%), linear-gradient(180deg,var(--bg-1),var(--bg-2)); color:var(--text); font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,Arial; margin:0; padding:22px;}
+.container-wide { max-width:1200px; margin:0 auto; }
+
+/* header */
+.header { display:flex; gap:12px; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; }
+.header-left { display:flex; gap:12px; align-items:center; }
+.page-title { margin:0; font-size:1.6rem; font-weight:800; }
+.controls { display:flex; gap:10px; align-items:center; }
+
+/* search */
+.search { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.02); padding:8px; border-radius:12px; border:1px solid rgba(255,255,255,0.04); }
+.search input { background:transparent; border:none; color:var(--text); outline:none; width:240px; font-size:0.95rem; }
+
+/* selects & buttons */
+.select, .btn { padding:8px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.05); background:transparent; color:var(--text); cursor:pointer; font-weight:600; }
+.btn.primary { background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#51b5af; border:none; box-shadow:0 10px 30px rgba(94,168,255,0.12); }
+
+/* grid */
+.pets-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-w), 1fr)); gap:var(--gap); justify-items:center; }
+
+/* card */
+.pet-card { width:100%; max-width:var(--card-w); background:var(--card-bg); border-radius:var(--radius); border:1px solid var(--card-border); overflow:hidden; box-shadow:var(--shadow); transition:transform .15s ease, box-shadow .15s ease; display:flex; flex-direction:column; }
+.pet-card:hover { transform: translateY(-8px); box-shadow:0 20px 60px rgba(106, 125, 210, 0.7); }
+
+/* image */
+.pet-image { height:210px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.pet-image img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .28s ease; }
+.pet-image img:hover { transform:scale(1.03); }
+.placeholder { color:var(--muted); font-weight:700; }
+
+/* body */
+.pet-body { padding:14px 16px 18px; display:flex; flex-direction:column; gap:8px; align-items:center; text-align:center; }
+.pet-title { font-size:1.05rem; font-weight:800; margin:0; color:var(--text); }
+.pet-meta { color:var(--muted); font-size:0.95rem; line-height:1.45; }
+
+/* actions */
+.pet-actions { display:flex; gap:8px; margin-top:10px; }
+.btn-sm { padding:8px 10px; border-radius:8px; font-weight:700; cursor:pointer; border:none; }
+.btn-outline { background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted); }
+.btn-edit { background:#6b7280;color:#fff; }
+.btn-delete { background:var(--danger); color:#fff; }
+
+/* pagination */
+.pagination { display:flex; gap:8px; justify-content:center; margin-top:18px; align-items:center; }
+.page-btn { padding:8px 10px; border-radius:8px; background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--text); cursor:pointer; }
+.page-btn.active { background:var(--accent); color:#06202e; border:none; box-shadow:0 8px 24px rgba(94,168,255,0.12); }
+
+/* empty */
+.empty { text-align:center; color:var(--muted); padding:36px 12px; }
+
+/* lightbox */
+.lightbox { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); z-index:1200; }
+.lightbox img { max-width:92%; max-height:92%; border-radius:12px; box-shadow:0 14px 60px rgba(0,0,0,0.6); }
+.lightbox.show { display:flex; animation:fadeIn .16s ease; }
+@keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+
+/* focus & reduced motion */
+button:focus, a:focus { box-shadow: var(--focus-ring); border-radius:8px; outline:none;}
+@media (prefers-reduced-motion: reduce){ * { transition: none !important; } }
+@media (max-width:780px){ .search input { width: 140px; } .page-title { font-size:1.25rem; } .pet-image { height: 180px; } }
+</style>
+
+<div class="container-wide" role="main" aria-labelledby="pets-heading">
+  <div class="header">
+    <div class="header-left">
+      <h2 id="pets-heading" class="page-title">Available Pets</h2>
+
+      <div class="search" role="search" aria-label="Search pets">
+        <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="2"/></svg>
+        <input id="q" type="search" placeholder="Search name, type, colour..." aria-label="Search pets">
+      </div>
+    </div>
+
+    <div class="controls" role="region" aria-label="Filters and actions">
+      <select id="filterType" class="select" aria-label="Filter by type">
+        <option value="">All types</option>
+
+        {# build unique types safely using namespace (no `do` required) #}
+        {%- set ns = namespace(types=[]) -%}
+        {%- for p in pets -%}
+          {%- if p.pet_type and (p.pet_type not in ns.types) -%}
+            {%- set _ = ns.types.append(p.pet_type) -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {%- for t in ns.types -%}
+          <option value="{{ t|lower }}">{{ t }}</option>
+        {%- endfor -%}
+      </select>
+
+      <select id="sortBy" class="select" aria-label="Sort pets">
+        <option value="new">Newest</option>
+        <option value="name-asc">Name (A → Z)</option>
+        <option value="name-desc">Name (Z → A)</option>
+        <option value="age-asc">Age (young → old)</option>
+        <option value="age-desc">Age (old → young)</option>
+      </select>
+
+      <a href="{{ url_for('main.add_pet') }}" class="btn primary" title="Add Pet">Add Pet</a>
+    </div>
+  </div>
+
+  <!-- grid -->
+  <div id="petsGrid" class="pets-grid" role="list" aria-live="polite">
+    {%- for pet in pets -%}
+    <article class="pet-card" data-name="{{ (pet.pet_name or '')|lower }}" data-type="{{ (pet.pet_type or '')|lower }}" data-age="{{ pet.pet_age or '' }}">
+      <div class="pet-image" tabindex="0">
+        {%- if pet.pet_img -%}
+          {%- set img_filename = pet.pet_img if '/' in pet.pet_img else ('user_images/' ~ pet.pet_img) -%}
+          <img data-src="{{ url_for('main.media', filename=img_filename) }}" alt="{{ pet.pet_name }}" loading="lazy">
+        {%- else -%}
+          <div class="placeholder">No Image</div>
+        {%- endif -%}
+      </div>
+
+      <div class="pet-body">
+        <h3 class="pet-title">{{ pet.pet_name }}</h3>
+        <div class="pet-meta">
+          <div><strong>Type:</strong> {{ pet.pet_type or "—" }}</div>
+          <div><strong>Age:</strong> {{ pet.pet_age or "—" }}</div>
+          <div><strong>Colour:</strong> {{ pet.pet_colour or "—" }}</div>
+        </div>
+
+        <div class="pet-actions" role="toolbar" aria-label="Actions for {{ pet.pet_name }}">
+          <a class="btn-sm btn-outline" href="{{ url_for('main.view_pet', pet_id=pet.pet_id) }}">View</a>
+          <a class="btn-sm btn-edit" href="{{ url_for('main.edit_pet', pet_id=pet.pet_id) }}">Edit</a>
+          <form method="post" action="{{ url_for('main.delete_pet', pet_id=pet.pet_id) }}" style="display:inline;" onsubmit="return confirm('Delete this pet?');">
+            <button type="submit" class="btn-sm btn-delete">Delete</button>
+          </form>
+        </div>
+      </div>
+    </article>
+    {%- endfor -%}
+  </div>
+
+  <!-- pagination -->
+  <div id="pager" class="pagination" role="navigation" aria-label="Pagination"></div>
+
+  <!-- empty -->
+  <div id="empty" class="empty" hidden>No pets match your search.</div>
+</div>
+
+<!-- lightbox -->
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-hidden="true" onclick="hideLightbox()">
+  <img id="lightboxImg" src="" alt="Enlarged pet photo">
+</div>
+
+<script>
+/* ---------- Safer JS: filtering, sorting, pagination, lazy load, lightbox ---------- */
+(function(){
+  const perPage = 9;
+  const grid = document.getElementById('petsGrid');
+  if (!grid) return;
+
+  const items = Array.from(grid.querySelectorAll('.pet-card'));
+  const qInput = document.getElementById('q');
+  const filterType = document.getElementById('filterType');
+  const sortBy = document.getElementById('sortBy');
+  const pager = document.getElementById('pager');
+  const empty = document.getElementById('empty');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+
+  function initImages() {
+    items.forEach(card => {
+      const img = card.querySelector('img[data-src]');
+      if(img && !img.src) img.src = img.dataset.src;
+    });
+  }
+
+  let filtered = items.slice();
+  let currentPage = 1;
+
+  const normalizeText = s => (s||'').toString().trim().toLowerCase();
+
+  function applyFilterSort(){
+    const q = qInput ? normalizeText(qInput.value) : '';
+    const type = filterType ? normalizeText(filterType.value) : '';
+    const sort = sortBy ? sortBy.value : 'new';
+
+    filtered = items.filter(card => {
+      const name = card.dataset.name || '';
+      const t = card.dataset.type || '';
+      const age = card.dataset.age || '';
+      const matchQ = q === '' || name.includes(q) || t.includes(q) || (age && age.includes(q));
+      const matchType = type === '' || t === type;
+      return matchQ && matchType;
+    });
+
+    filtered.sort((a,b) => {
+      if(sort === 'name-asc' || sort === 'name-desc'){
+        const an = (a.dataset.name||''); const bn = (b.dataset.name||'');
+        return (an > bn ? 1 : an < bn ? -1 : 0) * (sort==='name-asc'?1:-1);
+      }
+      if(sort === 'age-asc' || sort === 'age-desc'){
+        const av = parseFloat(a.dataset.age) || 0; const bv = parseFloat(b.dataset.age) || 0;
+        return (av - bv) * (sort==='age-asc'?1:-1);
+      }
+      return 0;
+    });
+
+    currentPage = 1;
+    renderPage();
+  }
+
+  function renderPage(){
+    items.forEach(i => i.style.display = 'none');
+
+    if(filtered.length === 0){
+      if(pager) pager.innerHTML = '';
+      if(empty) empty.hidden = false;
+      return;
+    } else if (empty) {
+      empty.hidden = true;
+    }
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+    currentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+    const start = (currentPage - 1) * perPage;
+    const pageItems = filtered.slice(start, start + perPage);
+
+    pageItems.forEach(i => i.style.display = '');
+
+    if(!pager) return;
+    pager.innerHTML = '';
+
+    const createBtn = (text, enabled, onClick) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'page-btn';
+      btn.textContent = text;
+      if(!enabled) btn.disabled = true;
+      btn.addEventListener('click', onClick);
+      return btn;
+    };
+
+    pager.appendChild(createBtn('Prev', currentPage>1, ()=>{ if(currentPage>1){ currentPage--; renderPage(); }}));
+
+    const maxButtons = 7;
+    let startPage = Math.max(1, currentPage - Math.floor(maxButtons/2));
+    let endPage = Math.min(totalPages, startPage + maxButtons -1);
+    if(endPage - startPage < maxButtons -1) startPage = Math.max(1, endPage - maxButtons +1);
+
+    if(startPage > 1){ pager.appendChild(createBtn('1', true, ()=>{ currentPage=1; renderPage(); })); if(startPage > 2){ const s = document.createElement('span'); s.textContent='…'; s.style.padding='0 8px'; s.style.color='var(--muted)'; pager.appendChild(s); } }
+
+    for(let p=startPage;p<=endPage;p++){
+      const btn = createBtn(String(p), true, ()=>{ currentPage=p; renderPage(); });
+      if(p === currentPage) btn.classList.add('active');
+      pager.appendChild(btn);
+    }
+
+    if(endPage < totalPages){ if(endPage < totalPages-1){ const s = document.createElement('span'); s.textContent='…'; s.style.padding='0 8px'; s.style.color='var(--muted)'; pager.appendChild(s); } pager.appendChild(createBtn(String(totalPages), true, ()=>{ currentPage=totalPages; renderPage(); })); }
+
+    pager.appendChild(createBtn('Next', currentPage<totalPages, ()=>{ if(currentPage<totalPages){ currentPage++; renderPage(); }}));
+
+    // ensure images for visible items are loaded
+    pageItems.forEach(card => {
+      const img = card.querySelector('img[data-src]');
+      if(img && !img.src) img.src = img.dataset.src;
+    });
+  }
+
+  // events
+  let debounce;
+  [qInput, filterType, sortBy].forEach(el => {
+    if(!el) return;
+    el.addEventListener('input', ()=>{ clearTimeout(debounce); debounce = setTimeout(applyFilterSort, 220); });
+    el.addEventListener('change', applyFilterSort);
+  });
+
+  function showLightbox(src, alt){
+    if(!src || !lightbox || !lightboxImg) return;
+    lightboxImg.src = src; lightboxImg.alt = alt || 'Photo';
+    lightbox.classList.add('show'); lightbox.setAttribute('aria-hidden','false');
+    document.body.style.overflow = 'hidden';
+  }
+  function hideLightbox(){
+    if(!lightbox) return;
+    lightbox.classList.remove('show'); lightbox.setAttribute('aria-hidden','true'); if(lightboxImg) lightboxImg.src=''; document.body.style.overflow='';
+  }
+  window.hideLightbox = hideLightbox;
+
+  grid.addEventListener('click', (e)=>{ const el = e.target.closest('.pet-image img'); if(el) showLightbox(el.src, el.alt); });
+  grid.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && (e.target.classList.contains('pet-image') || e.target.closest('.pet-image'))){ const el = e.target.querySelector('img') || e.target.closest('.pet-image')?.querySelector('img'); if(el) showLightbox(el.src, el.alt); } });
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && lightbox && lightbox.classList.contains('show')) hideLightbox(); });
+
+  // init
+  initImages();
+  applyFilterSort();
+
+  window.__pets_ui = { applyFilterSort, renderPage };
+})();
+</script>
+
+{% endblock %}

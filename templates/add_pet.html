@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Add Pet{% endblock %}
+
+{% block content %}
+<style>
+/* ===== Single-file modern Add Pet page ===== */
+:root{
+  --bg-a:#071026; --bg-b:#0f2338;
+  --card-bg: rgba(255,255,255,0.02);
+  --card-border: rgba(255,255,255,0.06);
+  --muted: #9fb0c7;
+  --accent-a: #4fb0ff;
+  --accent-b: #5ff0d8;
+  --radius:14px;
+  --shadow: 0 12px 40px rgba(2,6,23,0.6);
+}
+
+/* page base */
+.addpet-wrap{
+  max-width: 920px;
+  margin: 36px auto;
+  padding: 22px;
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow);
+  color: #eaf6ff;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+/* heading */
+.addpet-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+}
+.addpet-header h2 { margin:0; font-size:1.5rem; font-weight:800; }
+.addpet-header .muted { color:var(--muted); font-size:0.95rem; }
+
+/* grid */
+.form-grid {
+  display:grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap:12px;
+  align-items:start;
+}
+
+/* helpers */
+.col-6{ grid-column: span 6; }
+.col-3{ grid-column: span 3; }
+.col-12{ grid-column: span 12; }
+
+@media (max-width:880px){
+  .col-6, .col-3 { grid-column: span 12; }
+}
+
+/* labels & inputs */
+.form-label { display:block; margin-bottom:6px; color:var(--muted); font-weight:600; }
+.form-control, .form-select {
+  width:100%;
+  padding:11px 12px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
+  color: #eaf6ff;
+  font-size:15px;
+  outline:none;
+  transition: box-shadow .12s ease, border-color .12s ease, transform .06s ease;
+}
+.form-control::placeholder { color: rgba(230,240,255,0.36); }
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent-a);
+  box-shadow: 0 10px 30px rgba(79,176,255,0.08);
+  transform: translateY(-1px);
+}
+
+/* image input + preview */
+.preview-wrap {
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+.preview-box {
+  width:180px;
+  height:120px;
+  border-radius:10px;
+  overflow:hidden;
+  background: rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.03);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--muted);
+  font-weight:700;
+}
+.preview-img { width:100%; height:100%; object-fit:cover; display:block; }
+
+/* errors & helper text */
+.text-danger { color:#ff9aa2; font-size:0.9rem; margin-top:6px; }
+.form-text { color:var(--muted); font-size:0.92rem; margin-top:6px; }
+
+/* actions */
+.actions { display:flex; gap:10px; align-items:center; margin-top:12px; }
+.btn-primary {
+  background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
+  color:#042033;
+  border:none;
+  padding:10px 14px;
+  border-radius:10px;
+  font-weight:800;
+  cursor:pointer;
+  box-shadow: 0 8px 26px rgba(79,176,255,0.12);
+}
+.btn-secondary {
+  background: transparent;
+  border:1px solid rgba(255,255,255,0.06);
+  color:var(--muted);
+  padding:10px 12px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+/* small helpers */
+.note { color:var(--muted); font-size:0.92rem; margin-top:6px; }
+
+/* reduce motion preference */
+@media (prefers-reduced-motion: reduce){
+  * { transition: none !important; }
+}
+</style>
+
+<div class="addpet-wrap" role="main" aria-labelledby="addpet-title">
+  <div class="addpet-header">
+    <h2 id="addpet-title">Add Pet</h2>
+    <div class="muted">Add rescued or adoptable animals</div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" novalidate onsubmit="disableSubmit(this)">
+    {{ form.hidden_tag() }}
+
+    <div class="form-grid">
+      <div class="col-6">
+        <label class="form-label" for="{{ form.pet_name.id }}">{{ form.pet_name.label.text }}</label>
+        {{ form.pet_name(class="form-control", id=form.pet_name.id, placeholder="Pet name (required)") }}
+        {% for err in form.pet_name.errors %}<div class="text-danger">{{ err }}</div>{% endfor %}
+      </div>
+
+      <div class="col-3">
+        <label class="form-label" for="{{ form.pet_owner_id.id }}">{{ form.pet_owner_id.label.text }}</label>
+        {{ form.pet_owner_id(class="form-control", id=form.pet_owner_id.id, placeholder="Owner ID") }}
+        {% for err in form.pet_owner_id.errors %}<div class="text-danger">{{ err }}</div>{% endfor %}
+      </div>
+
+      <div class="col-3">
+        <label class="form-label" for="{{ form.pet_age.id }}">{{ form.pet_age.label.text }}</label>
+        {{ form.pet_age(class="form-control", id=form.pet_age.id, placeholder="Age (years)") }}
+        {% for err in form.pet_age.errors %}<div class="text-danger">{{ err }}</div>{% endfor %}
+      </div>
+
+      <div class="col-6">
+        <label class="form-label" for="{{ form.pet_type.id }}">{{ form.pet_type.label.text }}</label>
+        {{ form.pet_type(class="form-control", id=form.pet_type.id, placeholder="e.g. Dog, Cat") }}
+      </div>
+
+      <div class="col-6">
+        <label class="form-label" for="{{ form.pet_colour.id }}">{{ form.pet_colour.label.text }}</label>
+        {{ form.pet_colour(class="form-control", id=form.pet_colour.id, placeholder="Colour") }}
+      </div>
+
+      <div class="col-6">
+        <label class="form-label" for="{{ form.pet_licence_id.id }}">{{ form.pet_licence_id.label.text }}</label>
+        {{ form.pet_licence_id(class="form-control", id=form.pet_licence_id.id, placeholder="Licence ID (optional)") }}
+      </div>
+
+      <div class="col-6">
+        <label class="form-label" for="{{ form.pet_male_female.id }}">{{ form.pet_male_female.label.text }}</label>
+        {{ form.pet_male_female(class="form-select", id=form.pet_male_female.id) }}
+        {% for err in form.pet_male_female.errors %}<div class="text-danger">{{ err }}</div>{% endfor %}
+      </div>
+
+      <div class="col-6">
+        <label class="form-label" for="{{ form.pet_img.id }}">{{ form.pet_img.label.text }}</label>
+        <div class="preview-wrap">
+          <div class="preview-box" id="preview-box">Preview</div>
+          <div style="flex:1;">
+            {{ form.pet_img(class="form-control", id=form.pet_img.id, onchange="previewImg(event)") }}
+            {% for err in form.pet_img.errors %}<div class="text-danger">{{ err }}</div>{% endfor %}
+            <div class="form-text">jpg / png / gif — max 5MB</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 actions">
+        {{ form.submit(class="btn-primary") }}
+        <a class="btn-secondary" href="{{ url_for('main.pets_list') }}">Cancel</a>
+        <div class="note" style="margin-left:auto">Tip: Add a clear photo to increase adoption chances.</div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+/* image preview and simple client-side checks */
+function previewImg(e){
+  const input = e.target;
+  const file = input.files && input.files[0];
+  const box = document.getElementById('preview-box');
+
+  if(!file){
+    box.innerText = 'Preview';
+    box.style.backgroundImage = '';
+    return;
+  }
+
+  const allowed = ['image/jpeg','image/png','image/gif'];
+  if(!allowed.includes(file.type)){
+    alert('Only JPG, PNG, GIF allowed.');
+    input.value = '';
+    return;
+  }
+  if(file.size > 5 * 1024 * 1024){
+    alert('Max file size 5 MB.');
+    input.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    box.style.backgroundImage = `url('${ev.target.result}')`;
+    box.style.backgroundSize = 'cover';
+    box.style.backgroundPosition = 'center';
+    box.innerText = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+/* disable submit button to avoid double submits */
+function disableSubmit(form){
+  const btn = form.querySelector('button[type="submit"], input[type="submit"], .btn-primary');
+  if(btn){
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+    btn.innerText = 'Saving...';
+  }
+  return true;
+}
+</script>
+
+{% endblock %}
