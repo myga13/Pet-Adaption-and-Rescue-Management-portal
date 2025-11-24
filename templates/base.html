@@ -103,15 +103,15 @@
   <!-- TOP BANNER NAVBAR -->
   <header class="banner" role="banner">
     <div class="brand" aria-hidden="true">
-      <div class="logo">PA</div>
-      <div>Pet Rescue</div>
+      <div class="logo">PC</div>
+      <div>PawCare</div>
     </div>
 
     <nav class="nav-links" role="navigation" aria-label="Main navigation">
-      <a href="{{ url_for('main.register') }}">Register</a>
-      <a href="{{ url_for('main.user_list') }}">Users</a>
+      <a href="{{ url_for('main.pets_list') }}">pets</a>
+      <!--<a href="{{ url_for('main.user_list') }}">Users</a>
       <a href="{{ url_for('main.pets_list') }}">Pets</a>
-      <a href="{{ url_for('main.login') }}">Login</a>
+      <a href="{{ url_for('main.login') }}">Login</a>-->
     </nav>
 
     <div class="profile-area" aria-hidden="{{ 'false' if g.user else 'true' }}">
@@ -147,13 +147,14 @@
             </div>
             <div>
               <div id="popoverTitle" style="font-weight:800;font-size:1.05rem">{{ g.user.user_name }}</div>
-              <div class="meta">{{ g.user.email or 'No email' }}</div>
+              <div class="meta"><p><b>Email:</b> {{ g.user.email }}</p></div>
               <div class="meta" style="font-weight:600">{{ g.user.city or '' }}{% if g.user.city and g.user.country %}, {% endif %}{{ g.user.country or '' }}</div>
             </div>
           </div>
 
           <div class="popover-body">
             <div style="color:#475569;font-weight:700">{{ g.user.user_bio or 'No bio yet.' }}</div>
+            <div style="color:#475569;font-weight:700">Owner Id: {{ g.user.user_id or 'No Id' }}</div>
             <div style="margin-top:8px;color:#64748b;font-size:0.9rem">
               Phone: <strong style="color:#0b1220">{{ g.user.phone_number or '—' }}</strong>
             </div>

@@ -3,7 +3,6 @@
 
 {% block content %}
 <style>
-/* Login page content (placed inside base.html content block) */
 :root{
   --bg-a:#eaf6ff; --bg-b:#e8fbf2;
   --accent-1:#6ea8ff; --accent-2:#ff9f7a;
@@ -12,8 +11,6 @@
   --radius:18px;
   --focus-ring: rgba(110,168,255,0.18);
 }
-
-/* container */
 .page-wrap{
   min-height: calc(100vh - 120px);
   display:flex;
@@ -22,8 +19,6 @@
   padding:28px;
   box-sizing:border-box;
 }
-
-/* split layout */
 .split {
   width:100%;
   max-width:1400px;
@@ -32,31 +27,21 @@
   gap:25px;
   align-items:stretch;
 }
-
-/* left welcome panel */
 .welcome {
-  /*background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.88));*/
-
   display:flex;
   flex-direction:column;
   justify-content:center;
   position:relative;
   overflow:hidden;
 }
-
-/* faint decorative paw glyph */
 .welcome::before{
   content: "🐾";
   position:absolute;
   right:-30px; top:-20px;
   font-size:140px; opacity:.06; transform: rotate(-18deg);
 }
-
-/* welcome */
 .welcome h2{ margin:0 0 6px 0; font-size:1.8rem; letter-spacing:0.2px }
 .welcome p.lead{ margin:0 0 18px 0; color:var(--muted); font-weight:600 }
-
-/* quote box */
 .quote-box {
   background: linear-gradient(180deg, rgba(110,168,255,0.04), rgba(123,224,199,0.02));
   border-radius:12px;
@@ -67,8 +52,6 @@
   position:relative;
   overflow:hidden;
 }
-
-/* quote text */
 .quote { font-size:1.05rem; line-height:1.5; font-weight:700; color:var(--text); margin:0;
   opacity:0; transform: translateY(8px);
   transition: opacity .45s cubic-bezier(.2,.9,.2,1), transform .45s cubic-bezier(.2,.9,.2,1);
@@ -76,16 +59,11 @@
 }
 .quote.show{ opacity:1; transform:translateY(0); }
 .quote-author{ margin-top:10px; font-size:0.9rem; color:var(--muted); font-weight:700 }
-
-/* small list */
 .welcome ul{ margin:14px 0 0 18px; color:var(--muted); }
 .welcome li{ margin:8px 0; font-weight:600 }
-
-/* login card */
 .login-card{
   border-radius:var(--radius);
   padding:25px;
-  
   background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.99));
   box-shadow:var(--shadow-soft);
   border:1px solid rgba(9, 19, 37, 0.04);
@@ -93,8 +71,6 @@
   flex-direction:column;
   justify-content:center;
 }
-
-/* brand row */
 .brand-row{ display:flex; align-items:center; gap:12px; margin-bottom:8px; justify-content:center }
 .brand-logo{
   width:56px; height:56px; border-radius:12px; display:grid; place-items:center; font-weight:700; color:white;
@@ -103,8 +79,6 @@
 }
 .title{ font-size:1.3rem; margin:0; font-weight:700; text-align:center }
 .subtitle{ font-size:0.95rem; color:var(--muted); margin-bottom:14px; text-align:center }
-
-/* form */
 .form-row{ margin-bottom:12px; }
 .form-label{ display:block; margin-bottom:8px; color:var(--muted); font-weight:700; text-align:left; }
 .form-control{
@@ -112,11 +86,7 @@
   font-size:15px; color:var(--text); outline:none; transition: box-shadow .12s ease, transform .08s ease, border-color .12s ease;
 }
 .form-control:focus{ box-shadow: 0 8px 30px var(--focus-ring); border-color: var(--accent-1); transform: translateY(-2px); }
-
-/* checkbox row */
 .form-check{ display:flex; gap:8px; align-items:center; color:var(--muted); font-weight:600 }
-
-/* submit */
 .btn-primary{
   margin-top:12px;
   width:100%;
@@ -131,18 +101,12 @@
   transition: transform .12s ease;
 }
 .btn-primary:active{ transform: translateY(1px) }
-
-/* helper text */
 .text-muted{ color:var(--muted); font-size:0.92rem; text-align:center; margin-top:10px }
-
-/* small screens */
 @media (max-width:920px){
   .split { grid-template-columns: 1fr; padding: 0 10px; }
   .welcome{ order:2; margin-top:12px }
   .login-card{ order:1 }
 }
-
-/* reduced motion */
 @media (prefers-reduced-motion: reduce){
   .quote, .welcome::before, .login-card::before { transition:none; animation:none; transform:none; }
 }
@@ -150,7 +114,6 @@
 
 <div class="page-wrap">
   <div class="split" role="main" aria-labelledby="login-title">
-    <!-- LEFT: welcome + animated quotes -->
     <aside class="welcome" aria-labelledby="welcome-title">
       <h2 id="welcome-title">Welcome to Pet Rescue</h2>
       <p class="lead">Find friends, save lives — adopt, foster, or volunteer.</p>
@@ -169,7 +132,6 @@
       </ul>
     </aside>
 
-    <!-- RIGHT: login card -->
     <main class="login-card" role="main" aria-labelledby="login-title">
       <div class="brand-row" aria-hidden="true">
         <div class="brand-logo" aria-hidden="true">PA</div>
@@ -185,9 +147,9 @@
         <input type="hidden" name="role" id="roleInput" value="staff">
 
         <div class="form-row">
-          <label class="form-label" for="{{ form.user_name.id }}">{{ form.user_name.label.text }}</label>
-          {{ form.user_name(class="form-control", id=form.user_name.id, placeholder="username", autofocus=True) }}
-          {% for e in form.user_name.errors %}<div class="text-danger">{{ e }}</div>{% endfor %}
+          <label class="form-label" for="{{ form.email.id }}">{{ form.email.label.text }}</label>
+          {{ form.email(class="form-control", id=form.email.id, placeholder="email address", type="email", autofocus=True) }}
+          {% for e in form.email.errors %}<div class="text-danger">{{ e }}</div>{% endfor %}
         </div>
 
         <div class="form-row">
@@ -205,14 +167,16 @@
           {{ form.submit(class="btn-primary", type="submit", id="submitBtn") }}
         </div>
 
-        <div id="form-help" class="text-muted">If you don't have an account <a href="{{ url_for('main.register') }}">Register</a></div>
+        <div id="form-help" class="text-muted">
+          If you don't have an account
+          <a href="{{ url_for('main.register') }}">Register</a>
+        </div>
       </form>
     </main>
   </div>
 </div>
 
 <script>
-/* Rotating quotes (gentle fade/slide). Respects prefers-reduced-motion. */
 (function(){
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const quotes = Array.from(document.querySelectorAll('.quote'));
@@ -232,28 +196,35 @@
   }, 5000);
 })();
 
-/* Simple client-side feedback on submit */
 (function(){
   const form = document.getElementById('loginForm');
   const submit = document.getElementById('submitBtn');
   if(!form || !submit) return;
   form.addEventListener('submit', function(e){
-    const user = form.querySelector('input[name="{{ form.user_name.name }}"]');
+    const email = form.querySelector('input[name="{{ form.email.name }}"]');
     const pass = form.querySelector('input[name="{{ form.password.name }}"]');
     let invalid = false;
-    if(user && user.value.trim()===''){ invalid = true; user.classList.add('invalid'); }
+    if(email && email.value.trim()===''){ invalid = true; email.classList.add('invalid'); }
     if(pass && pass.value.trim()===''){ invalid = true; pass.classList.add('invalid'); }
     if(invalid){
       e.preventDefault();
       const firstErr = form.querySelector('.invalid');
-      if(firstErr){ firstErr.focus(); firstErr.style.outline = '3px solid rgba(228,87,87,0.18)'; setTimeout(()=> firstErr.style.outline = '', 1400); }
+      if(firstErr){
+        firstErr.focus();
+        firstErr.style.outline = '3px solid rgba(228,87,87,0.18)';
+        setTimeout(()=> firstErr.style.outline = '', 1400);
+      }
       return false;
     }
     submit.disabled = true;
     submit.classList.add('loading');
     const original = submit.innerText;
     submit.innerText = 'PLEASE WAIT...';
-    setTimeout(()=>{ submit.disabled=false; submit.classList.remove('loading'); submit.innerText = original }, 3000);
+    setTimeout(()=>{
+      submit.disabled=false;
+      submit.classList.remove('loading');
+      submit.innerText = original;
+    }, 3000);
   });
 })();
 </script>

@@ -83,7 +83,15 @@ body {
 .form-col-full{ grid-column: 1 / -1; }
 
 /* Labels */
-label{ display:block; margin-bottom:8px; color:var(--muted); font-weight:700; font-size:0.95rem; text-transform:uppercase; letter-spacing:.6px }
+label{
+  display:block;
+  margin-bottom:8px;
+  color:var(--muted);
+  font-weight:700;
+  font-size:0.95rem;
+  text-transform:uppercase;
+  letter-spacing:.6px
+}
 
 /* Modern inputs: transparent with animated underline */
 .form-control{
@@ -119,10 +127,13 @@ label{ display:block; margin-bottom:8px; color:var(--muted); font-weight:700; fo
 .form-control:focus{ transform: translateY(-3px); box-shadow: 0 12px 30px var(--focus-ring); }
 .form-control:focus + .form-control-wrapper::after{ transform: scaleX(1); opacity: 1; }
 
-/* Place the wrapper after the input in markup, so the underline pseudo can be targeted */
-
-/* Reduced height for bio textarea (requested) */
-textarea.form-control{ min-height:68px; max-height:180px; resize:vertical; padding:12px; }
+/* Reduced height for bio textarea */
+textarea.form-control{
+  min-height:68px;
+  max-height:180px;
+  resize:vertical;
+  padding:12px;
+}
 
 /* file preview row */
 .file-row{ display:flex; gap:12px; align-items:center; }
@@ -157,15 +168,31 @@ textarea.form-control{ min-height:68px; max-height:180px; resize:vertical; paddi
 @keyframes pulse{ 0%{ transform:none } 50%{ transform: translateY(-3px) } 100%{ transform:none } }
 
 /* invalid */
-.form-control.invalid{ box-shadow: 0 6px 20px rgba(224,84,84,0.06); border-radius:10px; animation: shake .36s cubic-bezier(.36,.07,.19,.97); }
-@keyframes shake{ 0%{ transform: translateX(0) } 20%{ transform: translateX(-6px) } 40%{ transform: translateX(6px) } 60%{ transform: translateX(-4px) } 80%{ transform: translateX(4px) } 100%{ transform: translateX(0) } }
+.form-control.invalid{
+  box-shadow: 0 6px 20px rgba(224,84,84,0.06);
+  border-radius:10px;
+  animation: shake .36s cubic-bezier(.36,.07,.19,.97);
+}
+@keyframes shake{
+  0%{ transform: translateX(0) }
+  20%{ transform: translateX(-6px) }
+  40%{ transform: translateX(6px) }
+  60%{ transform: translateX(-4px) }
+  80%{ transform: translateX(4px) }
+  100%{ transform: translateX(0) }
+}
 
 /* responsive */
-@media (max-width:720px){ .form-grid{ grid-template-columns:1fr } .file-preview{ width:64px; height:64px } }
+@media (max-width:720px){
+  .form-grid{ grid-template-columns:1fr }
+  .file-preview{ width:64px; height:64px }
+}
 
 /* reduced motion respect */
 @media (prefers-reduced-motion: reduce){
-  .register-wrapper, .register-wrapper::before, .form-control, .btn-submit{ animation:none; transition:none; transform:none }
+  .register-wrapper, .register-wrapper::before, .form-control, .btn-submit{
+    animation:none; transition:none; transform:none
+  }
   .form-control-wrapper::after{ transition:none }
 }
 </style>
@@ -178,60 +205,94 @@ textarea.form-control{ min-height:68px; max-height:180px; resize:vertical; paddi
     {{ form.hidden_tag() }}
 
     <div class="form-grid">
+      <!-- Username -->
       <div>
-        <label for="{{ form.user_name.id }}">{{ form.user_name.label }}</label>
+        <label for="{{ form.user_name.id }}">{{ form.user_name.label.text }}</label>
         {{ form.user_name(class="form-control", id=form.user_name.id, placeholder="Enter username") }}
         <span class="form-control-wrapper" aria-hidden="true"></span>
-        {% for e in form.user_name.errors %}<div class="helper" style="color:var(--danger)">{{ e }}</div>{% endfor %}
+        {% for e in form.user_name.errors %}
+          <div class="helper" style="color:var(--danger)">{{ e }}</div>
+        {% endfor %}
       </div>
 
+      <!-- Email (NEW: styled like others) -->
       <div>
-        <label for="{{ form.phone_number.id }}">{{ form.phone_number.label }}</label>
+        <label for="{{ form.email.id }}">{{ form.email.label.text }}</label>
+        {{ form.email(class="form-control", id=form.email.id, placeholder="Email address") }}
+        <span class="form-control-wrapper" aria-hidden="true"></span>
+        {% for e in form.email.errors %}
+          <div class="helper" style="color:var(--danger)">{{ e }}</div>
+        {% endfor %}
+      </div>
+
+      <!-- Phone -->
+      <div>
+        <label for="{{ form.phone_number.id }}">{{ form.phone_number.label.text }}</label>
         {{ form.phone_number(class="form-control", id=form.phone_number.id, placeholder="e.g. +1 555 555 555") }}
         <span class="form-control-wrapper" aria-hidden="true"></span>
-        {% for e in form.phone_number.errors %}<div class="helper" style="color:var(--danger)">{{ e }}</div>{% endfor %}
+        {% for e in form.phone_number.errors %}
+          <div class="helper" style="color:var(--danger)">{{ e }}</div>
+        {% endfor %}
       </div>
 
+      <!-- Bio -->
       <div class="form-col-full">
-        <label for="{{ form.user_bio.id }}">{{ form.user_bio.label }}</label>
+        <label for="{{ form.user_bio.id }}">{{ form.user_bio.label.text }}</label>
         {{ form.user_bio(class="form-control", id=form.user_bio.id, placeholder="Short bio about you", rows=3) }}
         <span class="form-control-wrapper" aria-hidden="true"></span>
-        {% for e in form.user_bio.errors %}<div class="helper" style="color:var(--danger)">{{ e }}</div>{% endfor %}
+        {% for e in form.user_bio.errors %}
+          <div class="helper" style="color:var(--danger)">{{ e }}</div>
+        {% endfor %}
       </div>
 
+      <!-- Location fields -->
       <div>
-        <label for="{{ form.city.id }}">{{ form.city.label }}</label>
+        <label for="{{ form.city.id }}">{{ form.city.label.text }}</label>
         {{ form.city(class="form-control", id=form.city.id, placeholder="City") }}
         <span class="form-control-wrapper" aria-hidden="true"></span>
       </div>
 
       <div>
-        <label for="{{ form.state.id }}">{{ form.state.label }}</label>
+        <label for="{{ form.state.id }}">{{ form.state.label.text }}</label>
         {{ form.state(class="form-control", id=form.state.id, placeholder="State / Province") }}
         <span class="form-control-wrapper" aria-hidden="true"></span>
       </div>
 
       <div>
-        <label for="{{ form.country.id }}">{{ form.country.label }}</label>
+        <label for="{{ form.country.id }}">{{ form.country.label.text }}</label>
         {{ form.country(class="form-control", id=form.country.id, placeholder="Country") }}
         <span class="form-control-wrapper" aria-hidden="true"></span>
       </div>
 
       <div>
-        <label for="{{ form.address.id }}">{{ form.address.label }}</label>
+        <label for="{{ form.address.id }}">{{ form.address.label.text }}</label>
         {{ form.address(class="form-control", id=form.address.id, placeholder="Street address") }}
         <span class="form-control-wrapper" aria-hidden="true"></span>
       </div>
 
+      <!-- Password -->
       <div>
-        <label for="{{ form.password.id }}">{{ form.password.label }}</label>
+        <label for="{{ form.password.id }}">{{ form.password.label.text }}</label>
         {{ form.password(class="form-control", id=form.password.id, placeholder="Choose a secure password") }}
         <span class="form-control-wrapper" aria-hidden="true"></span>
-        {% for e in form.password.errors %}<div class="helper" style="color:var(--danger)">{{ e }}</div>{% endfor %}
+        {% for e in form.password.errors %}
+          <div class="helper" style="color:var(--danger)">{{ e }}</div>
+        {% endfor %}
       </div>
 
+      <!-- Confirm Password (NEW) -->
+      <div>
+        <label for="{{ form.confirm_password.id }}">{{ form.confirm_password.label.text }}</label>
+        {{ form.confirm_password(class="form-control", id=form.confirm_password.id, placeholder="Re-enter password") }}
+        <span class="form-control-wrapper" aria-hidden="true"></span>
+        {% for e in form.confirm_password.errors %}
+          <div class="helper" style="color:var(--danger)">{{ e }}</div>
+        {% endfor %}
+      </div>
+
+      <!-- Avatar upload -->
       <div class="form-col-full">
-        <label for="{{ form.user_img.id }}">{{ form.user_img.label }}</label>
+        <label for="{{ form.user_img.id }}">{{ form.user_img.label.text }}</label>
         <div class="file-row">
           {{ form.user_img(class="form-control", id=form.user_img.id, accept="image/*", style="padding:8px") }}
           <div class="file-preview" id="filePreview" aria-hidden="true">
@@ -239,9 +300,12 @@ textarea.form-control{ min-height:68px; max-height:180px; resize:vertical; paddi
           </div>
         </div>
         <div class="helper">Accepted formats: JPG, PNG — max ~5MB</div>
-        {% for e in form.user_img.errors %}<div class="helper" style="color:var(--danger)">{{ e }}</div>{% endfor %}
+        {% for e in form.user_img.errors %}
+          <div class="helper" style="color:var(--danger)">{{ e }}</div>
+        {% endfor %}
       </div>
 
+      <!-- Submit -->
       <div class="form-col-full" style="margin-top:6px">
         {{ form.submit(class="btn-submit", id="submitBtn") }}
       </div>
@@ -267,7 +331,11 @@ textarea.form-control{ min-height:68px; max-height:180px; resize:vertical; paddi
     const img = document.createElement('img');
     img.alt = 'preview';
     const reader = new FileReader();
-    reader.onload = function(e){ img.src = e.target.result; preview.innerHTML=''; preview.appendChild(img); };
+    reader.onload = function(e){
+      img.src = e.target.result;
+      preview.innerHTML='';
+      preview.appendChild(img);
+    };
     reader.readAsDataURL(file);
   }
 
@@ -279,19 +347,19 @@ textarea.form-control{ min-height:68px; max-height:180px; resize:vertical; paddi
     if(fileInput.files && fileInput.files[0]) showPreview(fileInput.files[0]);
   }
 
-  // input focus: add class to reveal underline (for keyboard focus too)
+  // underline visibility for keyboard focus
   document.querySelectorAll('.form-control').forEach(inp=>{
-    inp.addEventListener('focus', ()=> {
+    inp.addEventListener('focus', ()=>{
       const wrapper = inp.nextElementSibling;
       if(wrapper && wrapper.classList.contains('form-control-wrapper')) wrapper.style.opacity = 1;
     });
-    inp.addEventListener('blur', ()=> {
+    inp.addEventListener('blur', ()=>{
       const wrapper = inp.nextElementSibling;
       if(wrapper && wrapper.classList.contains('form-control-wrapper')) wrapper.style.opacity = '';
     });
   });
 
-  // submit validation + loading
+  // submit validation + loading (basic client-side)
   const form = document.getElementById('registerForm');
   const submit = document.getElementById('submitBtn');
   if(form && submit){
@@ -306,14 +374,20 @@ textarea.form-control{ min-height:68px; max-height:180px; resize:vertical; paddi
           setTimeout(()=> el.classList.remove('invalid'), 1400);
         }
       });
-      if(invalid){ ev.preventDefault(); const first = document.querySelector('.form-control.invalid'); if(first) first.focus(); return false; }
+      if(invalid){
+        ev.preventDefault();
+        const first = document.querySelector('.form-control.invalid');
+        if(first) first.focus();
+        return false;
+      }
 
-      // loading state
       submit.classList.add('loading');
       const original = submit.innerText;
       submit.innerText = 'CREATING...';
-      // fallback removal if not navigating
-      setTimeout(()=>{ submit.classList.remove('loading'); submit.innerText = original; }, 6000);
+      setTimeout(()=>{
+        submit.classList.remove('loading');
+        submit.innerText = original;
+      }, 6000);
     });
   }
 })();

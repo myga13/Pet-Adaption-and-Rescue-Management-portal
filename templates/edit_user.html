@@ -72,6 +72,13 @@
               {% for e in form.user_name.errors %}<div class="small" style="color:#b91c1c">{{ e }}</div>{% endfor %}
             </div>
 
+            <!-- NEW: email field -->
+            <div>
+              <label class="label" for="{{ form.email.id }}">{{ form.email.label.text }}</label>
+              {{ form.email(class="input", id=form.email.id, placeholder="email address") }}
+              {% for e in form.email.errors %}<div class="small" style="color:#b91c1c">{{ e }}</div>{% endfor %}
+            </div>
+
             <div>
               <label class="label" for="{{ form.phone_number.id }}">{{ form.phone_number.label.text }}</label>
               {{ form.phone_number(class="input", id=form.phone_number.id, placeholder="phone number") }}
@@ -115,7 +122,7 @@
       </div>
 
       <div class="actions">
-        <a href="{{ url_for('main.user_list') }}" class="btn btn-cancel" role="button">Back</a>
+        <a href="{{ url_for('main.index') }}" class="btn btn-cancel" role="button">Back</a>
         {{ form.submit(class="btn btn-save", value="Save") }}
       </div>
     </form>
@@ -133,7 +140,6 @@
 
   function showPreview(file){
     if(!file){
-      // if no file selected, keep current preview (do nothing)
       return;
     }
     if(!file.type.startsWith('image/')){
@@ -158,7 +164,6 @@
         previewBox.appendChild(img);
       }
       if(previewInitial) previewInitial.style.display = 'none';
-      // show remove button
       removeBtn.style.display = 'inline-block';
     };
     reader.readAsDataURL(file);
@@ -171,9 +176,8 @@
     });
   }
 
-  // Remove image: this simply clears input and sets a hidden form flag so server can remove stored image
+  // Remove image
   removeBtn && removeBtn.addEventListener('click', function(){
-    // create or toggle a hidden input to signal remove on server
     let marker = document.getElementById('remove_image_marker');
     if(!marker){
       marker = document.createElement('input');
@@ -183,7 +187,6 @@
       marker.value = '1';
       document.getElementById('editForm').appendChild(marker);
     }
-    // clear file input and preview
     if(fileInput) fileInput.value = '';
     previewBox.innerHTML = '<span style="font-weight:800;color:#042033">{{ g.user.user_name[:1]|upper if g.user else "" }}</span>';
     removeBtn.style.display = 'none';

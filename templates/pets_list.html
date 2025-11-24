@@ -8,7 +8,7 @@
   --bg-1:#e3e9f7; --bg-2:#c4cfd9;
   --card-bg: rgba(255,255,255,0.03);
   --card-border: rgba(255,255,255,0.06);
-  --muted:#9fb0c7; --text:#eaf6ff;
+  --muted:#000000; --text:#0091ff;
   --accent:#5ea8ff; --accent-2:#6ff3d1;
   --danger:#ef4444;
   --radius:14px; --gap:18px; --card-w:320px;
@@ -92,10 +92,10 @@ button:focus, a:focus { box-shadow: var(--focus-ring); border-radius:8px; outlin
       <select id="filterType" class="select" aria-label="Filter by type">
         <option value="">All types</option>
 
-        {# build unique types safely using namespace (no `do` required) #}
+        {# collect unique types #}
         {%- set ns = namespace(types=[]) -%}
         {%- for p in pets -%}
-          {%- if p.pet_type and (p.pet_type not in ns.types) -%}
+          {%- if p.pet_type and p.pet_type not in ns.types -%}
             {%- set _ = ns.types.append(p.pet_type) -%}
           {%- endif -%}
         {%- endfor -%}
@@ -121,12 +121,14 @@ button:focus, a:focus { box-shadow: var(--focus-ring); border-radius:8px; outlin
     {%- for pet in pets -%}
     <article class="pet-card" data-name="{{ (pet.pet_name or '')|lower }}" data-type="{{ (pet.pet_type or '')|lower }}" data-age="{{ pet.pet_age or '' }}">
       <div class="pet-image" tabindex="0">
-        {%- if pet.pet_img -%}
-          {%- set img_filename = pet.pet_img if '/' in pet.pet_img else ('user_images/' ~ pet.pet_img) -%}
-          <img data-src="{{ url_for('main.media', filename=img_filename) }}" alt="{{ pet.pet_name }}" loading="lazy">
-        {%- else -%}
+
+        {# FIXED IMAGE PATH — NO 'user_images/' PREFIX #}
+        {% if pet.pet_img %}
+          <img data-src="{{ url_for('main.media', filename=pet.pet_img) }}" alt="{{ pet.pet_name }}" loading="lazy">
+        {% else %}
           <div class="placeholder">No Image</div>
-        {%- endif -%}
+        {% endif %}
+
       </div>
 
       <div class="pet-body">
@@ -149,10 +151,8 @@ button:focus, a:focus { box-shadow: var(--focus-ring); border-radius:8px; outlin
     {%- endfor -%}
   </div>
 
-  <!-- pagination -->
   <div id="pager" class="pagination" role="navigation" aria-label="Pagination"></div>
 
-  <!-- empty -->
   <div id="empty" class="empty" hidden>No pets match your search.</div>
 </div>
 
@@ -162,7 +162,7 @@ button:focus, a:focus { box-shadow: var(--focus-ring); border-radius:8px; outlin
 </div>
 
 <script>
-/* ---------- Safer JS: filtering, sorting, pagination, lazy load, lightbox ---------- */
+/* ---------- Filtering, sorting, pagination, lazy load, lightbox ---------- */
 (function(){
   const perPage = 9;
   const grid = document.getElementById('petsGrid');
@@ -190,26 +190,26 @@ button:focus, a:focus { box-shadow: var(--focus-ring); border-radius:8px; outlin
   const normalizeText = s => (s||'').toString().trim().toLowerCase();
 
   function applyFilterSort(){
-    const q = qInput ? normalizeText(qInput.value) : '';
-    const type = filterType ? normalizeText(filterType.value) : '';
-    const sort = sortBy ? sortBy.value : 'new';
+    const q = normalizeText(qInput.value);
+    const type = normalizeText(filterType.value);
+    const sort = sortBy.value;
 
     filtered = items.filter(card => {
       const name = card.dataset.name || '';
       const t = card.dataset.type || '';
       const age = card.dataset.age || '';
-      const matchQ = q === '' || name.includes(q) || t.includes(q) || (age && age.includes(q));
+      const matchQ = q === '' || name.includes(q) || t.includes(q) || age.includes(q);
       const matchType = type === '' || t === type;
       return matchQ && matchType;
     });
 
     filtered.sort((a,b) => {
-      if(sort === 'name-asc' || sort === 'name-desc'){
-        const an = (a.dataset.name||''); const bn = (b.dataset.name||'');
+      if(sort.startsWith('name')){
+        const an = a.dataset.name || '', bn = b.dataset.name || '';
         return (an > bn ? 1 : an < bn ? -1 : 0) * (sort==='name-asc'?1:-1);
       }
-      if(sort === 'age-asc' || sort === 'age-desc'){
-        const av = parseFloat(a.dataset.age) || 0; const bv = parseFloat(b.dataset.age) || 0;
+      if(sort.startsWith('age')){
+        const av = parseFloat(a.dataset.age) || 0, bv = parseFloat(b.dataset.age) || 0;
         return (av - bv) * (sort==='age-asc'?1:-1);
       }
       return 0;
@@ -223,12 +223,10 @@ button:focus, a:focus { box-shadow: var(--focus-ring); border-radius:8px; outlin
     items.forEach(i => i.style.display = 'none');
 
     if(filtered.length === 0){
-      if(pager) pager.innerHTML = '';
-      if(empty) empty.hidden = false;
+      pager.innerHTML = '';
+      empty.hidden = false;
       return;
-    } else if (empty) {
-      empty.hidden = true;
-    }
+    } else empty.hidden = true;
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
     currentPage = Math.min(Math.max(1, currentPage), totalPages);
@@ -238,7 +236,6 @@ button:focus, a:focus { box-shadow: var(--focus-ring); border-radius:8px; outlin
 
     pageItems.forEach(i => i.style.display = '');
 
-    if(!pager) return;
     pager.innerHTML = '';
 
     const createBtn = (text, enabled, onClick) => {
@@ -251,14 +248,21 @@ button:focus, a:focus { box-shadow: var(--focus-ring); border-radius:8px; outlin
       return btn;
     };
 
-    pager.appendChild(createBtn('Prev', currentPage>1, ()=>{ if(currentPage>1){ currentPage--; renderPage(); }}));
+    pager.appendChild(createBtn('Prev', currentPage>1, ()=>{ currentPage--; renderPage(); }));
 
     const maxButtons = 7;
     let startPage = Math.max(1, currentPage - Math.floor(maxButtons/2));
     let endPage = Math.min(totalPages, startPage + maxButtons -1);
-    if(endPage - startPage < maxButtons -1) startPage = Math.max(1, endPage - maxButtons +1);
+    if(endPage - startPage < maxButtons -1)
+      startPage = Math.max(1, endPage - maxButtons +1);
 
-    if(startPage > 1){ pager.appendChild(createBtn('1', true, ()=>{ currentPage=1; renderPage(); })); if(startPage > 2){ const s = document.createElement('span'); s.textContent='…'; s.style.padding='0 8px'; s.style.color='var(--muted)'; pager.appendChild(s); } }
+    if(startPage > 1){
+      pager.appendChild(createBtn('1', true, ()=>{ currentPage=1; renderPage(); }));
+      if(startPage > 2){
+        const s=document.createElement('span'); s.textContent='…'; s.style.padding='0 8px'; s.style.color='var(--muted)';
+        pager.appendChild(s);
+      }
+    }
 
     for(let p=startPage;p<=endPage;p++){
       const btn = createBtn(String(p), true, ()=>{ currentPage=p; renderPage(); });
@@ -266,46 +270,52 @@ button:focus, a:focus { box-shadow: var(--focus-ring); border-radius:8px; outlin
       pager.appendChild(btn);
     }
 
-    if(endPage < totalPages){ if(endPage < totalPages-1){ const s = document.createElement('span'); s.textContent='…'; s.style.padding='0 8px'; s.style.color='var(--muted)'; pager.appendChild(s); } pager.appendChild(createBtn(String(totalPages), true, ()=>{ currentPage=totalPages; renderPage(); })); }
+    if(endPage < totalPages){
+      if(endPage < totalPages-1){
+        const s=document.createElement('span'); s.textContent='…'; s.style.padding='0 8px'; s.style.color='var(--muted)';
+        pager.appendChild(s);
+      }
+      pager.appendChild(createBtn(String(totalPages), true, ()=>{ currentPage=totalPages; renderPage(); }));
+    }
 
-    pager.appendChild(createBtn('Next', currentPage<totalPages, ()=>{ if(currentPage<totalPages){ currentPage++; renderPage(); }}));
+    pager.appendChild(createBtn('Next', currentPage<totalPages, ()=>{ currentPage++; renderPage(); }));
 
-    // ensure images for visible items are loaded
     pageItems.forEach(card => {
       const img = card.querySelector('img[data-src]');
       if(img && !img.src) img.src = img.dataset.src;
     });
   }
 
-  // events
   let debounce;
-  [qInput, filterType, sortBy].forEach(el => {
-    if(!el) return;
-    el.addEventListener('input', ()=>{ clearTimeout(debounce); debounce = setTimeout(applyFilterSort, 220); });
-    el.addEventListener('change', applyFilterSort);
-  });
+  qInput.addEventListener('input', ()=>{ clearTimeout(debounce); debounce=setTimeout(applyFilterSort,220); });
+  filterType.addEventListener('change', applyFilterSort);
+  sortBy.addEventListener('change', applyFilterSort);
 
   function showLightbox(src, alt){
-    if(!src || !lightbox || !lightboxImg) return;
-    lightboxImg.src = src; lightboxImg.alt = alt || 'Photo';
+    lightboxImg.src = src; lightboxImg.alt = alt;
     lightbox.classList.add('show'); lightbox.setAttribute('aria-hidden','false');
     document.body.style.overflow = 'hidden';
   }
   function hideLightbox(){
-    if(!lightbox) return;
-    lightbox.classList.remove('show'); lightbox.setAttribute('aria-hidden','true'); if(lightboxImg) lightboxImg.src=''; document.body.style.overflow='';
+    lightbox.classList.remove('show');
+    lightboxImg.src = '';
+    lightbox.setAttribute('aria-hidden','true');
+    document.body.style.overflow = '';
   }
   window.hideLightbox = hideLightbox;
 
-  grid.addEventListener('click', (e)=>{ const el = e.target.closest('.pet-image img'); if(el) showLightbox(el.src, el.alt); });
-  grid.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && (e.target.classList.contains('pet-image') || e.target.closest('.pet-image'))){ const el = e.target.querySelector('img') || e.target.closest('.pet-image')?.querySelector('img'); if(el) showLightbox(el.src, el.alt); } });
-  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && lightbox && lightbox.classList.contains('show')) hideLightbox(); });
+  grid.addEventListener('click', (e)=>{
+    const el = e.target.closest('.pet-image img');
+    if(el) showLightbox(el.src, el.alt);
+  });
 
-  // init
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape' && lightbox.classList.contains('show'))
+      hideLightbox();
+  });
+
   initImages();
   applyFilterSort();
-
-  window.__pets_ui = { applyFilterSort, renderPage };
 })();
 </script>
 

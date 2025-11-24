@@ -1,0 +1,1450 @@
+{% extends "base.html" %}
+
+{% block title %}PawCare | Home{% endblock %}
+
+{% block content %}
+
+<style>
+  /* Hero Section */
+  .hero {
+    margin-top: 120px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 40px;
+    /*gap: 40px;"*/
+  }
+
+  .hero-text { max-width: 45%; }
+  .hero-text h1 { font-size: 42px; color: #0b2c3d; margin-bottom: 20px; }
+  .hero-text p { font-size: 18px; line-height: 1.6; margin-bottom: 20px; color: #345; }
+
+  .quote-box {
+    margin-top: 20px;
+    background: #ffffff;
+    padding: 20px;
+    border-left: 6px solid #ff7a00;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    font-size: 16px;
+    color: #233;
+  }
+
+  .buttons { margin-top: 24px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    padding: 12px 20px;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  .btn-primary { background: #ff7a00; color: white; }
+  .btn-outline { background: transparent; border: 2px solid #ff7a00; color: #ff7a00; }
+
+  .hero-img {
+    width: 50%;
+    height: 520px;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+  }
+
+  .slider {
+    width: 300%;
+    height: 100%;
+    display: flex;
+    animation: slide 10s infinite;
+  }
+  .slider img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  @keyframes slide {
+    0% { transform: translateX(0%); }
+    33% { transform: translateX(-80%); }
+    66% { transform: translateX(0%); }
+    100% { transform: translateX(0%); }
+  }
+
+  @media(max-width:900px){
+    .hero { flex-direction: column; text-align: center; }
+    .hero-text { max-width: 100%; }
+    .hero-img { width: 100%; height: 400px; margin-top: 20px; }
+  }
+
+  /* ===================== */
+  /*     PROBLEM SECTION   */
+  /* ===================== */
+
+  .problem-section {
+    
+    ;
+    margin-top: 40px;
+    background: #ffd442;
+    background-image: repeating-linear-gradient(
+      -60deg,
+      rgba(255, 200, 0, 0.35),
+      rgba(255, 200, 0, 0.35) 120px,
+      rgba(255, 230, 120, 0.35) 120px,
+      rgba(255, 230, 120, 0.35) 240px
+    );
+  }
+
+  .problem-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .problem-left,
+  .problem-right {
+    width: 30%;
+  }
+
+  .problem-left h2,
+  .problem-right h1 {
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    color: #0b2c3d;
+  }
+
+  .problem-left p,
+  .problem-right p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #1a2a33;
+  }
+
+  .problem-cat {
+    width: 160px;
+    margin-top: 25px;
+  }
+
+  .problem-image {
+    width: 28%;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  }
+
+  .problem-image img {
+    width: 100%;
+    height: 420px;
+    object-fit: cover;
+    display: block;
+  }
+
+  @media (max-width: 900px) {
+    .problem-section { padding: 50px 24px; }
+    .problem-container {
+      flex-direction: column;
+      text-align: center;
+    }
+    .problem-left,
+    .problem-right {
+      width: 100%;
+    }
+    .problem-image { width: 90%; }
+  }
+
+  /* ========================= */
+  /*  WHAT WE DO + MARKET      */
+  /* ========================= */
+
+  .what-we-do {
+    max-width: 800px;
+    margin: 40px auto;
+    font-family: Arial, sans-serif;
+  }
+
+  .what-we-do h2 {
+    font-size: 32px;
+    font-weight: 800;
+    color: #023F2E;
+    border-bottom: 4px solid #00C77F;
+    display: inline-block;
+    margin-bottom: 15px;
+  }
+
+  .what-we-do p {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 25px;
+    line-height: 1.6;
+  }
+
+  .feature-box {
+    padding: 16px 18px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .feature-box .icon {
+    font-size: 22px;
+  }
+
+  .feature-box.green {
+    background: #EFFFF4;
+    color: #197C43;
+  }
+
+  .feature-box.mint {
+    background: #F0FFFA;
+    color: #1A6D74;
+  }
+
+  .feature-box.pink {
+    background: #FFF0F6;
+    color: #B32656;
+  }
+
+  .learn-more-btn {
+    display: inline-block;
+    margin-top: 20px;
+    background: #00AF69;
+    color: white;
+    padding: 12px 18px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  .learn-more-btn:hover {
+    background: #00995D;
+  }
+
+  .market-section {
+    width: 100%;
+    background: #e0f5ff;
+    padding: 60px 40px;
+  }
+
+  .market-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+
+  .market-image {
+    flex: 1;
+    min-width: 320px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.15);
+  }
+
+  .market-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .market-content {
+    flex: 1;
+    min-width: 320px;
+  }
+
+  .market-title {
+    font-size: 34px;
+    font-weight: 800;
+    color: #0b2c3d;
+    margin-bottom: 10px;
+  }
+
+  .market-subtitle {
+    font-size: 16px;
+    margin-bottom: 18px;
+    color: #345;
+    line-height: 1.7;
+  }
+
+  .market-box {
+    background: #fff9d9;
+    padding: 22px 20px;
+    border-radius: 16px;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    font-size: 16px;
+    line-height: 1.7;
+    color: #333;
+  }
+
+  .market-box h3 {
+    margin-bottom: 8px;
+    color: #d67a00;
+    font-size: 20px;
+  }
+
+  @media (max-width: 900px) {
+    .market-section { padding: 50px 24px; }
+    .market-inner {
+      flex-direction: column;
+      text-align: center;
+    }
+  }
+
+  .adopt-btn {
+    display: inline-block !important;
+    margin-top: 20px;
+    padding: 12px 20px;
+    font-size: 18px;
+    font-weight: 800;
+    color: white;
+    background: #00AF69;
+    text-decoration: none;
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+    transition: 0.25s ease;
+  }
+
+  .adopt-btn:hover {
+    background: #00995D;
+    transform: translateY(-3px);
+  }
+
+  /* ========================= */
+  /*   HOW IT WORKS (ROW)     */
+  /* ========================= */
+
+  .howitworks {
+    max-width: 1100px;
+    margin: 60px auto;
+    text-align: center;
+    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  }
+
+  .howitworks-title {
+    font-size: 32px;
+    font-weight: 800;
+    color: #052b25;
+    margin-bottom: 6px;
+  }
+
+  .howitworks-sub {
+    font-size: 15px;
+    color: #5f6c7b;
+    margin-bottom: 30px;
+  }
+
+  .howitworks-steps {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .howitworks-step {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .howitworks-card {
+    position: relative;
+    width: 100%;
+    max-width: 210px;
+    height: 120px;
+    margin: 0 auto 12px auto;
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 14px 30px rgba(0,0,0,0.06);
+  }
+
+  .howitworks-card-1 { background: #e9fff2; }
+  .howitworks-card-2 { background: #ffe9f1; }
+  .howitworks-card-3 { background: #e9fff7; }
+  .howitworks-card-4 { background: #e9f4ff; }
+
+  .howitworks-icon { font-size: 32px; }
+
+  .howitworks-number {
+    position: absolute;
+    top: -14px;
+    right: 50%;
+    transform: translateX(50%);
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    background: #0fd17f;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.16);
+  }
+
+  .howitworks-step h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: #062b28;
+  }
+
+  .howitworks-step p {
+    font-size: 14px;
+    margin: 0;
+    color: #4a5563;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 900px) {
+    .howitworks-steps { justify-content: center; }
+    .howitworks-step { flex: 0 0 48%; }
+  }
+
+  @media (max-width: 600px) {
+    .howitworks-step { flex: 0 0 100%; }
+  }
+
+  /* =========================== */
+  /*      FIND PETS SECTION      */
+  /* =========================== */
+
+  .findpets-section {
+    width: 100%;
+    padding: 60px 40px;
+    margin-top: 40px;
+    background: #d7f0e4;
+  }
+
+  .findpets-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #0c6b6b, #158b94, #0b5661);
+    border-radius: 16px;
+    border: 4px solid #b8a5ff;
+  }
+
+  .findpets-text {
+    flex: 1.2;
+    padding: 40px 20px;
+  }
+
+  .findpets-text h2 {
+    font-size: 36px;
+    font-weight: 800;
+    color: #f8d361;
+    margin-bottom: 16px;
+  }
+
+  .findpets-text p {
+    font-size: 22px;
+    line-height: 1.6;
+    color: #f8d361;
+  }
+
+  .findpets-image {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .findpets-image img {
+    width: 280px;
+    height: 420px;
+    object-fit: cover;
+    border-radius: 24px;
+    border: 3px solid #000;
+    background: white;
+  }
+
+  @media(max-width: 900px) {
+    .findpets-inner {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .findpets-image img {
+      width: 80%;
+      height: auto;
+      margin-top: 20px;
+    }
+  }
+
+  /* ========================= */
+  /*   PET CARDS SECTION       */
+  /* ========================= */
+
+  .pet-section {
+    width: 100%;
+    background: #416ac8;
+    padding: 50px 40px 70px;
+    margin-top: 40px;
+  }
+
+  .pet-section-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .pet-section-inner h2 {
+    color: #fff;
+    font-size: 28px;
+    margin-bottom: 20px;
+  }
+
+  .pet-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: space-between;
+  }
+
+  .pet-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+    flex: 1;
+    min-width: 180px;
+    max-width: 210px;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .pet-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.18);
+  }
+
+  .pet-card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 6px;
+  }
+
+  .profile-circle {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #416ac8;
+    overflow: hidden;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .profile-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .pet-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid #4caf50;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pet-image-wrapper {
+    margin-top: 10px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pet-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .pet-card-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .btn-small {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 18px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.1s ease;
+  }
+
+  .btn-message {
+    background: #ff7a00;
+    color: #fff;
+  }
+
+  .btn-message:hover {
+    background: #e36d00;
+  }
+
+  .btn-view {
+    background: #ffffff;
+    border: 2px solid #ff7a00;
+    color: #ff7a00;
+  }
+
+  .btn-view:hover {
+    background: #ff7a00;
+    color: #ffffff;
+  }
+
+  .view-more-wrapper {
+    text-align: center;
+    margin-top: 28px;
+  }
+
+  .view-more-btn {
+    padding: 10px 26px;
+    border-radius: 22px;
+    border: 2px solid #4caf50;
+    background: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+
+  .view-more-btn:hover {
+    background: #e8ffe8;
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: 900px) {
+    .pet-section {
+      padding: 40px 24px 60px;
+    }
+    .pet-cards { justify-content: center; }
+  }
+
+  /* ========================== */
+  /*   SERVICES & MANAGEMENT    */
+  /* ========================== */
+
+  .services-section {
+    width: 100%;
+    padding: 0;
+    margin-top: 40px;
+    background: #c9efe6;
+  }
+
+  .services-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 30px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #95d8d0, #68bfb4, #57aa9d);
+  }
+
+  .services-left {
+    flex: 1.4;
+    padding: 20px 10px;
+  }
+
+  .service-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 26px;
+  }
+
+  .service-icon {
+    font-size: 28px;
+    background: #0c5750;
+    color: white;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .service-text h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .service-text p {
+    font-size: 15px;
+    color: #133;
+    line-height: 1.6;
+  }
+
+  .services-image {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .services-image img {
+    width: 100%;
+    max-width: 330px;
+    height: 420px;
+    object-fit: cover;
+    border-radius: 20px;
+    border: 3px solid black;
+  }
+
+  .services-heading {
+    width: 100%;
+    background: #ffd442;
+    padding: 5px 4px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .services-heading h2 {
+    font-size: 42px;
+    font-weight: 800;
+    color: #0b2c3d;
+    line-height: 1.2;
+  }
+
+  .services-heading img {
+    width: 500px;
+  }
+
+  @media(max-width: 900px) {
+    .services-inner {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .service-item { justify-content: center; }
+
+    .services-image img {
+      height: auto;
+      max-width: 80%;
+    }
+
+    .services-heading {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .services-heading img {
+      width: 90px;
+    }
+  }
+
+  /* ========================= */
+  /*   SUCCESS STORIES        */
+  /* ========================= */
+
+  .stories-section {
+    width: 100%;
+    background: #f5f7fa;
+    padding: 60px 40px;
+    margin-top: 40px;
+  }
+
+  .stories-section-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .stories-section-inner h2 {
+    font-size: 30px;
+    font-weight: 800;
+    color: #0b2c3d;
+    margin-bottom: 8px;
+  }
+
+  .stories-section-inner p.subtitle {
+    font-size: 16px;
+    color: #556;
+    margin-bottom: 22px;
+  }
+
+  .stories-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .stories-carousel {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 10px;
+    scrollbar-width: thin;
+  }
+
+  .stories-carousel::-webkit-scrollbar {
+    height: 6px;
+  }
+  .stories-carousel::-webkit-scrollbar-thumb {
+    background: #c3ccd8;
+    border-radius: 10px;
+  }
+
+  .story-card {
+    scroll-snap-align: start;
+    min-width: 280px;
+    max-width: 320px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .story-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .story-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 10px;
+    background:#ddd;
+  }
+
+  .story-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .story-meta h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #122;
+  }
+
+  .story-meta span {
+    font-size: 13px;
+    color: #667;
+  }
+
+  .story-pet-image {
+    margin: 10px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    height: 160px;
+    background: #f3f3f3;
+  }
+
+  .story-pet-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .story-text {
+    font-size: 14px;
+    color: #334;
+    line-height: 1.6;
+  }
+
+  .stories-arrow {
+    border: none;
+    background: #ffffff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+    position: absolute;
+    top: 45%;
+    transform: translateY(-50%);
+    z-index: 2;
+  }
+
+  .stories-arrow.left { left: -10px; }
+  .stories-arrow.right { right: -10px; }
+
+  @media (max-width: 900px) {
+    .stories-section { padding: 40px 24px; }
+    .stories-arrow { display: none; }
+  }
+
+  /* ========================= */
+  /*          FOOTER           */
+  /* ========================= */
+
+  footer {
+    width: 100%;
+    background: #0b2c3d;
+    color: #f5f7fa;
+    margin-top: 60px;
+    padding: 40px 40px 20px;
+  }
+
+  .footer-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    justify-content: space-between;
+  }
+
+  .footer-brand {
+    flex: 1 1 220px;
+  }
+
+  .footer-brand h2 {
+    font-size: 26px;
+    font-weight: 800;
+    color: #ffb347;
+    margin-bottom: 8px;
+  }
+
+  .footer-brand p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #d8e2ec;
+  }
+
+  .footer-links,
+  .footer-contact {
+    flex: 1 1 180px;
+  }
+
+  .footer-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .footer-links ul { list-style: none; }
+
+  .footer-links li { margin-bottom: 6px; }
+
+  .footer-links a {
+    text-decoration: none;
+    font-size: 14px;
+    color: #d8e2ec;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: #ff7a00; }
+
+  .footer-contact p {
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: #d8e2ec;
+  }
+
+  .footer-social {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .footer-social span {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #12384f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .footer-bottom {
+    border-top: 1px solid #24475d;
+    margin-top: 24px;
+    padding-top: 10px;
+    text-align: center;
+    font-size: 13px;
+    color: #a9bdcc;
+  }
+
+  @media (max-width: 900px) {
+    footer { padding: 30px 24px 18px; }
+    .footer-inner { flex-direction: column; }
+  }
+</style>
+
+<!-- HERO SECTION -->
+<section class="hero">
+
+  <div class="hero-text">
+    <h1>Where Love Meets a Home</h1>
+    <p>Helping pets find warmth, care, and families who truly love them. Every adoption brings hope to another life.</p>
+
+    <div class="quote-box">
+      "Every pet deserves a loving home — warmth, patience, and a little adventure."
+      <br><br>
+      <small>— Rescue &amp; Care Team</small>
+    </div>
+
+    <div class="buttons">
+      <a href="#found-pets" class="btn btn-primary">Adopt Now</a>
+      <a href="{{ url_for('main.pets_list') }}" class="btn btn-primary">Rescue a Pet</a>
+      <a href="#services" class="btn btn-outline">Learn More</a>
+    </div>
+  </div>
+
+  <div class="hero-img">
+    <div class="slider">
+      <img src="{{ url_for('static', filename='images/hero1.jpg') }}" alt="Pet image 1">
+      <img src="{{ url_for('static', filename='images/hero2.jpg') }}" alt="Pet image 2">
+      <img src="{{ url_for('static', filename='images/hero3.jpg') }}" alt="Pet image 3">
+    </div>
+  </div>
+
+</section>
+
+<!-- PROBLEM SECTION -->
+<section class="problem-section">
+  <div class="problem-container">
+
+    <div class="problem-left">
+      <h2>Pet Care</h2>
+      <p>Many families want to adopt but struggle to find trusted sources, clear information, and support after bringing a pet home.</p>
+      <img class="problem-cat" src="{{ url_for('static', filename='images/problem-left.jpg') }}" alt="Concerned cat">
+    </div>
+
+    <div class="problem-image">
+      <img src="{{ url_for('static', filename='images/problem-middle.jpg') }}" alt="Shelter pet waiting">
+    </div>
+
+    <div class="problem-right">
+      <h1></h1>
+      <p>Pet lovers need a simple way to discover verified pets, understand their needs, and feel confident that they’re making the right choice for their family.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- WHAT WE DO + FIND A FRIEND -->
+<section class="market-section" id="services">
+  <div class="market-inner">
+
+    <!-- LEFT -->
+    <div class="market-content">
+      <section class="what-we-do">
+        <h2>What We Do</h2>
+        <p>
+          We provide a secure, NGO-moderated platform for reporting lost and found animals
+          across species — from dogs and cats to farm animals and birds.
+          Our verification process reduces fraud and helps reunify animals with their families quickly.
+        </p>
+
+        <div class="feature-box green">
+          <span class="icon">🛡️</span>
+          NGO-verified reports to reduce false claims and improve trust
+        </div>
+
+        <div class="feature-box mint">
+          <span class="icon">🔗</span>
+          Support for all animal types including farm and working animals
+        </div>
+
+        <div class="feature-box pink">
+          <span class="icon">❤️</span>
+          Clear handover protocols to protect both animals and claimants
+        </div>
+
+        <a href="#" class="learn-more-btn">Learn more about NGO verification</a>
+      </section>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="market-content">
+      <h2 class="market-title">Find a Friend for Your Family</h2>
+      <p class="market-subtitle">
+        In our PawCare portal, you can discover pets that match your lifestyle, your home, and your heart.
+      </p>
+
+      <div class="market-box">
+        <h3>How PawCare Helps</h3>
+        <p>
+          • Browse real pet profiles shared by verified owners and shelters.<br>
+          • Learn about each pet’s personality, habits, and special needs.<br>
+          • Connect safely with pet parents through messaging before you adopt.<br>
+          • Give a second chance to pets waiting for a loving, permanent home.
+        </p>
+      </div>
+
+      <a href="{{ url_for('main.pets_list') }}" class="adopt-btn">🐾 Adopt a Pet</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="howitworks">
+  <h2 class="howitworks-title">How It Works</h2>
+  <p class="howitworks-sub">
+    A step-by-step map that explains how PawCare helps you find pets, report animals, and complete safe NGO-verified matches.
+  </p>
+
+  <div class="howitworks-steps">
+
+    <div class="howitworks-step">
+      <div class="howitworks-card howitworks-card-1">
+        <div class="howitworks-icon">🐾</div>
+        <div class="howitworks-number">1</div>
+      </div>
+      <h3>1. Create Your Account</h3>
+      <p>Set up your profile and start accessing all portal features instantly.</p>
+    </div>
+
+    <div class="howitworks-step">
+      <div class="howitworks-card howitworks-card-2">
+        <div class="howitworks-icon">📤</div>
+        <div class="howitworks-number">2</div>
+      </div>
+      <h3>2. Add Your Pets</h3>
+      <p>Create verified profiles with photos, age, and identification details.</p>
+    </div>
+
+    <div class="howitworks-step">
+      <div class="howitworks-card howitworks-card-3">
+        <div class="howitworks-icon">🔍</div>
+        <div class="howitworks-number">3</div>
+      </div>
+      <h3>3. Search or Report</h3>
+      <p>Find pets, adopt, or report lost and found animals with NGO verification.</p>
+    </div>
+
+    <div class="howitworks-step">
+      <div class="howitworks-card howitworks-card-4">
+        <div class="howitworks-icon">❤️</div>
+        <div class="howitworks-number">4</div>
+      </div>
+      <h3>4. Adopt or Reunite</h3>
+      <p>Connect safely and help a pet find a home or return to its family.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ADOPTION AWARENESS -->
+<section class="findpets-section">
+  <div class="findpets-inner">
+
+    <div class="findpets-text">
+      <h2>Awareness on Reporting Pets</h2>
+      <p>Where pets smile and owners feel confident.</p><br>
+      <p>
+        Our platform empowers communities to report lost and found pets with NGO verification,
+        ensuring every animal is treated with care and respect.
+        By fostering trust and transparency, we help reunite pets with their families
+        and provide a safe haven for those in need.
+
+    </div>
+
+    <div class="findpets-image">
+      <!-- update filename to whatever you actually use in /static/images/ -->
+      <img src="{{ url_for('static', filename='images/adoption-awareness.png') }}" alt="Adoption awareness">
+    </div>
+
+  </div>
+</section>
+
+<!-- PET CARDS SECTION -->
+<section class="pet-section" id="found-pets">
+  <div class="pet-section-inner">
+    <h2>Found a Pet</h2>
+
+    <div class="pet-cards">
+      <div class="pet-card">
+        <div class="pet-card-header">
+          <div class="profile-circle">
+            <img src="{{ url_for('static', filename='images/profile1.jpg') }}" alt="Owner profile">
+          </div>
+          <div class="pet-card-title">Buddy • 2 yrs</div>
+        </div>
+        <div class="pet-image-wrapper">
+          <img src="{{ url_for('static', filename='images/pet1.jpg') }}" alt="Buddy the dog">
+        </div>
+        <div class="pet-card-buttons">
+          <button class="btn-small btn-message">Message</button>
+          <button class="btn-small btn-view">View Pet Profile</button>
+        </div>
+      </div>
+
+      <div class="pet-card">
+        <div class="pet-card-header">
+          <div class="profile-circle">
+            <img src="{{ url_for('static', filename='images/profile2.jpg') }}" alt="Owner profile">
+          </div>
+          <div class="pet-card-title">Misty • 1 yr</div>
+        </div>
+        <div class="pet-image-wrapper">
+          <img src="{{ url_for('static', filename='images/pet2.jpg') }}" alt="Misty the cat">
+        </div>
+        <div class="pet-card-buttons">
+          <button class="btn-small btn-message">Message</button>
+          <button class="btn-small btn-view">View Pet Profile</button>
+        </div>
+      </div>
+
+      <div class="pet-card">
+        <div class="pet-card-header">
+          <div class="profile-circle">
+            <img src="{{ url_for('static', filename='images/profile3.jpg') }}" alt="Owner profile">
+          </div>
+          <div class="pet-card-title">Luna • 3 yrs</div>
+        </div>
+        <div class="pet-image-wrapper">
+          <img src="{{ url_for('static', filename='images/pet3.jpg') }}" alt="Luna the dog">
+        </div>
+        <div class="pet-card-buttons">
+          <button class="btn-small btn-message">Message</button>
+          <button class="btn-small btn-view">View Pet Profile</button>
+        </div>
+      </div>
+
+      <div class="pet-card">
+        <div class="pet-card-header">
+          <div class="profile-circle">
+            <img src="{{ url_for('static', filename='images/profile4.jpg') }}" alt="Owner profile">
+          </div>
+          <div class="pet-card-title">Coco • 4 yrs</div>
+        </div>
+        <div class="pet-image-wrapper">
+          <img src="{{ url_for('static', filename='images/pet4.jpg') }}" alt="Coco the cat">
+        </div>
+        <div class="pet-card-buttons">
+          <button class="btn-small btn-message">Message</button>
+          <button class="btn-small btn-view">View Pet Profile</button>
+        </div>
+      </div>
+
+      <div class="pet-card">
+        <div class="pet-card-header">
+          <div class="profile-circle">
+            <img src="{{ url_for('static', filename='images/profile5.jpg') }}" alt="Owner profile">
+          </div>
+          <div class="pet-card-title">Max • 6 mos</div>
+        </div>
+        <div class="pet-image-wrapper">
+          <img src="{{ url_for('static', filename='images/pet5.jpg') }}" alt="Max the puppy">
+        </div>
+        <div class="pet-card-buttons">
+          <button class="btn-small btn-message">Message</button>
+          <button class="btn-small btn-view">View Pet Profile</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="view-more-wrapper">
+      <button class="view-more-btn">View more</button>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES AND MANAGEMENT SECTION -->
+<section class="services-section" id="services-section">
+  <div class="services-inner">
+
+    <div class="services-left">
+      <div class="service-item">
+        <div class="service-icon">🐶</div>
+        <div class="service-text">
+          <h3>Pet Essentials</h3>
+          <p>Healthy pet food, eco-friendly toys, and stylish accessories.</p>
+        </div>
+      </div>
+
+      <div class="service-item">
+        <div class="service-icon">🧼</div>
+        <div class="service-text">
+          <h3>Pet Lifestyle</h3>
+          <p>Comprehensive grooming, daycare services, and tailored training programs.</p>
+        </div>
+      </div>
+
+      <div class="service-item">
+        <div class="service-icon">📱</div>
+        <div class="service-text">
+          <h3>Digital Solutions</h3>
+          <p>User-friendly mobile app for seamless bookings and smart pet care recommendations.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="services-image">
+      <img src="{{ url_for('static', filename='images/services-pet.jpg') }}" alt="Pet in service section">
+    </div>
+  </div>
+
+  <div class="services-heading" id="services">
+    <h2>Services and<br>Management</h2>
+    <img src="{{ url_for('static', filename='images/house-icon.png') }}" alt="House icon">
+  </div>
+</section>
+
+<!-- SUCCESS STORIES SECTION -->
+<section class="stories-section" id="stories">
+  <div class="stories-section-inner">
+    <h2>Successful Adoption Stories</h2>
+    <p class="subtitle">
+      Families who found their perfect companion through our portal.
+    </p>
+
+    <div class="stories-wrapper">
+      <button class="stories-arrow left" onclick="scrollStories(-1)">&#10094;</button>
+
+      <div class="stories-carousel" id="storiesCarousel">
+        <article class="story-card">
+          <div class="story-header">
+            <div class="story-avatar">
+              <img src="{{ url_for('static', filename='images/adopter1.jpg') }}" alt="Adopter profile">
+            </div>
+            <div class="story-meta">
+              <h3>Ananya &amp; Bruno</h3>
+              <span>Chennai, India</span>
+            </div>
+          </div>
+          <div class="story-pet-image">
+            <img src="{{ url_for('static', filename='images/story-pet1.jpg') }}" alt="Bruno the dog">
+          </div>
+          <p class="story-text">
+            “We found Bruno on PawCare. He was shy at first, but now he runs the
+            house with his goofy zoomies. The process was simple and transparent.”
+          </p>
+        </article>
+
+        <article class="story-card">
+          <div class="story-header">
+            <div class="story-avatar">
+              <img src="{{ url_for('static', filename='images/adopter2.jpg') }}" alt="Adopter profile">
+            </div>
+            <div class="story-meta">
+              <h3>Rahul &amp; Misty</h3>
+              <span>Bangalore, India</span>
+            </div>
+          </div>
+          <div class="story-pet-image">
+            <img src="{{ url_for('static', filename='images/story-pet2.jpg') }}" alt="Misty the cat">
+          </div>
+          <p class="story-text">
+            “PawCare helped us match with a calm indoor cat. Misty spends her days
+            napping on laptops and stealing our hearts.”
+          </p>
+        </article>
+
+        <article class="story-card">
+          <div class="story-header">
+            <div class="story-avatar">
+              <img src="{{ url_for('static', filename='images/adopter3.jpg') }}" alt="Adopter profile">
+            </div>
+            <div class="story-meta">
+              <h3>The Kumar Family &amp; Max</h3>
+              <span>Hyderabad, India</span>
+            </div>
+          </div>
+          <div class="story-pet-image">
+            <img src="{{ url_for('static', filename='images/story-pet3.jpg') }}" alt="Max the puppy">
+          </div>
+          <p class="story-text">
+            “With school and work, we needed an active but kid-friendly dog.
+            Max fits perfectly into our routine thanks to the detailed profiles.”
+          </p>
+        </article>
+      </div>
+
+      <button class="stories-arrow right" onclick="scrollStories(1)">&#10095;</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <h2>PawCare</h2>
+      <p>
+        PawCare connects loving families with pets who need a second chance.
+        Discover verified pet profiles, talk to owners and shelters, and adopt with confidence.
+      </p>
+    </div>
+
+    <div class="footer-links">
+      <h3 class="footer-title">Quick Links</h3>
+      <ul>
+        <li><a href="#top">Home</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#stories">Success Stories</a></li>
+        <li><a href="#team">Our Team</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-contact">
+      <h3 class="footer-title">Contact</h3>
+      <p>Email: support@pawcare.com</p>
+      <p>Phone: +91-98765-43210</p>
+      <p>City: Chennai, India</p>
+
+      <div class="footer-social">
+        <span>🐾</span>
+        <span>💬</span>
+        <span>📸</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    © 2025 PawCare. All rights reserved.
+  </div>
+</footer>
+
+<script>
+  function scrollStories(direction) {
+    const container = document.getElementById('storiesCarousel');
+    if (!container) return;
+    const card = container.querySelector('.story-card');
+    const scrollAmount = card ? (card.offsetWidth + 20) : 320;
+    container.scrollBy({
+      left: direction * scrollAmount,
+      behavior: 'smooth'
+    });
+  }
+</script>
+
+{% endblock %}

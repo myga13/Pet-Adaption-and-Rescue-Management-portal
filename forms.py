@@ -1,68 +1,126 @@
+# forms.py
 from flask_wtf import FlaskForm
+from wtforms import (
+    StringField,
+    TextAreaField,
+    PasswordField,
+    IntegerField,
+    SelectField,
+    BooleanField,
+    SubmitField,
+)
+from wtforms.validators import (
+    DataRequired,
+    Email,
+    Length,
+    Optional,
+    EqualTo,
+    NumberRange,
+)
 from flask_wtf.file import FileField, FileAllowed
 
-from wtforms import (
-    StringField, TextAreaField, FileField, IntegerField,
-    PasswordField, SubmitField, SelectField
-)
+from models import GenderEnum
 
-from wtforms.validators import (
-    DataRequired, Optional, Length, NumberRange
-)
+ALLOWED_IMAGE_EXT = ["jpg", "jpeg", "png", "gif"]
 
-# Allowed image types
-ALLOWED_IMAGES = {"jpg", "jpeg", "png", "gif"}
-from wtforms import BooleanField
-from wtforms.validators import InputRequired
 
-class LoginForm(FlaskForm):
-    user_name = StringField("Username", validators=[DataRequired(), Length(max=100)])
-    password = PasswordField("Password", validators=[DataRequired()])
-    remember = BooleanField("Remember me")   # optional — we will implement simple session-based "remember"
-    submit = SubmitField("Login")
-
-# -------------------------------
-# User Registration Form
-# -------------------------------
 class RegisterForm(FlaskForm):
-    user_name = StringField("Name", validators=[DataRequired(), Length(max=100)])
-    user_img = FileField("Photo", validators=[
-        Optional(),
-        FileAllowed(list(ALLOWED_IMAGES), "Only images allowed (jpg, png, gif).")
-    ])
-    user_bio = TextAreaField("Bio", validators=[Optional()])
-    password = PasswordField("Password", validators=[DataRequired()])
-    phone_number = StringField("Phone", validators=[Optional(), Length(max=20)])
-    city = StringField("City", validators=[Optional()])
-    state = StringField("State", validators=[Optional()])
-    country = StringField("Country", validators=[Optional()])
-    address = StringField("Address", validators=[Optional()])
-   
-    
+    user_name = StringField(
+        "Username",
+        validators=[DataRequired(), Length(min=2, max=100)],
+    )
+    user_bio = TextAreaField(
+        "Bio",
+        validators=[Optional(), Length(max=500)],
+    )
+    phone_number = StringField(
+        "Phone Number",
+        validators=[Optional(), Length(max=20)],
+    )
+    city = StringField("City", validators=[Optional(), Length(max=100)])
+    state = StringField("State", validators=[Optional(), Length(max=100)])
+    country = StringField("Country", validators=[Optional(), Length(max=100)])
+    address = StringField("Address", validators=[Optional(), Length(max=255)])
+
+    email = StringField(
+        "Email",
+        validators=[DataRequired(), Email(), Length(max=150)],
+    )
+
+    password = PasswordField(
+        "Password",
+        validators=[DataRequired(), Length(min=6)],
+    )
+    confirm_password = PasswordField(
+        "Confirm Password",
+        validators=[
+            DataRequired(),
+            EqualTo("password", message="Passwords must match"),
+        ],
+    )
+
+    # ✅ This matches register.html and edit_user.html
+    user_img = FileField(
+        "Profile Image",
+        validators=[Optional(), FileAllowed(ALLOWED_IMAGE_EXT)],
+    )
+
     submit = SubmitField("Register")
 
 
-# -------------------------------
-# Pet Form
-# -------------------------------
+class LoginForm(FlaskForm):
+    # EMAIL-BASED LOGIN
+    email = StringField(
+        "Email",
+        validators=[DataRequired(), Email(), Length(max=150)],
+    )
+    password = PasswordField(
+        "Password",
+        validators=[DataRequired()],
+    )
+    remember = BooleanField("Remember me")
+    submit = SubmitField("Login")
+
+
 class PetForm(FlaskForm):
-    pet_name = StringField("Pet Name", validators=[DataRequired(), Length(max=100)])
-    pet_owner_id = IntegerField("Owner ID", validators=[DataRequired(), NumberRange(min=1)])
+    pet_name = StringField(
+        "Pet Name",
+        validators=[DataRequired(), Length(min=1, max=100)],
+    )
+    pet_owner_id = IntegerField(
+        "Owner ID",
+        validators=[DataRequired(), NumberRange(min=1)],
+    )
 
-    pet_img = FileField("Pet Image", validators=[
-        Optional(),
-        FileAllowed(list(ALLOWED_IMAGES), "Only images allowed (jpg, png, gif).")
-    ])
-
-    pet_age = IntegerField("Age", validators=[Optional(), NumberRange(min=0)])
-    pet_licence_id = StringField("Licence ID", validators=[Optional(), Length(max=100)])
-    pet_type = StringField("Type", validators=[Optional(), Length(max=50)])
-    pet_colour = StringField("Colour", validators=[Optional(), Length(max=50)])
+    pet_age = IntegerField(
+        "Pet Age",
+        validators=[Optional(), NumberRange(min=0)],
+    )
+    pet_licence_id = StringField(
+        "Licence ID",
+        validators=[Optional(), Length(max=100)],
+    )
+    pet_type = StringField(
+        "Pet Type",
+        validators=[Optional(), Length(max=50)],
+    )
+    pet_colour = StringField(
+        "Colour",
+        validators=[Optional(), Length(max=50)],
+    )
 
     pet_male_female = SelectField(
         "Gender",
-        choices=[("male", "Male"), ("female", "Female")],
-        validators=[DataRequired()]
+        choices=[
+            (GenderEnum.male.value, "Male"),
+            (GenderEnum.female.value, "Female"),
+        ],
+        validators=[DataRequired()],
     )
 
-    submit = SubmitField("Save Pet")
+    pet_img = FileField(
+        "Pet Image",
+        validators=[Optional(), FileAllowed(ALLOWED_IMAGE_EXT)],
+    )
+
+    submit = SubmitField("Save")
