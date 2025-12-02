@@ -1,0 +1,472 @@
+{# templates/user_lost_pets.html #}
+{% extends "base.html" %}
+
+{% block content %}
+
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <style>
+    :root{
+      --bg:#f6f7fb; --card:#fff; --muted:#64748b; --accent:#2563eb;
+    }
+    body{
+      font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+      margin:0;
+      background:var(--bg);
+      color:#071029;
+    }
+    .wrap{
+      max-width:1100px;
+      margin:28px auto;
+      padding:12px;
+    }
+    h1{margin:0 0 8px 0;font-size:22px}
+    .muted{color:var(--muted);font-weight:500;font-size:13px}
+
+    /* cards grid */
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+      gap:16px;
+      margin-top:16px;
+    }
+    .card{
+      background:var(--card);
+      border-radius:14px;
+      box-shadow:0 10px 32px rgba(15,23,42,0.10);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+
+    /* POST main image (single full image) */
+    .card-media{
+      height:220px;
+      background:#f8fafc;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+    }
+    .card-media img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .card-body{
+      padding:12px 14px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      flex:1;
+    }
+    .pet-name{
+      font-weight:900;
+      font-size:16px;
+      color:#0b1220;
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+    .badge{
+      font-size:11px;
+      padding:4px 8px;
+      border-radius:999px;
+      background:#dcfce7;
+      color:#166534;
+      font-weight:700;
+    }
+    .meta-line{
+      font-size:13px;
+      color:#334155;
+    }
+    .meta-line span.label{
+      font-weight:700;
+    }
+
+    .card-footer{
+      margin-top:auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .btn{
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,0.3);
+      background:#fff;
+      cursor:pointer;
+      font-weight:700;
+      font-size:13px;
+    }
+    .btn-primary{
+      background:linear-gradient(90deg,#bfdbfe,#93c5fd);
+      border-color:#bfdbfe;
+      color:#0b3a8a;
+    }
+
+    /* MODAL + CAROUSEL */
+    .modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:2200;
+    }
+    .modal.show{display:flex;}
+    .backdrop{
+      position:absolute;
+      inset:0;
+      background:rgba(15,23,42,0.55);
+    }
+    .panel{
+      position:relative;
+      z-index:2;
+      width:95%;
+      max-width:960px;
+      max-height:88vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:16px;
+      padding:18px;
+      box-shadow:0 20px 60px rgba(15,23,42,0.45);
+      display:grid;
+      grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);
+      gap:18px;
+    }
+    @media(max-width:900px){
+      .panel{grid-template-columns:1fr;padding:12px;}
+    }
+
+    .close-btn{
+      position:absolute;
+      top:10px;
+      right:10px;
+      border:none;
+      border-radius:999px;
+      background:#0f172a;
+      color:#fff;
+      padding:6px 10px;
+      font-size:13px;
+      cursor:pointer;
+      z-index:5;
+    }
+
+    .carousel{
+      position:relative;
+      border-radius:12px;
+      background:#f8fafc;
+      min-height:320px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+    }
+    .carousel img{
+      max-width:100%;
+      max-height:72vh;
+      object-fit:contain;
+      display:block;
+      margin:0 auto;
+    }
+    .arrow{
+      position:absolute;
+      top:50%;
+      transform:translateY(-50%);
+      width:40px;
+      height:40px;
+      border-radius:999px;
+      background:rgba(15,23,42,0.15);
+      color:#fff;
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      font-weight:800;
+      user-select:none;
+    }
+    .arrow.left{left:10px;}
+    .arrow.right{right:10px;}
+
+    .thumbs{
+      display:flex;
+      gap:8px;
+      margin-top:10px;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+    .thumb{
+      width:70px;
+      height:70px;
+      border-radius:10px;
+      overflow:hidden;
+      border:2px solid transparent;
+      cursor:pointer;
+    }
+    .thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .thumb.active{
+      border-color:var(--accent);
+      transform:scale(1.03);
+    }
+
+    .meta-card{
+      padding:10px 12px;
+      border-radius:12px;
+      background:#f9fafb;
+      border:1px solid #e5e7eb;
+      font-size:13px;
+      color:#0f172a;
+    }
+    .meta-row{
+      margin-bottom:8px;
+    }
+    .meta-row b{
+      display:block;
+      font-size:12px;
+      color:#6b7280;
+      margin-bottom:2px;
+    }
+    .meta-row .val{
+      font-weight:700;
+      color:#111827;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header style="margin-bottom:10px;">
+      <h1>Verified Lost Pet Reports</h1>
+      <p class="muted">
+        These lost pet reports have been checked and accepted by PawCare admins.
+        Click <strong>View details</strong> to see all photos and more information.
+      </p>
+    </header>
+
+    <section class="cards" aria-live="polite">
+      {% for r in lost_reports %}
+      <article class="card" aria-labelledby="lost-{{ r.id }}">
+        <!-- MAIN POST IMAGE (single big one) -->
+        <div class="card-media">
+          {% if r.pet_img_full %}
+            <img src="{{ url_for('main.media', filename=r.pet_img_full) }}" alt="Photo of {{ r.pet_name or 'lost pet' }}">
+          {% elif r.pet_img_face %}
+            <img src="{{ url_for('main.media', filename=r.pet_img_face) }}" alt="Photo of {{ r.pet_name or 'lost pet' }}">
+          {% elif r.pet_img_marks %}
+            <img src="{{ url_for('main.media', filename=r.pet_img_marks) }}" alt="Photo of {{ r.pet_name or 'lost pet' }}">
+          {% else %}
+            <div style="padding:18px;color:var(--muted);font-weight:800">No image</div>
+          {% endif %}
+        </div>
+
+        <div class="card-body">
+          <div class="pet-name" id="lost-{{ r.id }}">
+            {{ r.pet_name or 'Lost pet' }}
+            <span class="badge">Verified by PawCare</span>
+          </div>
+
+          <div class="meta-line">
+            <span class="label">Last seen:</span>
+            {{ r.last_seen_location or 'Unknown location' }}
+          </div>
+
+          <div class="meta-line">
+            <span class="label">Date lost:</span>
+            {% if r.date_lost %}
+              {{ r.date_lost.strftime('%d %b %Y') }}
+            {% else %}
+              Not specified
+            {% endif %}
+          </div>
+
+          <div class="meta-line">
+            <span class="label">Owner:</span>
+            {{ r.owner_name or '-' }}
+          </div>
+
+          <div class="card-footer">
+            <button
+              class="btn btn-primary"
+              data-role="open-details"
+              data-pet-name="{{ r.pet_name or 'Lost pet' }}"
+              data-last-seen="{{ r.last_seen_location or '' }}"
+              data-date-lost="{% if r.date_lost %}{{ r.date_lost.strftime('%d %b %Y') }}{% else %}{% endif %}"
+              data-owner-name="{{ r.owner_name or '' }}"
+              data-owner-phone="{{ r.owner_phone or '' }}"
+              data-owner-email="{{ r.owner_email or '' }}"
+              data-notes="{{ (r.description or r.owner_notes or '')|e }}"
+              data-face="{{ url_for('main.media', filename=r.pet_img_face) if r.pet_img_face else '' }}"
+              data-full="{{ url_for('main.media', filename=r.pet_img_full) if r.pet_img_full else '' }}"
+              data-marks="{{ url_for('main.media', filename=r.pet_img_marks) if r.pet_img_marks else '' }}"
+            >
+              View details
+            </button>
+          </div>
+        </div>
+      </article>
+      {% else %}
+      <div style="grid-column:1/-1;padding:30px;text-align:center;color:var(--muted);font-weight:700;">
+        No verified lost pet reports yet.
+      </div>
+      {% endfor %}
+    </section>
+  </div>
+
+  <!-- DETAILS MODAL -->
+  <div class="modal" id="detailsModal" aria-modal="true" aria-hidden="true">
+    <div class="backdrop" id="modalBackdrop"></div>
+    <div class="panel" id="modalPanel" role="document">
+      <button class="close-btn" id="modalClose">Close</button>
+
+      <!-- LEFT: 3-image carousel -->
+      <div>
+        <div class="carousel">
+          <div class="arrow left" id="prevArrow">‹</div>
+          <div class="arrow right" id="nextArrow">›</div>
+          <div id="carouselImage">
+            <!-- injected -->
+          </div>
+        </div>
+        <div class="thumbs" id="thumbs"></div>
+      </div>
+
+      <!-- RIGHT: text meta -->
+      <aside class="meta-card">
+        <div class="meta-row">
+          <b>Pet name</b>
+          <div class="val" id="metaPetName">—</div>
+        </div>
+        <div class="meta-row">
+          <b>Last seen</b>
+          <div class="val" id="metaLastSeen">—</div>
+        </div>
+        <div class="meta-row">
+          <b>Date lost</b>
+          <div class="val" id="metaDateLost">—</div>
+        </div>
+        <div class="meta-row">
+          <b>Owner</b>
+          <div class="val" id="metaOwnerName">—</div>
+          <div id="metaOwnerPhone" class="muted"></div>
+          <div id="metaOwnerEmail" class="muted"></div>
+        </div>
+        <div class="meta-row">
+          <b>Notes / description</b>
+          <div id="metaNotes" class="muted">—</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const modal = document.getElementById('detailsModal');
+  const backdrop = document.getElementById('modalBackdrop');
+  const closeBtn = document.getElementById('modalClose');
+  const imgBox = document.getElementById('carouselImage');
+  const thumbs = document.getElementById('thumbs');
+  const prev = document.getElementById('prevArrow');
+  const next = document.getElementById('nextArrow');
+
+  const metaPetName = document.getElementById('metaPetName');
+  const metaLastSeen = document.getElementById('metaLastSeen');
+  const metaDateLost = document.getElementById('metaDateLost');
+  const metaOwnerName = document.getElementById('metaOwnerName');
+  const metaOwnerPhone = document.getElementById('metaOwnerPhone');
+  const metaOwnerEmail = document.getElementById('metaOwnerEmail');
+  const metaNotes = document.getElementById('metaNotes');
+
+  let images = [];
+  let index = 0;
+
+  function renderCarousel(){
+    if (!images.length){
+      imgBox.innerHTML = '<div style="padding:20px;color:#64748b;font-weight:700;">No images available</div>';
+      thumbs.innerHTML = '';
+      return;
+    }
+    imgBox.innerHTML = '<img src="'+images[index]+'" alt="Pet image">';
+    thumbs.innerHTML = '';
+    images.forEach((src, i) => {
+      const d = document.createElement('div');
+      d.className = 'thumb' + (i === index ? ' active' : '');
+      d.innerHTML = '<img src="'+src+'" alt="Thumb '+(i+1)+'">';
+      d.addEventListener('click', () => { index = i; renderCarousel(); });
+      thumbs.appendChild(d);
+    });
+  }
+
+  function openModalFromButton(btn){
+    const petName = btn.dataset.petName || 'Lost pet';
+    const lastSeen = btn.dataset.lastSeen || '—';
+    const dateLost = btn.dataset.dateLost || '—';
+    const ownerName = btn.dataset.ownerName || '—';
+    const ownerPhone = btn.dataset.ownerPhone || '';
+    const ownerEmail = btn.dataset.ownerEmail || '';
+    const notes = btn.dataset.notes || '—';
+
+    // up to 3 images: face, full, marks
+    images = [btn.dataset.face, btn.dataset.full, btn.dataset.marks].filter(u => u && u.length);
+    index = 0;
+    renderCarousel();
+
+    metaPetName.textContent = petName;
+    metaLastSeen.textContent = lastSeen;
+    metaDateLost.textContent = dateLost || '—';
+    metaOwnerName.textContent = ownerName;
+    metaOwnerPhone.textContent = ownerPhone ? ('Phone: ' + ownerPhone) : '';
+    metaOwnerEmail.textContent = ownerEmail ? ('Email: ' + ownerEmail) : '';
+    metaNotes.textContent = notes;
+
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden','false');
+  }
+
+  function closeModal(){
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden','true');
+    imgBox.innerHTML = '';
+    thumbs.innerHTML = '';
+    images = [];
+    index = 0;
+  }
+
+  // open when clicking "View details"
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('[data-role="open-details"]');
+    if (!btn) return;
+    e.preventDefault();
+    openModalFromButton(btn);
+  });
+
+  // prev/next
+  prev.addEventListener('click', () => {
+    if (!images.length) return;
+    index = (index - 1 + images.length) % images.length;
+    renderCarousel();
+  });
+  next.addEventListener('click', () => {
+    if (!images.length) return;
+    index = (index + 1) % images.length;
+    renderCarousel();
+  });
+
+  // close interactions
+  closeBtn.addEventListener('click', closeModal);
+  backdrop.addEventListener('click', closeModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('show')) {
+      closeModal();
+    }
+  });
+})();
+</script>
+
+{% endblock content %}

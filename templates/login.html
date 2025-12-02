@@ -115,7 +115,7 @@
 <div class="page-wrap">
   <div class="split" role="main" aria-labelledby="login-title">
     <aside class="welcome" aria-labelledby="welcome-title">
-      <h2 id="welcome-title">Welcome to Pet Rescue</h2>
+      <h2 id="welcome-title">Welcome to PawCare</h2>
       <p class="lead">Find friends, save lives — adopt, foster, or volunteer.</p>
 
       <div class="quote-box" aria-live="polite" aria-atomic="true">
@@ -134,7 +134,7 @@
 
     <main class="login-card" role="main" aria-labelledby="login-title">
       <div class="brand-row" aria-hidden="true">
-        <div class="brand-logo" aria-hidden="true">PA</div>
+        <div class="brand-logo" aria-hidden="true">PC</div>
         <div style="text-align:center">
           <h1 id="login-title" class="title">Welcome back</h1>
           <div class="subtitle">Sign in to continue</div>
@@ -170,6 +170,10 @@
         <div id="form-help" class="text-muted">
           If you don't have an account
           <a href="{{ url_for('main.register') }}">Register</a>
+        </div>
+        <div id="form-help" class="text-muted">
+          If you are an admin Login here 
+          <a href="{{ url_for('main.admin_login') }}">Admin Login</a>
         </div>
       </form>
     </main>

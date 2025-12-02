@@ -193,7 +193,8 @@
 
       <div class="col-12" style="display:flex; gap:10px; align-items:center; margin-top:6px;">
         <button type="submit" class="btn-primary">{{ form.submit.label.text }}</button>
-        <a href="{{ url_for('main.pets_list') }}" class="btn-secondary" role="button">Cancel</a>
+        <a href="javascript:history.back()" class="btn-secondary" role="button">Cancel</a>
+
       </div>
     </div>
   </form>

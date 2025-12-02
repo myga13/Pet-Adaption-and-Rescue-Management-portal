@@ -6,7 +6,7 @@
 
   <style>
     /* -------------------------
-         Modern Banner Styling + Profile Popover
+         Modern Banner Styling + Profile Popover + Notifications
        -------------------------*/
     :root{
       --banner-h: 75px;
@@ -18,7 +18,12 @@
       --radius: 12px;
     }
 
-    body { margin:0; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+    body {
+      margin:0;
+      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
 
     .banner {
       width: 98%;
@@ -34,15 +39,112 @@
     }
 
     .brand { font-size: 1.45rem; font-weight:700; display:flex; align-items:center; gap:12px; }
-    .brand .logo { width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#6ea8ff,#ffd67a); font-weight:800; color:#042033; box-shadow:0 6px 20px rgba(0,0,0,0.12) }
+    .brand .logo {
+      width:44px;height:44px;border-radius:10px;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg,#6ea8ff,#ffd67a);
+      font-weight:800; color:#042033;
+      box-shadow:0 6px 20px rgba(0,0,0,0.12)
+    }
 
     .nav-links { display:flex; gap:20px; align-items:center; }
-    .nav-links a { color:white; text-decoration:none; font-weight:600; opacity:.95; transition:opacity .18s ease; }
+    .nav-links a {
+      color:white; text-decoration:none;
+      font-weight:600; opacity:.95;
+      transition:opacity .18s ease;
+    }
     .nav-links a:hover{ opacity:.85; }
 
-    /* profile area */
-    .profile-area { display:flex; align-items:center; gap:0px; position:relative; }
+    /* profile + notifications area */
+    .profile-area {
+      display:flex; align-items:center; gap:10px; position:relative;
+    }
 
+    /* ---------- Notification bell ---------- */
+    .notif-btn{
+      position:relative;
+      display:inline-flex; align-items:center; justify-content:center;
+      width:40px; height:40px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.18);
+      background:rgba(0,0,0,0.10);
+      cursor:pointer;
+      padding:0;
+    }
+    .notif-btn span{
+      display:inline-flex; align-items:center; justify-content:center;
+    }
+    .notif-icon{
+      font-size:1.1rem;
+    }
+    .notif-badge{
+      position:absolute;
+      top:-4px; right:-2px;
+      min-width:18px; height:18px;
+      padding:0 4px;
+      border-radius:999px;
+      background:#ef4444;
+      color:#fff;
+      font-size:0.7rem;
+      font-weight:800;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 0 0 2px rgba(0,0,0,0.15);
+    }
+
+    .notif-popover{
+      position:absolute;
+      right:64px;
+      top: calc(var(--banner-h) + 12px);
+      width:340px; max-width:calc(100vw - 40px);
+      background:white; color:#042033;
+      border-radius:12px;
+      box-shadow:0 20px 60px rgba(0,0,0,0.28);
+      border:1px solid rgba(2,6,23,0.06);
+      padding:14px;
+      z-index:1200;
+      display:none;
+      transform-origin:top right;
+      transition: transform .18s cubic-bezier(.2,.9,.2,1), opacity .18s ease;
+    }
+    .notif-popover.show{ display:block; opacity:1; transform: translateY(0); }
+    .notif-popover.hideAnim{ opacity:0; transform: translateY(-6px); }
+
+    .notif-popover-header{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:8px;
+    }
+    .notif-title{ font-weight:800; font-size:1rem; }
+    .notif-count-label{ font-size:0.82rem; color:#64748b; }
+
+    .notif-list{
+      list-style:none; margin:0; padding:0; max-height:220px; overflow:auto;
+    }
+    .notif-item{
+      padding:8px 6px;
+      border-radius:8px;
+      border:1px solid rgba(148,163,184,0.25);
+      margin-bottom:6px;
+      font-size:0.9rem;
+    }
+    .notif-item strong{ color:#0f172a; }
+    .notif-empty{
+      font-size:0.9rem;
+      color:#64748b;
+    }
+    .notif-actions{
+      display:flex; justify-content:flex-end; margin-top:8px; gap:6px;
+    }
+    .notif-link{
+      font-size:0.85rem;
+      text-decoration:none;
+      padding:6px 10px;
+      border-radius:6px;
+      border:1px solid rgba(148,163,184,0.6);
+      color:#0f172a;
+      background:#f9fafb;
+    }
+
+    /* profile button */
     .profile-btn{
       display:inline-flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px; background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.08); color:white; cursor:pointer; font-weight:700; user-select:none;
@@ -55,7 +157,7 @@
     }
     .profile-name{ font-size:0.98rem; opacity: .98; white-space:nowrap; }
 
-    /* popover/modal */
+    /* profile popover/modal */
     .profile-popover {
       position:absolute; right:0; top: calc(var(--banner-h) + 12px);
       width:320px; max-width:calc(100vw - 40px);
@@ -72,28 +174,49 @@
     .popover-body{ font-size:0.95rem; color:#334155; }
     .meta { color:#64748b; font-weight:700; font-size:0.9rem; margin-top:6px }
 
-    .popover-actions{ display:flex; gap:8px; margin-top:12px; }
-    .btn-pop { flex:1; padding:10px 12px; font-weight:800; text-decoration:none; border-radius:8px; text-align:center; }
-    .btn-edit { background: linear-gradient(90deg,#7bb4ff,#6f8fd6); color:#042033; border:none; }
-    .btn-logout { background:transparent; border:1px solid rgba(2,6,23,0.06); color:#334155; }
+    .popover-actions{
+  display:flex;
+  flex-direction:column;   /* stack downwards */
+  gap:8px;
+  margin-top:12px;
+}
 
-    /* small arrow */
+.btn-pop{
+  width:90%;             /* full width */
+  padding:10px 12px;
+  font-weight:800;
+  text-decoration:none;
+  border-radius:8px;
+  text-align:left;
+  display:block;          /* make sure it behaves like a block/button */
+}
+
+.btn-edit{
+  background: linear-gradient(90deg,#7bb4ff,#6f8fd6);
+  color:#042033;
+  border:none;
+}
+
+.btn-logout{
+  background:transparent;
+  border:1px solid rgba(2,6,23,0.06);
+  color:#1065dd;
+}
+
     .profile-popover::before{
       content:""; position:absolute; right:18px; top:-8px; width:14px; height:14px; transform:rotate(45deg); background:white; border-left:1px solid rgba(2,6,23,0.04); border-top:1px solid rgba(2,6,23,0.04);
     }
 
-    /* overlay for modal close on mobile */
     .popover-overlay { position:fixed; inset:0; display:none; z-index:1100; }
     .popover-overlay.show { display:block; }
 
-    /* responsive adjustments */
     @media (max-width:720px){
       .profile-popover{ right:12px; left:12px; top: calc(var(--banner-h) + 10px); width:auto; max-width:none; }
+      .notif-popover{ right:12px; left:12px; top: calc(var(--banner-h) + 10px); width:auto; max-width:none; }
     }
 
-    /* reduced motion */
     @media (prefers-reduced-motion: reduce){
-      .profile-popover{ transition:none; transform:none; }
+      .profile-popover, .notif-popover{ transition:none; transform:none; }
     }
   </style>
 </head>
@@ -102,21 +225,116 @@
 
   <!-- TOP BANNER NAVBAR -->
   <header class="banner" role="banner">
-    <div class="brand" aria-hidden="true">
-      <div class="logo">PC</div>
+    <div class="brand" aria-hidden="true" onclick="window.location.href='{{ url_for('main.index') }}'">
+      <div class="logo">🐾</div>
       <div>PawCare</div>
     </div>
 
     <nav class="nav-links" role="navigation" aria-label="Main navigation">
-      <a href="{{ url_for('main.pets_list') }}">pets</a>
-      <!--<a href="{{ url_for('main.user_list') }}">Users</a>
-      <a href="{{ url_for('main.pets_list') }}">Pets</a>
-      <a href="{{ url_for('main.login') }}">Login</a>-->
+     <a class="" href="{{ url_for('main.found_reports') }}">Found Reports</a>
+     <a class="" href="{{ url_for('main.lost_reports') }}">Lost Reports</a>
     </nav>
 
     <div class="profile-area" aria-hidden="{{ 'false' if g.user else 'true' }}">
       {% if g.user %}
-        {# compute safe image path; do NOT call media if no filename #}
+
+        {# ---------- NOTIFICATION BELL (owner requests + requester updates) ---------- #}
+        {% set owner_count = pending_adoption_count|default(0) %}
+        {% set my_updates = my_adoption_updates|default([]) %}
+        {% set notif_count = owner_count + (my_updates|length) %}
+
+        <button id="notifBtn"
+                class="notif-btn"
+                type="button"
+                aria-label="Adoption notifications"
+                aria-haspopup="dialog"
+                aria-expanded="false"
+                aria-controls="notifPopover">
+          <span class="notif-icon">🔔</span>
+          {% if notif_count > 0 %}
+            <span class="notif-badge">{{ notif_count }}</span>
+          {% endif %}
+        </button>
+
+        <div id="notifPopover"
+             class="notif-popover"
+             role="dialog"
+             aria-modal="false"
+             aria-labelledby="notifTitle"
+             aria-hidden="true">
+          <div class="notif-popover-header">
+            <div id="notifTitle" class="notif-title">Adoption Center</div>
+            <div class="notif-count-label">
+              {% if notif_count > 0 %}
+                {{ notif_count }} notifications
+              {% else %}
+                No notifications
+              {% endif %}
+            </div>
+          </div>
+
+          {# ---------- OWNER: Requests for your pets (pending) ---------- #}
+          {% set requests = pending_adoption_requests|default([]) %}
+          {% if requests %}
+            <h4 style="margin:4px 0 6px;font-size:0.9rem;color:#0f172a;">Requests for your pets</h4>
+            <ul class="notif-list">
+              {% for r in requests %}
+                <li class="notif-item">
+                  <div>
+                    <strong>{{ r.pet_name }}</strong> –
+                    request from user #{{ r.requester_id }}
+                  </div>
+                  <div style="font-size:0.8rem;color:#6b7280;margin-top:2px;">
+                    Requested at {{ r.requested_at.strftime('%Y-%m-%d %H:%M') if r.requested_at else '' }}
+                  </div>
+                  <div class="notif-actions">
+                    <a class="notif-link"
+                       href="{{ url_for('main.view_pet', pet_id=r.pet_id) }}">
+                      View pet &amp; respond
+                    </a>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+
+          {# ---------- REQUESTER: Status of your adoption requests ---------- #}
+          {% set updates = my_adoption_updates|default([]) %}
+          {% if updates %}
+            <h4 style="margin:10px 0 6px;font-size:0.9rem;color:#0f172a;">Your adoption updates</h4>
+            <ul class="notif-list">
+              {% for u in updates %}
+                <li class="notif-item">
+                  <div>
+                    <strong>{{ u.pet_name }}</strong> –
+                    {% if u.request_status == 'accepted' %}
+                      <span style="color:#16a34a;font-weight:700;">Accepted</span>
+                    {% elif u.request_status == 'rejected' %}
+                      <span style="color:#dc2626;font-weight:700;">Rejected</span>
+                    {% else %}
+                      <span>{{ u.request_status }}</span>
+                    {% endif %}
+                  </div>
+                  <div style="font-size:0.8rem;color:#6b7280;margin-top:2px;">
+                    Updated at {{ u.requested_at.strftime('%Y-%m-%d %H:%M') if u.requested_at else '' }}
+                  </div>
+                  <div class="notif-actions">
+                    <a class="notif-link"
+                       href="{{ url_for('main.view_pet', pet_id=u.pet_id) }}">
+                      View pet
+                    </a>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+
+          {% if not requests and not updates %}
+            <p class="notif-empty">You don't have any new adoption activity right now.</p>
+          {% endif %}
+        </div>
+
+        {# ---------- PROFILE BUTTON & POPOVER ---------- #}
         {% if g.user.user_img %}
           {% set img_filename = g.user.user_img if '/' in g.user.user_img else ('user_images/' ~ g.user.user_img) %}
         {% else %}
@@ -129,11 +347,9 @@
             {% if img_filename %}
               <img src="{{ url_for('main.media', filename=img_filename) }}" alt="Avatar of {{ g.user.user_name }}" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'">
             {% else %}
-              {# initials fallback #}
               <span style="font-weight:800;color:#042033">{{ g.user.user_name[:1]|upper }}</span>
             {% endif %}
           </span>
-          
         </button>
 
         <div id="profilePopover" class="profile-popover" role="dialog" aria-modal="false" aria-labelledby="popoverTitle" aria-hidden="true">
@@ -161,6 +377,8 @@
 
             <div class="popover-actions">
               <a class="btn-pop btn-edit" href="{{ url_for('main.edit_user', user_id=g.user.user_id) }}">Edit Profile</a>
+              <a class="btn-pop btn-edit" href="{{ url_for('main.my_pets') }}">My Pets</a>
+              <a class="btn-pop btn-edit" href="{{ url_for('main.adoption_pets') }}">Adoption Pets</a>
               <a class="btn-pop btn-logout" href="{{ url_for('main.logout') }}">Logout</a>
             </div>
           </div>
@@ -190,6 +408,7 @@
   {% block content %}{% endblock %}
 
 <script>
+  /* ---------- Profile popover JS ---------- */
   (function(){
     const btn = document.getElementById('profileBtn');
     const pop = document.getElementById('profilePopover');
@@ -204,20 +423,17 @@
       btn.setAttribute('aria-expanded','true');
       overlay.classList.add('show');
       overlay.setAttribute('aria-hidden','false');
-      // focus first actionable element inside popover for accessibility
       const focusable = pop.querySelector('a, button, [tabindex]:not([tabindex="-1"])');
       if(focusable) focusable.focus();
       document.addEventListener('keydown', onKeydown);
     }
 
     function closePopover(){
-      // animate hide briefly if possible
       pop.classList.add('hideAnim');
       pop.setAttribute('aria-hidden','true');
       btn.setAttribute('aria-expanded','false');
       overlay.classList.remove('show');
       overlay.setAttribute('aria-hidden','true');
-      // after animation remove show class
       setTimeout(()=>{ pop.classList.remove('show'); pop.classList.remove('hideAnim'); }, 200);
       btn.focus();
       document.removeEventListener('keydown', onKeydown);
@@ -225,32 +441,69 @@
 
     function onKeydown(e){
       if(e.key === 'Escape') closePopover();
-      // trap focus inside popover? minimal: close on Escape only
     }
 
-    btn.addEventListener('click', function(e){
+    btn.addEventListener('click', function(){
       const expanded = btn.getAttribute('aria-expanded') === 'true';
       if(expanded) closePopover(); else openPopover();
     });
 
-    // close when clicking outside (overlay)
     overlay.addEventListener('click', closePopover);
 
-    // close when clicking outside the popover (on document)
     document.addEventListener('click', function(e){
       if(!pop.contains(e.target) && !btn.contains(e.target) && pop.classList.contains('show')){
         closePopover();
       }
     });
 
-    // accessibility: close on focusout if focus leaves popover and button
     document.addEventListener('focusin', function(e){
       if(!pop.contains(e.target) && !btn.contains(e.target) && pop.classList.contains('show')){
-        // small timeout to allow clicks to work
-        setTimeout(()=> { if(!pop.contains(document.activeElement) && !btn.contains(document.activeElement)) closePopover(); }, 50);
+        setTimeout(()=> {
+          if(!pop.contains(document.activeElement) && !btn.contains(document.activeElement)) {
+            closePopover();
+          }
+        }, 50);
       }
     });
 
+  })();
+
+  /* ---------- Notifications popover JS ---------- */
+  (function(){
+    const notifBtn = document.getElementById('notifBtn');
+    const notifPop = document.getElementById('notifPopover');
+    if(!notifBtn || !notifPop) return;
+
+    function openNotif(){
+      notifPop.classList.add('show');
+      notifPop.classList.remove('hideAnim');
+      notifPop.setAttribute('aria-hidden','false');
+      notifBtn.setAttribute('aria-expanded','true');
+      document.addEventListener('keydown', onKeydown);
+    }
+
+    function closeNotif(){
+      notifPop.classList.add('hideAnim');
+      notifPop.setAttribute('aria-hidden','true');
+      notifBtn.setAttribute('aria-expanded','false');
+      setTimeout(()=>{ notifPop.classList.remove('show'); notifPop.classList.remove('hideAnim'); }, 200);
+      document.removeEventListener('keydown', onKeydown);
+    }
+
+    function onKeydown(e){
+      if(e.key === 'Escape') closeNotif();
+    }
+
+    notifBtn.addEventListener('click', function(){
+      const expanded = notifBtn.getAttribute('aria-expanded') === 'true';
+      if(expanded) closeNotif(); else openNotif();
+    });
+
+    document.addEventListener('click', function(e){
+      if(!notifPop.contains(e.target) && !notifBtn.contains(e.target) && notifPop.classList.contains('show')){
+        closeNotif();
+      }
+    });
   })();
 </script>
 </body>

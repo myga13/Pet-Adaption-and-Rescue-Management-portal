@@ -1,0 +1,189 @@
+{# templates/found_reports.html - uses only f.pet_img #}
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  :root{--bg:#f6f7fb;--card:#fff;--muted:#64748b;--accent:#2563eb}
+  body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;margin:0;background:var(--bg);color:#071029}
+  .wrap{max-width:1100px;margin:24px auto;padding:12px}
+  h1{margin:0 0 8px 0;font-size:22px}
+  .muted{color:var(--muted);font-weight:500;font-size:13px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:16px}
+  .card{background:var(--card);border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,0.08);overflow:hidden;display:flex;flex-direction:column}
+  .card-media{height:210px;background:#f8fbff;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .card-media img{width:100%;height:100%;object-fit:cover;display:block}
+  .card-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+  .pet-name{font-weight:900;font-size:17px;color:#0b1220}
+  .meta-line{color:#334155;font-size:13px}
+  .card-footer{padding:12px 14px 14px;display:flex;align-items:center;justify-content:space-between}
+  .btn{padding:8px 12px;border-radius:999px;border:1px solid rgba(2,6,23,0.08);background:#fff;cursor:pointer;font-weight:700;font-size:13px}
+  .btn-primary{background:linear-gradient(90deg,#bfdbfe,#93c5fd);border-color:#bfdbfe;color:#0b3a8a;box-shadow:0 8px 18px rgba(37,99,235,0.25)}
+  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2000}
+  .modal.show{display:flex}
+  .backdrop{position:absolute;inset:0;background:rgba(15,23,42,0.55)}
+  .panel{position:relative;z-index:2;width:95%;max-width:980px;max-height:90vh;overflow:auto;border-radius:16px;background:#fff;padding:18px;box-shadow:0 22px 60px rgba(15,23,42,0.35);display:grid;grid-template-columns: minmax(0,1.3fr) minmax(0,1fr);gap:18px}
+  @media(max-width:880px){.panel{grid-template-columns:1fr;padding:12px}}
+  .close-btn{position:absolute;right:12px;top:10px;border:none;background:#0f172a;color:#f9fafb;border-radius:999px;padding:6px 10px;cursor:pointer;font-size:13px;font-weight:700;z-index:3}
+  .carousel{position:relative;background:#f8fafc;border-radius:12px;overflow:hidden;min-height:320px;display:flex;align-items:center;justify-content:center}
+  .carousel img{max-width:100%;max-height:75vh;object-fit:contain;display:block;margin:0 auto}
+  .arrow{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:999px;background:rgba(15,23,42,0.08);display:grid;place-items:center;cursor:pointer;font-size:20px;font-weight:800}
+  .arrow.left{left:10px}.arrow.right{right:10px}
+  .thumbs{display:flex;gap:8px;margin-top:10px;justify-content:center;flex-wrap:wrap}
+  .thumb{width:70px;height:70px;border-radius:8px;overflow:hidden;border:2px solid transparent;cursor:pointer}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb.active{border-color:var(--accent);transform:scale(1.03)}
+  .meta-card{padding:10px 12px 14px;border-radius:12px;background:#f9fafb;border:1px solid #e5e7eb;font-size:14px}
+  .meta-row{margin-bottom:8px}
+  .meta-row b{display:block;font-size:13px;color:#0b1220;margin-bottom:3px}
+  .meta-row .val{color:#111827;font-weight:600}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Found Pets</h1>
+    <p class="muted">Click “View details” to see finder contact info.</p>
+  </header>
+
+  <section class="cards" aria-live="polite">
+    {% for f in found_reports %}
+    <article class="card" aria-labelledby="found-{{ f.id }}">
+      <div class="card-media">
+        {% if f.pet_img %}
+          <img src="{{ url_for('main.media', filename=f.pet_img) }}" alt="Found pet image">
+        {% else %}
+          <div style="padding:18px;color:var(--muted);font-weight:700">No image available</div>
+        {% endif %}
+      </div>
+
+      <div class="card-body">
+        <div class="pet-name" id="found-{{ f.id }}">{{ f.pet_type or 'Found pet' }}</div>
+        <div class="meta-line"><strong>Found at:</strong> {{ f.found_location or 'Unknown' }}</div>
+        <div class="meta-line">{% if f.date_found %}<strong>Date found:</strong> {{ f.date_found.strftime('%d %b %Y') }}{% else %}<strong>Date found:</strong> Not specified{% endif %}</div>
+        <div class="meta-line"><strong>Finder:</strong> {{ f.finder_name or 'Not provided' }}</div>
+      </div>
+
+      <div class="card-footer">
+        <button
+          class="btn btn-primary"
+          data-role="open-details"
+          data-img="{{ url_for('main.media', filename=f.pet_img) if f.pet_img else '' }}"
+          data-type="{{ f.pet_type or '' }}"
+          data-location="{{ f.found_location or '' }}"
+          data-date="{{ f.date_found.strftime('%d %b %Y') if f.date_found else '' }}"
+          data-finder="{{ f.finder_name or '' }}"
+          data-phone="{{ f.finder_phone or '' }}"
+          data-email="{{ f.finder_email or '' }}"
+          data-notes="{{ (f.finder_notes or '')|e }}"
+        >View details</button>
+      </div>
+    </article>
+    {% else %}
+    <div style="grid-column:1/-1;padding:28px;text-align:center;color:var(--muted);font-weight:600;">No found pet reports yet.</div>
+    {% endfor %}
+  </section>
+</div>
+
+<!-- DETAILS MODAL -->
+<div class="modal" id="detailsModal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="backdrop" id="modalBackdrop"></div>
+  <div class="panel" id="modalPanel" role="document">
+    <button class="close-btn" id="modalClose">Close</button>
+
+    <div>
+      <div class="carousel" id="carousel">
+        <div class="arrow left" id="arrowPrev">‹</div>
+        <div class="arrow right" id="arrowNext">›</div>
+        <div id="carouselInner"></div>
+      </div>
+      <div class="thumbs" id="thumbs"></div>
+    </div>
+
+    <aside>
+      <div class="meta-card">
+        <h3 id="modalTitle" style="margin-top:0;">Found pet</h3>
+        <div class="meta-row"><b>Location</b><div class="val" id="modalLocation">—</div></div>
+        <div class="meta-row"><b>Date found</b><div class="val" id="modalDate">—</div></div>
+        <div class="meta-row"><b>Finder</b><div class="val" id="modalFinder">—</div></div>
+        <div class="meta-row"><b>Phone</b><div class="val" id="modalPhone">—</div></div>
+        <div class="meta-row"><b>Email</b><div class="val" id="modalEmail">—</div></div>
+        <div class="meta-row"><b>Notes</b><div class="muted" id="modalNotes">—</div></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function(){
+  const modal = document.getElementById('detailsModal');
+  const backdrop = document.getElementById('modalBackdrop');
+  const closeBtn = document.getElementById('modalClose');
+  const carouselInner = document.getElementById('carouselInner');
+  const thumbs = document.getElementById('thumbs');
+  const prev = document.getElementById('arrowPrev');
+  const next = document.getElementById('arrowNext');
+
+  const titleEl = document.getElementById('modalTitle');
+  const locEl = document.getElementById('modalLocation');
+  const dateEl = document.getElementById('modalDate');
+  const finderEl = document.getElementById('modalFinder');
+  const phoneEl = document.getElementById('modalPhone');
+  const emailEl = document.getElementById('modalEmail');
+  const notesEl = document.getElementById('modalNotes');
+
+  let imgs = [];
+  let idx = 0;
+
+  function render(){
+    if(!imgs.length){
+      carouselInner.innerHTML = '<div style="padding:24px;color:#64748b;font-weight:600;">No photos available</div>';
+      thumbs.innerHTML = '';
+      return;
+    }
+    carouselInner.innerHTML = '<img src="'+imgs[idx]+'" alt="photo">';
+    thumbs.innerHTML = '';
+    imgs.forEach((s,i)=>{
+      const t = document.createElement('div');
+      t.className = 'thumb' + (i===idx ? ' active' : '');
+      t.innerHTML = '<img src="'+s+'" alt="thumb">';
+      t.addEventListener('click', ()=>{ idx = i; render(); });
+      thumbs.appendChild(t);
+    });
+  }
+
+  function open(data){
+    imgs = (data.images || []).filter(Boolean); idx = 0; render();
+    titleEl.textContent = data.type || 'Found pet';
+    locEl.textContent = data.location || '—';
+    dateEl.textContent = data.date || '—';
+    finderEl.textContent = data.finder || '—';
+    phoneEl.textContent = data.phone || '—';
+    emailEl.textContent = data.email || '—';
+    notesEl.textContent = data.notes || '—';
+    modal.classList.add('show'); modal.setAttribute('aria-hidden','false');
+  }
+
+  function closeModal(){ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); carouselInner.innerHTML='';thumbs.innerHTML='';imgs=[];idx=0; }
+
+  prev.addEventListener('click', ()=>{ if(!imgs.length) return; idx = (idx - 1 + imgs.length) % imgs.length; render(); });
+  next.addEventListener('click', ()=>{ if(!imgs.length) return; idx = (idx + 1) % imgs.length; render(); });
+  closeBtn.addEventListener('click', closeModal);
+  backdrop.addEventListener('click', closeModal);
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && modal.classList.contains('show')) closeModal(); });
+
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('[data-role="open-details"]'); if(!btn) return; e.preventDefault();
+    const img = btn.dataset.img || '';
+    open({
+      images: img ? [img] : [],
+      type: btn.dataset.type || '',
+      location: btn.dataset.location || '',
+      date: btn.dataset.date || '',
+      finder: btn.dataset.finder || '',
+      phone: btn.dataset.phone || '',
+      email: btn.dataset.email || '',
+      notes: btn.dataset.notes || ''
+    });
+  });
+})();
+</script>
+{% endblock content %}

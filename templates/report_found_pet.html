@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Report Found Pet</title>
+
+  <style>
+    .report-section {
+      padding: 55px 20px;
+      display: flex;
+      justify-content: center;
+      background: linear-gradient(135deg, #f8fbff, #fefefe);
+    }
+
+    .report-container {
+      width: 100%;
+      max-width: 900px;
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 30px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.08);
+      grid-template-columns: 1.1fr 1fr;
+      gap: 24px;
+    }
+
+    .report-title {
+      font-size: 30px;
+      font-weight: 800;
+      color: #05263b;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 25px 0 10px;
+      color: #05263b;
+    }
+
+    .report-subtitle {
+      font-size: 15px;
+      color: #445;
+      margin-bottom: 22px;
+      line-height: 1.6;
+    }
+
+    .input {
+      width: 95%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #ccd6e0;
+      background: #fafcff;
+      font-size: 15px;
+      margin-bottom: 6px;
+      transition: 0.2s;
+    }
+
+    .input:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 8px rgba(0,123,255,0.25);
+      outline: none;
+    }
+
+    textarea.input {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .label-icon {
+      font-size: 18px;
+      margin-right: 6px;
+    }
+
+    .found-bg {
+      background: linear-gradient(135deg, #e9f3ff, #d9eaff);
+      border-left: 5px solid #007bff;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      font-weight: 800;
+      font-size: 16px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-top: 10px;
+      background: #3d8bff;
+      color: white;
+    }
+
+    .btn-submit:hover {
+      background: #2f6fe0;
+    }
+
+    .btn-map,
+    .btn-location {
+      margin: 4px 4px 10px 0;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 1px solid #3b82f6;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .btn-map:hover,
+    .btn-location:hover {
+      background: #dbeafe;
+    }
+
+    #mapFrame {
+      width: 100%;
+      height: 100%;
+      min-height: 320px;
+      border-radius: 14px;
+      border: 1px solid #cbd5e1;
+    }
+
+    @media (max-width: 900px) {
+      .report-container { grid-template-columns: 1fr; }
+      #mapFrame { min-height: 260px; }
+    }
+
+    .small-hint {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<section class="report-section">
+  <div class="report-container found-bg">
+
+    <!-- LEFT: FORM -->
+    <div>
+      <h2 class="report-title">🔍 Report a Found Pet</h2>
+      <p class="report-subtitle">
+        Thank you for helping a lost pet. You can type a location or use your live location.
+      </p>
+
+      <form method="post" enctype="multipart/form-data">
+
+        <!-- PET INFO -->
+        <div class="section-title">🐾 Pet Information</div>
+
+        <label><span class="label-icon">🐾</span>Animal Type</label>
+        <select name="pet_type" class="input">
+          <option>Dog</option>
+          <option>Cat</option>
+          <option>Bird</option>
+          <option>Farm Animal</option>
+          <option>Other</option>
+        </select>
+
+        <label><span class="label-icon">📍</span>Found Location</label>
+        <input
+          type="text"
+          id="found_location"
+          name="found_location"
+          class="input"
+          placeholder="Area / Street / Landmark"
+          required
+        >
+
+        <!-- Hidden lat/lng fields sent to backend -->
+        <input type="hidden" id="latitude" name="latitude">
+        <input type="hidden" id="longitude" name="longitude">
+
+        <div class="small-hint">
+          You can type a location and click “Show on Map”, or use your current GPS location.
+        </div>
+
+        <button type="button" class="btn-map" onclick="updateMapFromText()">
+          🗺️ Show on Map
+        </button>
+
+        <button type="button" class="btn-location" onclick="useMyLocation()">
+          📍 Use My Current Location
+        </button>
+        <div>
+      <div class="section-title">🗺️ Map Preview</div>
+      <p style="font-size: 13px; color: #555; margin-bottom: 10px;">
+        After choosing a location or using your GPS, we’ll show the point on the map.
+      </p>
+      <iframe
+        id="mapFrame"
+        src="https://www.google.com/maps?q=India&output=embed"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade">
+      </iframe>
+    </div>
+
+        <label><span class="label-icon">📅</span>Date Found</label>
+        <input type="date" name="date_found" class="input" required>
+
+        <label><span class="label-icon">❤️</span>Condition</label>
+        <textarea name="condition" class="input"></textarea>
+
+        <label><span class="label-icon">📸</span>Upload Image</label>
+        <input type="file" name="pet_img" accept="image/*" class="input">
+
+        <!-- USER INFO -->
+        <div class="section-title">👤 Your Contact Information</div>
+
+        <label><span class="label-icon">🧍</span>Your Full Name</label>
+        <input type="text" name="finder_name" class="input" required>
+
+        <label><span class="label-icon">📞</span>Phone Number</label>
+        <input type="text" name="finder_phone" class="input" required>
+
+        <label><span class="label-icon">💬</span>WhatsApp Number (optional)</label>
+        <input type="text" name="finder_whatsapp" class="input">
+
+        <label><span class="label-icon">📧</span>Email Address</label>
+        <input type="email" name="finder_email" class="input" required>
+
+        <label><span class="label-icon">📝</span>Additional Notes (optional)</label>
+        <textarea name="finder_notes" class="input"
+                  placeholder="Any extra details for admin/NGO team?"></textarea>
+
+        <button type="submit" class="btn-submit">📩 Submit Found Pet Report</button>
+      </form>
+    </div>
+
+    
+
+  </div>
+</section>
+
+<script>
+  function updateMapFromText() {
+    const locInput = document.getElementById('found_location');
+    const iframe = document.getElementById('mapFrame');
+    if (!locInput || !iframe) return;
+
+    const location = locInput.value.trim();
+    if (!location) return;
+
+    const url =
+      'https://www.google.com/maps?q=' +
+      encodeURIComponent(location) +
+      '&output=embed';
+
+    iframe.src = url;
+    // We don't get exact lat/lng here, only the text.
+    // Hidden lat/lng remain empty unless GPS is used.
+  }
+
+  function useMyLocation() {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        // Set hidden fields
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lng;
+
+        // Optionally show coordinates in the text field if it's empty
+        const locInput = document.getElementById('found_location');
+        if (locInput && !locInput.value.trim()) {
+          locInput.value = `Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`;
+        }
+
+        // Update map to this live point
+        const iframe = document.getElementById('mapFrame');
+        if (iframe) {
+          const url =
+            'https://www.google.com/maps?q=' +
+            lat + ',' + lng +
+            '&output=embed';
+          iframe.src = url;
+        }
+      },
+      (error) => {
+        console.error(error);
+        if (error.code === error.PERMISSION_DENIED) {
+          alert("Location permission denied. Please allow access or type the location manually.");
+        } else {
+          alert("Unable to get your location. Please type it manually.");
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  }
+
+  // Optional: Press Enter in text -> update map
+  document.addEventListener('DOMContentLoaded', function () {
+    const locInput = document.getElementById('found_location');
+    if (!locInput) return;
+    locInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        updateMapFromText();
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

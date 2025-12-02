@@ -1,0 +1,444 @@
+{% extends "admin_base.html" %}
+{% block title %}PawCare | Admin Registration{% endblock %}
+{% block content %}
+
+<style>
+  /* (same CSS as you already had, unchanged) */
+  .admin-auth-wrapper {
+    max-width: 960px;
+    margin: 40px auto;
+    padding: 20px;
+  }
+  .admin-auth-grid {
+    /* Ensure grid layout */
+    
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
+    gap: 24px;
+  }
+  .admin-auth-left {
+    padding: 20px;
+    border-radius: 16px;
+    background: #0b2c3d;
+    color: #f9fafb;
+  }
+  .admin-auth-left h1 {
+    font-size: 26px;
+    margin-bottom: 12px;
+  }
+  .admin-auth-left p {
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+  .admin-auth-list {
+    margin: 10px 0 0;
+    padding-left: 18px;
+    font-size: 14px;
+  }
+  .admin-auth-right {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 22px 20px;
+    box-shadow: 0 10px 28px rgba(15,23,42,0.12);
+    border: 1px solid #e5e7eb;
+  }
+  .admin-auth-right h2 {
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+  .admin-auth-right p {
+    font-size: 13px;
+    color: #374151;
+    margin-bottom: 16px;
+  }
+  .form-section-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 16px 0 8px;
+    color: #111827;
+  }
+  .form-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 16px;
+  }
+  .form-row {
+    margin-bottom: 10px;
+  }
+  .form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #374151;
+  }
+  .form-input,
+  .form-select,
+  .form-textarea {
+    width: 95%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-size: 13px;
+  }
+  .form-textarea {
+    min-height: 70px;
+    resize: vertical;
+  }
+  .form-file {
+    font-size: 13px;
+  }
+  .form-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .form-help {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 2px;
+  }
+  .form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .form-footer small {
+    font-size: 11px;
+    color: #6b7280;
+  }
+  .btn-primary-auth {
+    padding: 9px 18px;
+    border-radius: 999px;
+    border: none;
+    background: #ff7a00;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-primary-auth:hover {
+    background: #e36d00;
+  }
+  .auth-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 12px;
+  }
+  .auth-link:hover {
+    text-decoration: underline;
+  }
+  @media (max-width: 900px) {
+    .admin-auth-grid {
+      grid-template-columns: minmax(0,1fr);
+    }
+  }
+</style>
+
+<div class="admin-auth-wrapper">
+  <div class="admin-auth-grid">
+
+    <!-- LEFT INFO -->
+    <aside class="admin-auth-left">
+      <h1>Register as PawCare Admin</h1>
+      <p>
+        This form is for admins and NGO coordinators who help manage pets,
+        verify reports and ensure safe adoptions across the PawCare portal.
+      </p>
+
+      <p style="font-weight:600; margin-top:10px;">As an admin you can:</p>
+      <ul class="admin-auth-list">
+        <li>Verify pet profiles and NGO documents</li>
+        <li>Review lost &amp; found reports</li>
+        <li>Oversee adoptions and user activity</li>
+        <li>Send alerts and announcements to users</li>
+      </ul>
+
+      <p style="font-size:13px; margin-top:16px;">
+        Once your registration is approved by the super admin team,
+        you’ll receive access to the Admin Dashboard and NGO tools.
+      </p>
+    </aside>
+
+    <!-- RIGHT FORM -->
+    <section class="admin-auth-right">
+      <h2>Admin Registration</h2>
+      <p>Fill in your details carefully. Fields marked * are required.</p>
+
+      <form action="{{ url_for('main.admin_register') }}" method="post" enctype="multipart/form-data">
+        {# If you use CSRFProtect, include token here #}
+        {# <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> #}
+
+        <!-- PERSONAL DETAILS -->
+        <div class="form-section-title">Personal Details</div>
+        <div class="form-grid-2">
+          <div class="form-row">
+            <label class="form-label">Full Name *</label>
+            <input type="text" name="full_name" class="form-input" required>
+          </div>
+          <div class="form-row">
+            <label class="form-label">Age *</label>
+            <input type="number" name="age" class="form-input" min="18" required>
+          </div>
+
+          <!-- EMAIL + SEND CODE -->
+          <div class="form-row" style="grid-column: 1 / -1;">
+            <label class="form-label">Email *</label>
+            <div class="form-inline">
+              <input type="email" name="email" id="email" class="form-input" required>
+              <button type="button" id="send-code-btn" class="btn-primary-auth" style="padding:6px 14px; font-size:12px;">
+                Send Code
+              </button>
+            </div>
+            <div class="form-help">Enter your email and click "Send Code" to receive a verification code.</div>
+            <div id="email-code-status" class="form-help"></div>
+          </div>
+
+          <!-- VERIFICATION CODE FIELD -->
+          <div class="form-row" id="code-row" style="display:none; grid-column: 1 / -1;">
+            <label class="form-label">Verification Code *</label>
+            <input type="text" name="email_verification_code" id="email_verification_code" class="form-input" placeholder="Enter the 6-digit code you received">
+            <div class="form-help">Check your inbox (and spam folder) for the verification code.</div>
+          </div>
+
+          <div class="form-row">
+            <label class="form-label">Phone / WhatsApp *</label>
+            <input type="text" name="phone" class="form-input" required>
+          </div>
+
+          <div class="form-row">
+            <label class="form-label">City *</label>
+            <input type="text" name="city" class="form-input" required>
+          </div>
+          <div class="form-row">
+            <label class="form-label">State *</label>
+            <input type="text" name="state" class="form-input" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">Full Address *</label>
+          <textarea name="address" class="form-textarea" required></textarea>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">Current Location (Landmark)</label>
+          <input type="text" name="current_location" class="form-input" placeholder="Example: Near Anna Nagar Tower, Chennai">
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">Profile Image</label>
+          <input type="file" name="profile_image" class="form-file" accept="image/*">
+          <div class="form-help">Upload a clear face photo (JPG / PNG).</div>
+        </div>
+
+        <!-- PROFESSIONAL / ROLE -->
+        <div class="form-section-title">Admin / NGO Role</div>
+        <div class="form-grid-2">
+          <div class="form-row">
+            <label class="form-label">Admin Role *</label>
+            <select name="admin_role" class="form-select" required>
+              <option value="">Select role</option>
+              <option value="Super Admin">Super Admin</option>
+              <option value="City Admin">City Admin</option>
+              <option value="NGO Admin">NGO Admin</option>
+              <option value="Volunteer Admin">Volunteer Admin</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <label class="form-label">Experience (Years)</label>
+            <input type="number" name="experience_years" class="form-input" min="0">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">Past Experience (Animal Welfare / Admin)</label>
+          <textarea name="past_experience" class="form-textarea" placeholder="Share any relevant rescue, shelter, or NGO work."></textarea>
+        </div>
+
+        <!-- NGO DETAILS -->
+        <div class="form-section-title">NGO Details (Optional)</div>
+        <div class="form-grid-2">
+          <div class="form-row">
+            <label class="form-label">NGO Name</label>
+            <input type="text" name="ngo_name" class="form-input">
+          </div>
+          <div class="form-row">
+            <label class="form-label">Designation</label>
+            <input type="text" name="ngo_designation" class="form-input" placeholder="Coordinator, Volunteer, Manager...">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">Years with NGO</label>
+          <input type="number" name="ngo_years" class="form-input" min="0">
+        </div>
+
+        <!-- ID PROOF -->
+        <div class="form-section-title">ID Proof (Required)</div>
+        <div class="form-row">
+          <label class="form-label">ID Proof Type *</label>
+          <div class="form-inline">
+            <label><input type="radio" name="id_proof_type" value="Aadhar" required> Aadhar</label>
+            <label><input type="radio" name="id_proof_type" value="PAN"> PAN</label>
+            <label><input type="radio" name="id_proof_type" value="Driving License"> Driving License</label>
+            <label><input type="radio" name="id_proof_type" value="Other"> Other</label>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-row">
+            <label class="form-label">ID Proof Number *</label>
+            <input type="text" name="id_proof_number" class="form-input" required>
+          </div>
+          <div class="form-row">
+            <label class="form-label">Upload ID Document</label>
+            <input type="file" name="id_proof_file" class="form-file" accept=".jpg,.jpeg,.png,.pdf">
+            <div class="form-help">Upload scanned copy / photo (JPG / PNG / PDF).</div>
+          </div>
+        </div>
+
+        <!-- EMERGENCY CONTACT -->
+        <div class="form-section-title">Emergency Contact</div>
+        <div class="form-grid-2">
+          <div class="form-row">
+            <label class="form-label">Contact Name</label>
+            <input type="text" name="emergency_name" class="form-input">
+          </div>
+          <div class="form-row">
+            <label class="form-label">Relation</label>
+            <input type="text" name="emergency_relation" class="form-input" placeholder="Parent, Sibling, Friend...">
+          </div>
+
+          <div class="form-row">
+            <label class="form-label">Primary Phone</label>
+            <input type="text" name="emergency_phone" class="form-input">
+          </div>
+          <div class="form-row">
+            <label class="form-label">Alternate Phone</label>
+            <input type="text" name="emergency_phone_alt" class="form-input">
+          </div>
+        </div>
+
+        <!-- SOCIAL LINKS -->
+        <div class="form-section-title">Social / Professional Links</div>
+        <div class="form-grid-2">
+          <div class="form-row">
+            <label class="form-label">LinkedIn URL</label>
+            <input type="url" name="linkedin" class="form-input" placeholder="https://www.linkedin.com/in/...">
+          </div>
+          <div class="form-row">
+            <label class="form-label">Instagram URL</label>
+            <input type="url" name="instagram" class="form-input" placeholder="https://www.instagram.com/...">
+          </div>
+        </div>
+
+        <!-- LOGIN CREDENTIALS -->
+        <div class="form-section-title">Login Credentials</div>
+        <div class="form-grid-2">
+          <div class="form-row">
+            <label class="form-label">Password *</label>
+            <input type="password" name="password" class="form-input" required>
+          </div>
+          <div class="form-row">
+            <label class="form-label">Confirm Password *</label>
+            <input type="password" name="confirm_password" class="form-input" required>
+          </div>
+        </div>
+        <div class="form-help">
+          Your password will be used along with email. Afterwards, OTP will be sent to your email for secure admin login.
+        </div>
+
+        <!-- TERMS + SUBMIT -->
+        <div class="form-footer">
+          <div>
+            <label style="font-size:12px;">
+              <input type="checkbox" name="agree_terms" required>
+              I confirm that the above details are true and I agree to PawCare admin terms.
+            </label>
+            <br>
+            <small>Already have an admin account?
+              <a href="{{ url_for('main.admin_login') }}" class="auth-link">Login here</a>.
+            </small>
+          </div>
+
+          <button type="submit" class="btn-primary-auth">
+            Submit Admin Registration
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const sendCodeBtn = document.getElementById("send-code-btn");
+    const emailInput = document.getElementById("email");
+    const statusDiv = document.getElementById("email-code-status");
+    const codeRow = document.getElementById("code-row");
+    const form = document.querySelector(".admin-auth-right form");
+
+    if (sendCodeBtn) {
+      sendCodeBtn.addEventListener("click", function () {
+        const email = (emailInput.value || "").trim();
+        statusDiv.textContent = "";
+
+        if (!email) {
+          statusDiv.textContent = "Please enter your email first.";
+          return;
+        }
+
+        sendCodeBtn.disabled = true;
+        sendCodeBtn.textContent = "Sending...";
+
+        fetch("{{ url_for('main.send_email_verification_code') }}", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({ email: email })
+})
+
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            statusDiv.textContent = "Verification code sent to your email.";
+            codeRow.style.display = "block";
+          } else {
+            statusDiv.textContent = data.message || "Failed to send code. Please try again.";
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          statusDiv.textContent = "Error sending code. Please try again.";
+        })
+        .finally(() => {
+          sendCodeBtn.disabled = false;
+          sendCodeBtn.textContent = "Send Code";
+        });
+      });
+    }
+
+    // Optional client-side check to ensure code is entered before submit
+    if (form) {
+      form.addEventListener("submit", function (e) {
+        // If the verification row is shown, require the code
+        if (codeRow.style.display !== "none") {
+          const codeInput = document.getElementById("email_verification_code");
+          if (!codeInput.value || codeInput.value.trim() === "") {
+            e.preventDefault();
+            alert("Please enter the verification code sent to your email.");
+          }
+        }
+      });
+    }
+  });
+</script>
+
+{% endblock %}

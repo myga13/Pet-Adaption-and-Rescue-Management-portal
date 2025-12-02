@@ -224,8 +224,8 @@
   }
 
   .market-section {
-    width: 100%;
-    background: #e0f5ff;
+    
+    background: #ffffff;
     padding: 60px 40px;
   }
 
@@ -416,18 +416,18 @@
   /*      FIND PETS SECTION      */
   /* =========================== */
 
-  .findpets-section {
-    width: 100%;
+  /*.findpets-section {
+    
     padding: 60px 40px;
     margin-top: 40px;
     background: #d7f0e4;
-  }
+  }*/
 
   .findpets-inner {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    max-width: 1100px;
+    max-width: 11000px;
     margin: 0 auto;
     padding: 20px;
     background: linear-gradient(135deg, #0c6b6b, #158b94, #0b5661);
@@ -461,7 +461,7 @@
   }
 
   .findpets-image img {
-    width: 280px;
+
     height: 420px;
     object-fit: cover;
     border-radius: 24px;
@@ -482,13 +482,52 @@
     }
   }
 
+  .report-buttons {
+  margin-top: 18px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.btn-report {
+  padding: 12px 18px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: 0.2s ease-in-out;
+}
+
+/* Lost Pet – Red Theme */
+.btn-report.lost {
+  background: #ffedea;
+  color: #c0392b;
+  border: 1px solid #f5b7b1;
+}
+.btn-report.lost:hover {
+  background: #ffdad1;
+}
+
+/* Found Pet – Blue Theme */
+.btn-report.found {
+  background: #e8f4ff;
+  color: #0b3d91;
+  border: 1px solid #a8c9ff;
+}
+.btn-report.found:hover {
+  background: #d6eaff;
+}
+
+
   /* ========================= */
   /*   PET CARDS SECTION       */
   /* ========================= */
 
   .pet-section {
-    width: 100%;
-    background: #416ac8;
+    background: #f5f5f6;
     padding: 50px 40px 70px;
     margin-top: 40px;
   }
@@ -499,7 +538,7 @@
   }
 
   .pet-section-inner h2 {
-    color: #fff;
+    color: #b08312;
     font-size: 28px;
     margin-bottom: 20px;
   }
@@ -652,7 +691,6 @@
   /* ========================== */
 
   .services-section {
-    width: 100%;
     padding: 0;
     margin-top: 40px;
     background: #c9efe6;
@@ -663,7 +701,7 @@
     justify-content: space-between;
     align-items: stretch;
     gap: 30px;
-    max-width: 1100px;
+    max-width: 10300px;
     margin: 0 auto;
     padding: 40px 20px;
     background: linear-gradient(135deg, #95d8d0, #68bfb4, #57aa9d);
@@ -712,8 +750,8 @@
   }
 
   .services-image img {
-    width: 100%;
-    max-width: 330px;
+    width: 105%;
+    max-width: 1030px;
     height: 420px;
     object-fit: cover;
     border-radius: 20px;
@@ -721,7 +759,7 @@
   }
 
   .services-heading {
-    width: 100%;
+    
     background: #ffd442;
     padding: 5px 4px;
     display: flex;
@@ -768,10 +806,9 @@
   /* ========================= */
 
   .stories-section {
-    width: 100%;
     background: #f5f7fa;
     padding: 60px 40px;
-    margin-top: 40px;
+    
   }
 
   .stories-section-inner {
@@ -910,7 +947,6 @@
   /* ========================= */
 
   footer {
-    width: 100%;
     background: #0b2c3d;
     color: #f5f7fa;
     margin-top: 60px;
@@ -967,7 +1003,7 @@
 
   .footer-links a:hover { color: #ff7a00; }
 
-  .footer-contact p {
+  .footer-contact p,a {
     font-size: 14px;
     margin-bottom: 6px;
     color: #d8e2ec;
@@ -1019,8 +1055,9 @@
     </div>
 
     <div class="buttons">
-      <a href="#found-pets" class="btn btn-primary">Adopt Now</a>
-      <a href="{{ url_for('main.pets_list') }}" class="btn btn-primary">Rescue a Pet</a>
+      <a href="{{ url_for('main.adoption_pets') }}" class="btn btn-primary">Adopt Now</a>
+      <a href="{{ url_for('main.report_found_pet') }}" class="btn btn-primary">Rescue a Pet</a>
+      <a href="{{ url_for('main.report_lost_pet') }}" class="btn btn-primary">Report Lost Pet</a>
       <a href="#services" class="btn btn-outline">Learn More</a>
     </div>
   </div>
@@ -1042,7 +1079,7 @@
     <div class="problem-left">
       <h2>Pet Care</h2>
       <p>Many families want to adopt but struggle to find trusted sources, clear information, and support after bringing a pet home.</p>
-      <img class="problem-cat" src="{{ url_for('static', filename='images/problem-left.jpg') }}" alt="Concerned cat">
+      
     </div>
 
     <div class="problem-image">
@@ -1107,7 +1144,7 @@
         </p>
       </div>
 
-      <a href="{{ url_for('main.pets_list') }}" class="adopt-btn">🐾 Adopt a Pet</a>
+      <a href="{{ url_for('main.adoption_pets') }}" class="adopt-btn">🐾 Adopt a Pet</a>
     </div>
 
   </div>
@@ -1173,129 +1210,53 @@
         ensuring every animal is treated with care and respect.
         By fostering trust and transparency, we help reunite pets with their families
         and provide a safe haven for those in need.
+      </p>
 
+      <!-- ACTION BUTTONS -->
+      <div class="report-buttons">
+        <a href="#" class="btn-report lost">
+          🐾 Report Lost Pet
+        </a>
+        <a href="#" class="btn-report found">
+          🔍 Report Found Pet
+        </a>
+      </div>
     </div>
 
     <div class="findpets-image">
-      <!-- update filename to whatever you actually use in /static/images/ -->
       <img src="{{ url_for('static', filename='images/adoption-awareness.png') }}" alt="Adoption awareness">
     </div>
 
   </div>
 </section>
 
-<!-- PET CARDS SECTION -->
-<section class="pet-section" id="found-pets">
-  <div class="pet-section-inner">
-    <h2>Found a Pet</h2>
 
-    <div class="pet-cards">
-      <div class="pet-card">
-        <div class="pet-card-header">
-          <div class="profile-circle">
-            <img src="{{ url_for('static', filename='images/profile1.jpg') }}" alt="Owner profile">
-          </div>
-          <div class="pet-card-title">Buddy • 2 yrs</div>
-        </div>
-        <div class="pet-image-wrapper">
-          <img src="{{ url_for('static', filename='images/pet1.jpg') }}" alt="Buddy the dog">
-        </div>
-        <div class="pet-card-buttons">
-          <button class="btn-small btn-message">Message</button>
-          <button class="btn-small btn-view">View Pet Profile</button>
-        </div>
-      </div>
-
-      <div class="pet-card">
-        <div class="pet-card-header">
-          <div class="profile-circle">
-            <img src="{{ url_for('static', filename='images/profile2.jpg') }}" alt="Owner profile">
-          </div>
-          <div class="pet-card-title">Misty • 1 yr</div>
-        </div>
-        <div class="pet-image-wrapper">
-          <img src="{{ url_for('static', filename='images/pet2.jpg') }}" alt="Misty the cat">
-        </div>
-        <div class="pet-card-buttons">
-          <button class="btn-small btn-message">Message</button>
-          <button class="btn-small btn-view">View Pet Profile</button>
-        </div>
-      </div>
-
-      <div class="pet-card">
-        <div class="pet-card-header">
-          <div class="profile-circle">
-            <img src="{{ url_for('static', filename='images/profile3.jpg') }}" alt="Owner profile">
-          </div>
-          <div class="pet-card-title">Luna • 3 yrs</div>
-        </div>
-        <div class="pet-image-wrapper">
-          <img src="{{ url_for('static', filename='images/pet3.jpg') }}" alt="Luna the dog">
-        </div>
-        <div class="pet-card-buttons">
-          <button class="btn-small btn-message">Message</button>
-          <button class="btn-small btn-view">View Pet Profile</button>
-        </div>
-      </div>
-
-      <div class="pet-card">
-        <div class="pet-card-header">
-          <div class="profile-circle">
-            <img src="{{ url_for('static', filename='images/profile4.jpg') }}" alt="Owner profile">
-          </div>
-          <div class="pet-card-title">Coco • 4 yrs</div>
-        </div>
-        <div class="pet-image-wrapper">
-          <img src="{{ url_for('static', filename='images/pet4.jpg') }}" alt="Coco the cat">
-        </div>
-        <div class="pet-card-buttons">
-          <button class="btn-small btn-message">Message</button>
-          <button class="btn-small btn-view">View Pet Profile</button>
-        </div>
-      </div>
-
-      <div class="pet-card">
-        <div class="pet-card-header">
-          <div class="profile-circle">
-            <img src="{{ url_for('static', filename='images/profile5.jpg') }}" alt="Owner profile">
-          </div>
-          <div class="pet-card-title">Max • 6 mos</div>
-        </div>
-        <div class="pet-image-wrapper">
-          <img src="{{ url_for('static', filename='images/pet5.jpg') }}" alt="Max the puppy">
-        </div>
-        <div class="pet-card-buttons">
-          <button class="btn-small btn-message">Message</button>
-          <button class="btn-small btn-view">View Pet Profile</button>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="view-more-wrapper">
-      <button class="view-more-btn">View more</button>
-    </div>
-  </div>
-</section>
 
 <!-- SERVICES AND MANAGEMENT SECTION -->
 <section class="services-section" id="services-section">
+  <div class="services-heading" id="services">
+    <h2>Services and<br>Management</h2>
+  </div>
   <div class="services-inner">
 
     <div class="services-left">
       <div class="service-item">
         <div class="service-icon">🐶</div>
         <div class="service-text">
-          <h3>Pet Essentials</h3>
-          <p>Healthy pet food, eco-friendly toys, and stylish accessories.</p>
+          <h3>Pet care</h3>
+          <p>Expert-verified pet care resources that help owners manage nutrition, health checks, vaccinations, grooming schedules, and daily wellbeing needs — all guided through reliable information and trusted service providers.
+
+          </p>
         </div>
       </div>
 
       <div class="service-item">
         <div class="service-icon">🧼</div>
         <div class="service-text">
-          <h3>Pet Lifestyle</h3>
-          <p>Comprehensive grooming, daycare services, and tailored training programs.</p>
+          <h3>Pet Life</h3>
+          <p>
+           From adoption to long-term wellbeing, our portal enhances every part of a pet’s life with safe reporting tools, verified NGO support, behavior tracking, daycare options, and enriched activity planning — ensuring a happier, healthier journey for every pet.
+          </p>
         </div>
       </div>
 
@@ -1303,7 +1264,14 @@
         <div class="service-icon">📱</div>
         <div class="service-text">
           <h3>Digital Solutions</h3>
-          <p>User-friendly mobile app for seamless bookings and smart pet care recommendations.</p>
+          <p>A smart, integrated digital system that connects pet owners, NGOs, and shelters.
+                 Our portal enables:
+
+                 Instant lost & found reporting
+
+                Real-time status tracking
+
+                Verified matches by NGOs</p>
         </div>
       </div>
     </div>
@@ -1313,10 +1281,7 @@
     </div>
   </div>
 
-  <div class="services-heading" id="services">
-    <h2>Services and<br>Management</h2>
-    <img src="{{ url_for('static', filename='images/house-icon.png') }}" alt="House icon">
-  </div>
+  
 </section>
 
 <!-- SUCCESS STORIES SECTION -->
@@ -1412,14 +1377,16 @@
         <li><a href="#services">Services</a></li>
         <li><a href="#stories">Success Stories</a></li>
         <li><a href="#team">Our Team</a></li>
+        <li><a href="{{ url_for('main.about') }}">About Us</a></li>
       </ul>
     </div>
 
     <div class="footer-contact">
-      <h3 class="footer-title">Contact</h3>
+      <h3 class="footer-title"><a href="{{ url_for('main.contact') }}">Contact</a></h3>
       <p>Email: support@pawcare.com</p>
       <p>Phone: +91-98765-43210</p>
       <p>City: Chennai, India</p>
+      
 
       <div class="footer-social">
         <span>🐾</span>

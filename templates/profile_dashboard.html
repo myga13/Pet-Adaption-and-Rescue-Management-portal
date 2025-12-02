@@ -1,0 +1,1044 @@
+{% extends "base.html" %}
+{% block title %}PawCare | My Dashboard{% endblock %}
+{% block content %}
+
+<style>
+  :root {
+    --u-primary: #0ea5e9;
+    --u-primary-dark: #0284c7;
+    --u-accent: #22c55e;
+    --u-bg: #ecfeff;
+    --u-card-bg: #ffffff;
+    --u-text-main: #0f172a;
+    --u-text-muted: #6b7280;
+    --u-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  }
+
+  body {
+    background: radial-gradient(circle at top left, #e0f2fe 0, #f0f9ff 40%, #f9fafb 100%);
+  }
+
+  .user-layout {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    min-height: calc(100vh - 80px);
+    margin-top: 20px;
+  }
+
+  /* SIDEBAR */
+  .user-sidebar {
+    background: linear-gradient(180deg, var(--u-primary-dark), #0284c7 40%, #0f766e 100%);
+    color: #e5e7eb;
+    padding: 20px 12px 24px;
+    box-shadow: 8px 0 30px rgba(15, 23, 42, 0.35);
+    border-radius: 0 24px 24px 0;
+    position: sticky;
+    top: 0;
+    align-self: start;
+  }
+
+  .user-logo {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    padding: 4px 10px 14px;
+    border-bottom: 1px solid rgba(191, 219, 254, 0.35);
+    margin-bottom: 16px;
+  }
+
+  .user-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 6px;
+  }
+
+  .user-menu-btn {
+    border-radius: 14px;
+    padding: 10px 14px;
+    background: rgba(15, 23, 42, 0.12);
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #e5e7eb;
+    cursor: pointer;
+    transition: 0.18s ease-out;
+    text-decoration: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .user-menu-btn span.icon {
+    font-size: 18px;
+  }
+
+  .user-menu-btn:hover {
+    background: rgba(15, 23, 42, 0.28);
+    transform: translateY(-1px);
+  }
+
+  .user-menu-btn.active {
+    background: #f9fafb;
+    color: var(--u-primary-dark);
+    border-color: #bae6fd;
+  }
+
+  .user-menu-footer {
+    margin-top: 22px;
+    border-top: 1px solid rgba(191, 219, 254, 0.3);
+    padding-top: 12px;
+  }
+
+  /* MAIN AREA */
+  .user-main {
+    padding: 0 26px 40px;
+  }
+
+  .user-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    margin-bottom: 18px;
+    background: #f9fafb;
+    border-radius: 18px;
+    box-shadow: var(--u-shadow);
+  }
+
+  .user-topbar-left h2 {
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+
+  .user-topbar-left p {
+    font-size: 13px;
+    color: var(--u-text-muted);
+  }
+
+  .user-profile-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #ecfeff;
+    border: 1px solid #bae6fd;
+  }
+
+  .user-profile-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #7dd3fc;
+    background: #e0f2fe;
+  }
+
+  .user-profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .user-profile-name {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .user-profile-role {
+    font-size: 11px;
+    color: var(--u-text-muted);
+  }
+
+  /* CONTENT SECTIONS */
+  .user-section {
+    display: none;
+    animation: fadeIn 0.25s ease-out;
+  }
+
+  .user-section.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .user-card {
+    background: var(--u-card-bg);
+    border-radius: 18px;
+    box-shadow: var(--u-shadow);
+    border: 1px solid #e5e7eb;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+  }
+
+  .user-card h3 {
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+
+  .user-card p.desc {
+    font-size: 13px;
+    color: var(--u-text-muted);
+    margin-bottom: 12px;
+  }
+
+  .user-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px;
+    margin-top: 10px;
+  }
+
+  .user-stat {
+    background: #f0f9ff;
+    border-radius: 14px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .user-stat-label {
+    color: var(--u-text-muted);
+    margin-bottom: 4px;
+  }
+
+  .user-stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--u-primary-dark);
+  }
+
+  .user-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    border: 1px solid #dbeafe;
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  .user-chip-ngo {
+    border-color: #bbf7d0;
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .user-chip-warning {
+    border-color: #fed7aa;
+    background: #ffedd5;
+    color: #c2410c;
+  }
+
+  .user-chip-info {
+    border-color: #bae6fd;
+    background: #e0f2fe;
+    color: #0369a1;
+  }
+
+  .user-pet-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 14px;
+  }
+
+  .user-pet-card {
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    box-shadow: 0 8px 18px rgba(15,23,42,0.06);
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  .user-pet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .user-pet-main {
+    font-weight: 600;
+  }
+
+  .user-pet-meta {
+    font-size: 12px;
+    color: var(--u-text-muted);
+    margin-bottom: 6px;
+  }
+
+  .user-pet-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .user-btn {
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 12px;
+    border: none;
+    cursor: pointer;
+  }
+
+  .user-btn-primary {
+    background: var(--u-primary-dark);
+    color: #ffffff;
+  }
+
+  .user-btn-outline {
+    background: #ffffff;
+    border: 1px solid #bae6fd;
+    color: #075985;
+  }
+
+  .user-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 8px;
+  }
+
+  .user-table th,
+  .user-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+  }
+
+  .user-table th {
+    background: #f3f4f6;
+    font-weight: 600;
+  }
+
+  .user-step-list {
+    list-style: decimal;
+    padding-left: 18px;
+    font-size: 13px;
+    color: var(--u-text-main);
+  }
+
+  .user-step-list li {
+    margin-bottom: 6px;
+  }
+
+  .user-highlight-box {
+    background: #ecfeff;
+    border-radius: 14px;
+    border: 1px dashed #7dd3fc;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #0369a1;
+    margin-top: 8px;
+  }
+
+  /* CHAT STYLES */
+  .chat-layout {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .chat-users {
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .chat-users h4 {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  .chat-users ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+
+  .chat-users li {
+    padding: 6px 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-bottom: 4px;
+  }
+
+  .chat-users li.active,
+  .chat-users li:hover {
+    background: #e0f2fe;
+    color: #0369a1;
+  }
+
+  .chat-window {
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    box-shadow: 0 8px 18px rgba(15,23,42,0.06);
+    display: flex;
+    flex-direction: column;
+    height: 360px;
+  }
+
+  .chat-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+  }
+
+  .chat-header strong {
+    font-size: 14px;
+  }
+
+  .chat-messages {
+    flex: 1;
+    padding: 10px 14px;
+    overflow-y: auto;
+    background: #f9fafb;
+  }
+
+  .chat-message {
+    max-width: 80%;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+
+  .chat-message.other {
+    text-align: left;
+  }
+
+  .chat-message.me {
+    margin-left: auto;
+    text-align: right;
+  }
+
+  .chat-bubble {
+    display: inline-block;
+    padding: 8px 10px;
+    border-radius: 14px;
+  }
+
+  .chat-message.other .chat-bubble {
+    background: #e5e7eb;
+    color: #111827;
+    border-bottom-left-radius: 2px;
+  }
+
+  .chat-message.me .chat-bubble {
+    background: var(--u-primary-dark);
+    color: #ffffff;
+    border-bottom-right-radius: 2px;
+  }
+
+  .chat-meta {
+    margin-top: 2px;
+    font-size: 11px;
+    color: #9ca3af;
+  }
+
+  .chat-input-bar {
+    border-top: 1px solid #e5e7eb;
+    padding: 8px 10px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .chat-input-bar input[type="text"] {
+    flex: 1;
+    border-radius: 999px;
+    border: 1px solid #d1d5db;
+    padding: 7px 10px;
+    font-size: 13px;
+  }
+
+  .chat-input-bar button {
+    border-radius: 999px;
+    border: none;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--u-primary-dark);
+    color: #ffffff;
+    cursor: pointer;
+  }
+
+  .chat-input-bar button:hover {
+    filter: brightness(0.95);
+  }
+
+  @media (max-width: 950px) {
+    .user-layout {
+      grid-template-columns: 1fr;
+    }
+    .user-sidebar {
+      position: relative;
+      border-radius: 0 0 24px 24px;
+      display: flex;
+      flex-direction: row;
+      overflow-x: auto;
+      gap: 8px;
+      padding: 12px 10px 14px;
+    }
+    .user-logo {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+    .user-menu {
+      flex-direction: row;
+      margin-top: 0;
+    }
+    .user-menu-btn {
+      white-space: nowrap;
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+    .user-main {
+      padding: 12px 14px 30px;
+    }
+    .user-topbar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .chat-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
+
+
+<div class="user-layout">
+  <!-- SIDEBAR -->
+  <aside class="user-sidebar">
+    <div class="user-logo">My PawCare</div>
+    <nav class="user-menu">
+      <button class="user-menu-btn active" data-target="u-overview">
+        <span class="icon">🏠</span> Overview
+      </button>
+      <button class="user-menu-btn" data-target="u-pets"> 
+        <span class="icon">🐾</span> My Pets
+      </button>
+      <button class="user-menu-btn" data-target="u-ngo">
+        <span class="icon">✅</span> NGO Verification
+      </button>
+      <button class="user-menu-btn" data-target="u-adoption">
+        <span class="icon">🏡</span> Adoption
+      </button>
+      <button class="user-menu-btn" data-target="u-lostfound">
+        <span class="icon">📍</span> Lost &amp; Found
+      </button>
+      <!-- NEW: CHAT TAB -->
+      <button class="user-menu-btn" data-target="u-chat">
+        <span class="icon">💬</span> Chat
+      </button>
+      <button class="user-menu-btn" data-target="u-notify">
+        <span class="icon">🔔</span> Messages &amp; Alerts
+      </button>
+      <button class="user-menu-btn" data-target="u-help">
+        <span class="icon">💡</span> Help &amp; Awareness
+      </button>
+    </nav>
+
+    <div class="user-menu-footer">
+      <button class="user-menu-btn" onclick="window.location.href='{{ url_for('main.index') }}'">
+       <span class="icon">↩️</span> Back to Home
+      </button>
+
+      <button class="user-menu-btn" onclick="window.location.href='{{ url_for('main.logout') }}'">
+  <span class="icon">🚪</span> Logout
+</button>
+
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <section class="user-main">
+    <div class="user-topbar">
+      <div class="user-topbar-left">
+        <h2>Welcome to your PawCare </h2>
+        <p>Track your pets, NGO verification status, adoptions, and reports in one place.</p>
+      </div>
+      <div class="user-profile-pill">
+        <div class="user-profile-avatar">
+          <img src="{{ url_for('static', filename='images/profile1.jpg') }}" alt="User">
+        </div>
+        <div>
+          <div class="user-profile-name">Your Name</div>
+          <div class="user-profile-role">Pet Parent</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= OVERVIEW ============= -->
+    <div class="user-section active" id="u-overview">
+      <div class="user-card">
+        <h3>Overview</h3>
+        <p class="desc">
+          A quick snapshot of your activity in PawCare – how many pets you added, how many are NGO verified,
+          pending adoption requests, and any open lost &amp; found reports.
+        </p>
+
+        <div class="user-stats-grid">
+          <div class="user-stat">
+            <div class="user-stat-label">My Pets</div>
+            <div class="user-stat-value">3</div>
+            <span class="user-chip user-chip-info">Add more pets any time</span>
+          </div>
+          <div class="user-stat">
+            <div class="user-stat-label">NGO Verified Pets</div>
+            <div class="user-stat-value">1</div>
+            <span class="user-chip user-chip-ngo">Trusted badge shown on profile</span>
+          </div>
+          <div class="user-stat">
+            <div class="user-stat-label">Adoption Requests</div>
+            <div class="user-stat-value">2</div>
+            <span class="user-chip user-chip-warning">Respond quickly to serious adopters</span>
+          </div>
+          <div class="user-stat">
+            <div class="user-stat-label">Lost/Found Reports</div>
+            <div class="user-stat-value">1</div>
+            <span class="user-chip user-chip-info">Track status in Lost &amp; Found tab</span>
+          </div>
+        </div>
+
+        <div class="user-highlight-box">
+          Tip: Use <strong>NGO Verification</strong> to build trust.
+          When your pet is verified by a partner NGO, adopters feel safer and fraud is reduced.
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= MY PETS ============= -->
+    <div class="user-section" id="u-pets">
+      <div class="user-card">
+        <h3>My Pets</h3>
+        <p class="desc">
+          This section shows all pets you have added to the PawCare portal.
+          You can update details, request NGO verification, or mark a pet available for adoption.
+        </p>
+
+        <div class="user-pet-list">
+          <!-- Example Pet 1 -->
+          <div class="user-pet-card">
+            <div class="user-pet-header">
+              <div class="user-pet-main">Buddy • 2 yrs • Dog</div>
+              <span class="user-chip user-chip-ngo">✅ NGO Verified</span>
+            </div>
+            <div class="user-pet-meta">
+              Status: Family pet • Vaccinated • Microchipped
+            </div>
+            <p style="font-size:12px; margin:0;">
+              This pet carries an <strong>NGO Verified</strong> badge in your profile and in the adoption view
+              (if you choose to list for adoption). It shows that an NGO has checked identity and basic health.
+            </p>
+            <div class="user-pet-actions">
+              <button class="user-btn user-btn-outline">Edit Pet Details</button>
+              <button class="user-btn user-btn-outline">View NGO Report</button>
+            </div>
+          </div>
+
+          <!-- Example Pet 2 -->
+          <div class="user-pet-card">
+            <div class="user-pet-header">
+              <div class="user-pet-main">Milo • 1 yr • Cat</div>
+              <span class="user-chip user-chip-warning">Pending NGO Verification</span>
+            </div>
+            <div class="user-pet-meta">
+              Status: Listed for adoption • Indoor, calm temperament
+            </div>
+            <p style="font-size:12px; margin:0;">
+              Your request for NGO verification has been sent. You will see updates in the
+              <strong>NGO Verification</strong> tab and via alerts in <strong>Messages &amp; Alerts</strong>.
+            </p>
+            <div class="user-pet-actions">
+              <button class="user-btn user-btn-primary">Update Adoption Info</button>
+              <button class="user-btn user-btn-outline">Cancel NGO Request</button>
+            </div>
+          </div>
+
+          <!-- Example Pet 3 -->
+          <div class="user-pet-card">
+            <div class="user-pet-header">
+              <div class="user-pet-main">Snowy • 3 yrs • Dog</div>
+              <span class="user-chip user-chip-info">Reported as Lost</span>
+            </div>
+            <div class="user-pet-meta">
+              Status: Lost near City Park • Reported 2 days ago
+            </div>
+            <p style="font-size:12px; margin:0;">
+              This pet appears in the <strong>Lost &amp; Found</strong> section and may be checked by NGOs
+              to avoid misuse. Keep the details updated to improve chances of reunion.
+            </p>
+            <div class="user-pet-actions">
+              <button class="user-btn user-btn-primary">Update Lost Report</button>
+              <button class="user-btn user-btn-outline">Mark as Found / Reunited</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="user-highlight-box">
+          Awareness: Always use clear photos and honest information.
+          It helps NGOs verify faster and helps other families trust your pet’s profile.
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= NGO VERIFICATION ============= -->
+    <div class="user-section" id="u-ngo">
+      <div class="user-card">
+        <h3>NGO Verification Status</h3>
+        <p class="desc">
+          Here you see all verification requests sent to our collaborating NGOs.
+          Verification helps prove that your pet is real, healthy as described, and truly in your care.
+        </p>
+
+        <table class="user-table">
+          <thead>
+            <tr>
+              <th>Request ID</th>
+              <th>Pet</th>
+              <th>Partner NGO</th>
+              <th>Purpose</th>
+              <th>Status</th>
+              <th>What this means for you</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>#NGO-301</td>
+              <td>Buddy (Dog)</td>
+              <td>PawCare Trust</td>
+              <td>Adoption Profile</td>
+              <td><span class="user-chip user-chip-ngo">Verified</span></td>
+              <td>NGO has confirmed identity. An “NGO Verified” chip is shown to adopters.</td>
+            </tr>
+            <tr>
+              <td>#NGO-298</td>
+              <td>Milo (Cat)</td>
+              <td>City Animal Welfare</td>
+              <td>Adoption Profile</td>
+              <td><span class="user-chip user-chip-warning">Pending</span></td>
+              <td>NGO may contact you or ask for more documents or photos.</td>
+            </tr>
+            <tr>
+              <td>#NGO-292</td>
+              <td>Snowy (Dog)</td>
+              <td>Happy Paws Foundation</td>
+              <td>Lost/Found Match</td>
+              <td><span class="user-chip user-chip-info">Under Review</span></td>
+              <td>NGO is checking reported sightings against your lost report.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="user-highlight-box">
+          Awareness: NGOs are independent partners. Their decision helps protect both animals and families.
+          If a verification is rejected, you will see the reason and can correct information or re-apply.
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= ADOPTION ============= -->
+    <div class="user-section" id="u-adoption">
+      <div class="user-card">
+        <h3>Adoption Center</h3>
+        <p class="desc">
+          Manage pets you have listed for adoption and see how NGO verification affects their visibility.
+        </p>
+
+        <table class="user-table">
+          <thead>
+            <tr>
+              <th>Pet</th>
+              <th>Requests</th>
+              <th>NGO Verified?</th>
+              <th>Current Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Milo (Cat)</td>
+              <td>2 interested families</td>
+              <td><span class="user-chip user-chip-warning">Pending</span></td>
+              <td>Visible to users, but flagged as “Verification in progress”.</td>
+            </tr>
+            <tr>
+              <td>Buddy (Dog)</td>
+              <td>Not listed</td>
+              <td><span class="user-chip user-chip-ngo">Yes</span></td>
+              <td>You can safely list Buddy for adoption in future.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <ul class="user-step-list">
+          <li>Decide which pet you want to list for adoption.</li>
+          <li>Ensure the pet’s profile is complete and honest.</li>
+          <li>Request NGO verification for higher trust and smoother handover.</li>
+          <li>Chat with adopters only inside the portal – avoid sharing personal data directly.</li>
+        </ul>
+
+        <div class="user-highlight-box">
+          Awareness: <strong>Never charge “advance money” to adopters outside the portal.</strong><br>
+          If anyone asks you for unusual payments, report it through Messages &amp; Alerts.
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= LOST & FOUND ============= -->
+    <div class="user-section" id="u-lostfound">
+      <div class="user-card">
+        <h3>Lost &amp; Found</h3>
+        <p class="desc">
+          Report your pet as lost or inform the community when you find an unknown animal.
+          NGO verification and community checks help prevent misuse or false claims.
+        </p>
+
+        <table class="user-table">
+          <thead>
+            <tr>
+              <th>Report ID</th>
+              <th>Type</th>
+              <th>Pet / Animal</th>
+              <th>Location</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>#L-201</td>
+              <td>Lost</td>
+              <td>Snowy (Dog)</td>
+              <td>City Park</td>
+              <td><span class="user-chip user-chip-warning">Searching</span></td>
+            </tr>
+            <tr>
+              <td>#F-102</td>
+              <td>Found</td>
+              <td>Unknown mixed-breed dog</td>
+              <td>Main Street</td>
+              <td><span class="user-chip user-chip-info">Possible Match Found</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <ul class="user-step-list">
+          <li>Use clear photos and correct landmarks when you create a report.</li>
+          <li>Never hand over a pet without basic identity checks or NGO support.</li>
+          <li>Use the portal messages to coordinate, not personal calls at first.</li>
+        </ul>
+
+        <div class="user-highlight-box">
+          Awareness: NGOs may cross-check your lost report before confirming a match.
+          This is to avoid deliberate misuse and sale of stolen animals.
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= CHAT (NEW) ============= -->
+    <div class="user-section" id="u-chat">
+      <div class="user-card">
+        <h3>Chat with Other PawCare Users</h3>
+        <p class="desc">
+          Use this chat box to communicate with other pet parents and adopters inside the portal.
+          For your safety, avoid sharing phone numbers or addresses directly in chat.
+        </p>
+
+        <div class="chat-layout">
+          <!-- LEFT: simple user list (static demo, replace with real users later) -->
+          <aside class="chat-users">
+            <h4>Users</h4>
+            <ul id="chat-user-list">
+              <li class="active" data-user-id="1">Priya (Adopter)</li>
+              <li data-user-id="2">Rahul (Pet Parent)</li>
+              <li data-user-id="3">Ananya (Pet Parent)</li>
+            </ul>
+            <p class="user-highlight-box" style="margin-top:10px;">
+              Awareness: Only chat with people related to your adoption or lost/found cases.
+              Report suspicious messages through <strong>Messages &amp; Alerts</strong>.
+            </p>
+          </aside>
+
+          <!-- RIGHT: chat window -->
+          <section class="chat-window">
+            <div class="chat-header">
+              <div>
+                <strong id="chat-active-name">Priya (Adopter)</strong><br>
+                <span style="color:var(--u-text-muted); font-size:11px;">Secure PawCare conversation</span>
+              </div>
+              <span style="font-size:11px; color:#22c55e;">● Online</span>
+            </div>
+
+            <div class="chat-messages" id="chat-messages">
+              <div class="chat-message other">
+                <div class="chat-bubble">
+                  Hi! I’m interested in adopting Milo. Is he good with kids?
+                </div>
+                <div class="chat-meta">Priya • 2 min ago</div>
+              </div>
+              <div class="chat-message me">
+                <div class="chat-bubble">
+                  Yes, Milo is very gentle and used to being around children. We can arrange a meet-up.
+                </div>
+                <div class="chat-meta">You • 1 min ago</div>
+              </div>
+            </div>
+
+            <form class="chat-input-bar" id="chat-form">
+              <input
+                type="text"
+                id="chat-input"
+                autocomplete="off"
+                placeholder="Type your message here..."
+              >
+              <button type="submit">Send</button>
+            </form>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= MESSAGES & ALERTS ============= -->
+    <div class="user-section" id="u-notify">
+      <div class="user-card">
+        <h3>Messages &amp; Alerts</h3>
+        <p class="desc">
+          This is where you receive updates about NGO decisions, adoption interest, and lost &amp; found matches.
+        </p>
+
+        <ul style="list-style:none; padding-left:0; font-size:13px; color:var(--u-text-main); margin-bottom:8px;">
+          <li>• NGO <strong>PawCare Trust</strong> has verified your pet <strong>Buddy</strong>.</li>
+          <li>• New adoption request for <strong>Milo</strong> from <strong>Priya</strong>.</li>
+          <li>• A community member reported a dog similar to <strong>Snowy</strong> near City Mall.</li>
+        </ul>
+
+        <div class="user-highlight-box">
+          Awareness: Always read NGO notes carefully.
+          If they suggest medical checks or corrections in your profile, it is for your pet’s safety and trust-building.
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= HELP & AWARENESS ============= -->
+    <div class="user-section" id="u-help">
+      <div class="user-card">
+        <h3>Help &amp; Awareness</h3>
+        <p class="desc">
+          Learn how PawCare, NGOs, and the community work together to keep animals safe and families informed.
+        </p>
+
+        <div class="user-stats-grid">
+          <div class="user-stat">
+            <div class="user-stat-label">Why NGO Verification?</div>
+            <div style="font-size:13px;">
+              Prevents fake profiles, supports honest adoptions, and protects pets from trafficking.
+            </div>
+          </div>
+          <div class="user-stat">
+            <div class="user-stat-label">Safe Handover</div>
+            <div style="font-size:13px;">
+              Use written handover notes, ID verification and, if possible, NGO oversight.
+            </div>
+          </div>
+          <div class="user-stat">
+            <div class="user-stat-label">Reporting Misuse</div>
+            <div style="font-size:13px;">
+              If anyone is asking for unusual payments or acting suspiciously, report inside the portal.
+            </div>
+          </div>
+        </div>
+
+        <ul class="user-step-list" style="margin-top:10px;">
+          <li><strong>Always be transparent</strong> about your pet’s health and behaviour.</li>
+          <li><strong>Never abandon</strong> an animal in public spaces; use shelters and NGOs.</li>
+          <li><strong>Keep records</strong> of vaccines, vet visits and ID marks – this helps NGOs verify faster.</li>
+          <li><strong>Teach family members</strong> (especially kids) how to approach new animals gently.</li>
+        </ul>
+
+        <div class="user-highlight-box">
+          Awareness: Your actions on PawCare directly affect real animals and real families.
+          Using NGO verification and honest reporting builds a safer ecosystem for everyone.
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Simple tab switching for user dashboard
+  const uButtons = document.querySelectorAll(".user-menu-btn[data-target]");
+  const uSections = document.querySelectorAll(".user-section");
+
+  uButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.getAttribute("data-target");
+
+      uButtons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      uSections.forEach(sec => {
+        sec.classList.toggle("active", sec.id === targetId);
+      });
+    });
+  });
+
+  // Chat: local-only frontend behaviour (no backend yet)
+  const chatForm = document.getElementById("chat-form");
+  const chatInput = document.getElementById("chat-input");
+  const chatMessages = document.getElementById("chat-messages");
+  const chatUserList = document.getElementById("chat-user-list");
+  const chatActiveName = document.getElementById("chat-active-name");
+
+  if (chatUserList) {
+    chatUserList.addEventListener("click", (e) => {
+      const li = e.target.closest("li");
+      if (!li) return;
+      chatUserList.querySelectorAll("li").forEach(item => item.classList.remove("active"));
+      li.classList.add("active");
+      chatActiveName.textContent = li.textContent.trim();
+      // In a real app, here you would load chat history for that user via AJAX/WebSocket
+    });
+  }
+
+  if (chatForm) {
+    chatForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = chatInput.value.trim();
+      if (!text) return;
+
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "chat-message me";
+      msgDiv.innerHTML = `
+        <div class="chat-bubble">${text}</div>
+        <div class="chat-meta">You • just now</div>
+      `;
+      chatMessages.appendChild(msgDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      chatInput.value = "";
+      chatInput.focus();
+
+      // TODO (backend): send this message to server via fetch/WebSocket
+      // fetch('/chat/send', { method: 'POST', body: JSON.stringify({ text, toUserId }) ... })
+    });
+  }
+</script>
+
+{% endblock %}

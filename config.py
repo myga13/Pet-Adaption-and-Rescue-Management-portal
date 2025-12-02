@@ -17,3 +17,8 @@ class Config:
     USER_IMAGE_UPLOADS = os.path.join(MEDIA_ROOT, "user_images")
 
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB
+
+    ADMIN_PROFILE_UPLOADS = os.path.join(BASE_DIR, "media", "admin_profiles")
+    ADMIN_ID_UPLOADS = os.path.join(BASE_DIR, "media", "admin_ids")
+    FOUND_PET_UPLOADS = os.path.join(MEDIA_ROOT, "found_pets")
+    LOST_PET_UPLOADS = os.path.join(MEDIA_ROOT, "lost_pets")

@@ -24,6 +24,7 @@ from models import GenderEnum
 ALLOWED_IMAGE_EXT = ["jpg", "jpeg", "png", "gif"]
 
 
+
 class RegisterForm(FlaskForm):
     user_name = StringField(
         "Username",
