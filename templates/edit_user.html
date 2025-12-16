@@ -3,135 +3,271 @@
 
 {% block content %}
 <style>
-/* Edit profile page (matches app look) */
-:root{
-  --card-bg:#ffffff; --muted:#6b7c8c; --text:#071022; --accent:#5ea8ff; --radius:12px;
+/* -------------------------
+   EDIT PROFILE PAGE (Modern)
+   Matches register page style
+   ------------------------- */
+
+:root {
+  --card-bg:#ffffff; 
+  --muted:#6b7c8c; 
+  --text:#071022;
+  --accent:#4da3ff; 
+  --accent-2:#7be5c7;
+  --radius:14px;
+  --shadow:0 18px 40px rgba(10,24,48,0.06);
 }
-.container{ max-width:820px; margin:28px auto; padding:18px; font-family:Inter, system-ui, -apple-system,"Segoe UI",Roboto,Arial; color:var(--text); }
-.card{ background:var(--card-bg); border-radius:14px; padding:20px; border:1px solid rgba(8,20,40,0.04); box-shadow:0 12px 36px rgba(10,20,40,0.04); }
-.header{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
-.header h1{ margin:0; font-size:1.3rem; font-weight:800 }
-.form-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-.full{ grid-column:1/-1 }
-.label{ display:block; font-weight:700; margin-bottom:6px; color:var(--muted); text-transform:uppercase; font-size:.85rem }
-.input{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(8,20,40,0.06); background:transparent; font-size:15px; color:var(--text); outline:none }
-.textarea{ min-height:80px; resize:vertical; padding:12px; }
-.file-row{ display:flex; gap:12px; align-items:center }
-.preview{ width:96px; height:96px; border-radius:10px; overflow:hidden; background:#f3f6fb; border:1px solid rgba(0,0,0,0.04); display:grid; place-items:center }
-.small{ font-size:0.9rem; color:var(--muted); margin-top:6px }
-.actions{ display:flex; gap:10px; margin-top:14px; justify-content:flex-end }
-.btn{ padding:10px 14px; border-radius:10px; border:none; font-weight:800; cursor:pointer }
-.btn-save{ background: linear-gradient(90deg,var(--accent), #66f0d8); color:#042033 }
-.btn-cancel{ background:transparent; border:1px solid rgba(8,20,40,0.06); color:var(--muted) }
-.opt-remove{ background:transparent; border:1px dashed rgba(200,20,20,0.12); color:#b91c1c; padding:8px 10px; border-radius:8px; cursor:pointer }
-.note{ font-size:0.86rem; color:var(--muted); margin-top:8px }
-@media (max-width:720px){ .form-grid{ grid-template-columns: 1fr } .actions{ flex-direction:column-reverse; } .preview{ width:76px; height:76px } }
+
+/* container */
+.edit-wrapper{
+  max-width:760px;
+  margin:28px auto;
+  padding:32px;
+  background:var(--card-bg);
+  border-radius:16px;
+  border:1px solid rgba(8,20,40,0.04);
+  box-shadow:var(--shadow);
+  animation:fadeSlide .35s cubic-bezier(.28,.6,.2,1);
+}
+
+@keyframes fadeSlide {
+  0%{ opacity:0; transform:translateY(10px) scale(.985); }
+  100%{ opacity:1; transform:translateY(0) scale(1); }
+}
+
+.edit-title{
+  font-size:1.7rem;
+  font-weight:800;
+  margin:0;
+}
+.edit-sub{
+  color:var(--muted);
+  margin-top:4px;
+  margin-bottom:20px;
+  font-weight:600;
+}
+
+/* grid layout */
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+.full{ grid-column:1 / -1; }
+
+/* labels */
+.label{
+  display:block;
+  margin-bottom:6px;
+  font-size:.85rem;
+  font-weight:700;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+
+/* input styles */
+.input{
+  width:100%;
+  padding:11px 12px;
+  border-radius:10px;
+  border:1px solid rgba(8,20,40,0.06);
+  background:rgba(255,255,255,0.8);
+  font-size:15px;
+  color:var(--text);
+  transition:.15s ease;
+}
+.input:focus{
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(77,163,255,0.18);
+}
+
+/* textarea */
+.textarea{
+  min-height:88px;
+  resize:vertical;
+}
+
+/* avatar preview */
+.avatar-box{
+  width:108px; height:108px;
+  border-radius:12px;
+  background:#f3f6fb;
+  border:1px solid rgba(0,0,0,0.06);
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  box-shadow:0 10px 24px rgba(10,24,48,0.06);
+}
+.avatar-box img{
+  width:100%; height:100%; object-fit:cover;
+}
+
+/* action buttons */
+.actions{
+  margin-top:24px;
+  display:flex;
+  justify-content:flex-end;
+  gap:12px;
+}
+.btn{
+  padding:11px 16px;
+  border-radius:12px;
+  font-weight:700;
+  cursor:pointer;
+  border:none;
+}
+.btn-save{
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));
+  color:#042033;
+}
+.btn-cancel{
+  background:#f7f7f7;
+  border:1px solid rgba(8,20,40,0.1);
+  color:var(--muted);
+}
+
+/* remove button */
+.opt-remove{
+  margin-top:8px;
+  background:transparent;
+  border:1px dashed rgba(200,20,20,0.25);
+  padding:8px 12px;
+  color:#b91c1c;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+/* responsive */
+@media(max-width:720px){
+  .form-grid{ grid-template-columns:1fr; }
+  .avatar-box{ width:86px; height:86px; }
+}
 </style>
 
-<div class="container">
-  <div class="card" role="region" aria-labelledby="edit-title">
-    <div class="header">
-      <h1 id="edit-title">Edit Profile</h1>
-      <div class="small">Update your public information</div>
+<div class="edit-wrapper">
+  <h1 class="edit-title">Edit Profile</h1>
+  <div class="edit-sub">Update your personal details</div>
+
+  <form method="POST" enctype="multipart/form-data" id="editForm">
+    {{ form.hidden_tag() }}
+
+    <div style="display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap">
+      
+      <!-- LEFT: AVATAR -->
+      <div style="min-width:120px">
+        <label class="label">Current Avatar</label>
+
+        <div class="avatar-box" id="previewBox">
+
+          {% if user.user_img %}
+            <img id="previewImg" src="{{ url_for('main.media', filename=user.user_img) }}">
+          {% else %}
+            <span id="previewInitial" style="font-size:1.8rem;font-weight:800;color:#345">
+              {{ user.user_name[:1].upper() }}
+            </span>
+          {% endif %}
+
+        </div>
+
+        <!-- Upload -->
+        <div style="margin-top:12px">
+          <label class="label">{{ form.user_img.label.text }}</label>
+          {{ form.user_img(class="input", accept="image/*") }}
+          <div class="small">JPG / PNG / GIF — max 5MB</div>
+        </div>
+
+        <!-- Remove button -->
+        {% if user.user_img %}
+        <button type="button" id="removeImgBtn" class="opt-remove">Remove Image</button>
+        {% endif %}
+      </div>
+
+      <!-- RIGHT: FIELDS -->
+      <div style="flex:1; min-width:260px">
+        <div class="form-grid">
+
+          <!-- Username -->
+          <div>
+            <label class="label">{{ form.user_name.label.text }}</label>
+            {{ form.user_name(class="input") }}
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label class="label">{{ form.email.label.text }}</label>
+            {{ form.email(class="input") }}
+          </div>
+
+          <!-- Phone -->
+          <div>
+            <label class="label">{{ form.phone_number.label.text }}</label>
+            {{ form.phone_number(class="input") }}
+          </div>
+
+          <!-- Bio -->
+          <div class="full">
+            <label class="label">{{ form.user_bio.label.text }}</label>
+            {{ form.user_bio(class="input textarea") }}
+          </div>
+
+          <!-- City -->
+          <div>
+            <label class="label">{{ form.city.label.text }}</label>
+            {{ form.city(class="input") }}
+          </div>
+
+          <!-- State -->
+          <div>
+            <label class="label">{{ form.state.label.text }}</label>
+            {{ form.state(class="input") }}
+          </div>
+
+          <!-- Country -->
+          <div>
+            <label class="label">{{ form.country.label.text }}</label>
+            {{ form.country(class="input") }}
+          </div>
+
+          <!-- Address -->
+          <div class="full">
+            <label class="label">{{ form.address.label.text }}</label>
+            {{ form.address(class="input") }}
+          </div>
+
+          <!-- Pincode -->
+          <div>
+            <label class="label">{{ form.pincode.label.text }}</label>
+            {{ form.pincode(class="input") }}
+          </div>
+
+          <!-- Password -->
+          <div class="full">
+            <label class="label">{{ form.password.label.text }}</label>
+            {{ form.password(class="input", placeholder="Leave blank to keep current password") }}
+            <div class="small">Only fill this if you want to change your password.</div>
+          </div>
+
+        </div>
+      </div>
+
     </div>
 
-    <form method="post" enctype="multipart/form-data" id="editForm" novalidate>
-      {{ form.hidden_tag() }}
+    <!-- ACTION BUTTONS -->
+    <div class="actions">
+      <a href="{{ url_for('main.index') }}" class="btn btn-cancel">Back</a>
+      {{ form.submit(class="btn btn-save", value="Save Changes") }}
+    </div>
 
-      <div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">
-        <div style="min-width:120px">
-          <label class="label">Current avatar</label>
-          <div class="file-row">
-            <div class="preview" id="previewBox" aria-hidden="true">
-              {% if g.user and g.user.user_img %}
-                {% set img_filename = g.user.user_img if '/' in g.user.user_img else ('user_images/' ~ g.user.user_img) %}
-                <img id="previewImg" src="{{ url_for('main.media', filename=img_filename) }}" alt="Current avatar" style="width:100%;height:100%;object-fit:cover;display:block" />
-              {% else %}
-                <span id="previewInitial" style="font-weight:800;color:#042033">{{ g.user.user_name[:1]|upper if g.user else '' }}</span>
-              {% endif %}
-            </div>
-          </div>
-
-          <div style="margin-top:10px">
-            <label class="label" for="{{ form.user_img.id }}">Change avatar</label>
-            {{ form.user_img(class="input", id=form.user_img.id, accept="image/*") }}
-            <div class="note">JPG/PNG/GIF — max ~5MB</div>
-            {% for e in form.user_img.errors %}<div class="small" style="color:#b91c1c">{{ e }}</div>{% endfor %}
-          </div>
-
-          <div style="margin-top:8px">
-            <button type="button" id="removeImgBtn" class="opt-remove" {% if not g.user or not g.user.user_img %}style="display:none"{% endif %}>Remove image</button>
-          </div>
-        </div>
-
-        <div style="flex:1; min-width:260px">
-          <div class="form-grid">
-            <div>
-              <label class="label" for="{{ form.user_name.id }}">{{ form.user_name.label.text }}</label>
-              {{ form.user_name(class="input", id=form.user_name.id, placeholder="username") }}
-              {% for e in form.user_name.errors %}<div class="small" style="color:#b91c1c">{{ e }}</div>{% endfor %}
-            </div>
-
-            <!-- NEW: email field -->
-            <div>
-              <label class="label" for="{{ form.email.id }}">{{ form.email.label.text }}</label>
-              {{ form.email(class="input", id=form.email.id, placeholder="email address") }}
-              {% for e in form.email.errors %}<div class="small" style="color:#b91c1c">{{ e }}</div>{% endfor %}
-            </div>
-
-            <div>
-              <label class="label" for="{{ form.phone_number.id }}">{{ form.phone_number.label.text }}</label>
-              {{ form.phone_number(class="input", id=form.phone_number.id, placeholder="phone number") }}
-              {% for e in form.phone_number.errors %}<div class="small" style="color:#b91c1c">{{ e }}</div>{% endfor %}
-            </div>
-
-            <div class="full">
-              <label class="label" for="{{ form.user_bio.id }}">{{ form.user_bio.label.text }}</label>
-              {{ form.user_bio(class="input textarea", id=form.user_bio.id, placeholder="Short bio", rows=3) }}
-              {% for e in form.user_bio.errors %}<div class="small" style="color:#b91c1c">{{ e }}</div>{% endfor %}
-            </div>
-
-            <div>
-              <label class="label" for="{{ form.city.id }}">{{ form.city.label.text }}</label>
-              {{ form.city(class="input", id=form.city.id, placeholder="City") }}
-            </div>
-
-            <div>
-              <label class="label" for="{{ form.state.id }}">{{ form.state.label.text }}</label>
-              {{ form.state(class="input", id=form.state.id, placeholder="State / Province") }}
-            </div>
-
-            <div>
-              <label class="label" for="{{ form.country.id }}">{{ form.country.label.text }}</label>
-              {{ form.country(class="input", id=form.country.id, placeholder="Country") }}
-            </div>
-
-            <div class="full">
-              <label class="label" for="{{ form.address.id }}">{{ form.address.label.text }}</label>
-              {{ form.address(class="input", id=form.address.id, placeholder="Street address") }}
-            </div>
-
-            <div class="full">
-              <label class="label" for="{{ form.password.id }}">{{ form.password.label.text }}</label>
-              {{ form.password(class="input", id=form.password.id, placeholder="Leave blank to keep current password") }}
-              <div class="note">Fill only if you want to change your password.</div>
-              {% for e in form.password.errors %}<div class="small" style="color:#b91c1c">{{ e }}</div>{% endfor %}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="actions">
-        <a href="{{ url_for('main.index') }}" class="btn btn-cancel" role="button">Back</a>
-        {{ form.submit(class="btn btn-save", value="Save") }}
-      </div>
-    </form>
-  </div>
+  </form>
 </div>
 
+
+<!-- JAVASCRIPT: Image Preview & Remove -->
 <script>
-// Image preview + remove image helpers
 (function(){
+
   const fileInput = document.getElementById('{{ form.user_img.id }}');
   const previewBox = document.getElementById('previewBox');
   const previewImg = document.getElementById('previewImg');
@@ -139,59 +275,65 @@
   const removeBtn = document.getElementById('removeImgBtn');
 
   function showPreview(file){
-    if(!file){
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')){
+      alert("Please select a valid image file.");
+      fileInput.value = "";
       return;
     }
-    if(!file.type.startsWith('image/')){
-      alert('Invalid file type — please choose an image.');
-      fileInput.value = '';
-      return;
-    }
+
     const reader = new FileReader();
-    reader.onload = function(e){
-      if(previewImg){
+    reader.onload = e => {
+      if (previewImg){
         previewImg.src = e.target.result;
-        previewImg.style.display = 'block';
       } else {
         const img = document.createElement('img');
-        img.id = 'previewImg';
+        img.id = "previewImg";
         img.src = e.target.result;
-        img.alt = 'Preview';
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = 'cover';
-        previewBox.innerHTML = '';
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.objectFit = "cover";
+        previewBox.innerHTML = "";
         previewBox.appendChild(img);
       }
-      if(previewInitial) previewInitial.style.display = 'none';
-      removeBtn.style.display = 'inline-block';
+
+      if (previewInitial) previewInitial.style.display = "none";
+
+      if (removeBtn) removeBtn.style.display = "inline-block";
     };
     reader.readAsDataURL(file);
   }
 
-  if(fileInput){
-    fileInput.addEventListener('change', function(e){
-      const f = e.target.files && e.target.files[0];
-      showPreview(f);
+  if (fileInput){
+    fileInput.addEventListener("change", e => {
+      showPreview(e.target.files[0]);
     });
   }
 
-  // Remove image
-  removeBtn && removeBtn.addEventListener('click', function(){
-    let marker = document.getElementById('remove_image_marker');
-    if(!marker){
-      marker = document.createElement('input');
-      marker.type = 'hidden';
-      marker.name = 'remove_image';
-      marker.id = 'remove_image_marker';
-      marker.value = '1';
-      document.getElementById('editForm').appendChild(marker);
-    }
-    if(fileInput) fileInput.value = '';
-    previewBox.innerHTML = '<span style="font-weight:800;color:#042033">{{ g.user.user_name[:1]|upper if g.user else "" }}</span>';
-    removeBtn.style.display = 'none';
-  });
+  // remove image
+  if (removeBtn){
+    removeBtn.addEventListener("click", () => {
+
+      // hidden flag to route
+      let marker = document.getElementById("remove_image_marker");
+      if (!marker){
+        marker = document.createElement("input");
+        marker.type = "hidden";
+        marker.name = "remove_image";
+        marker.id = "remove_image_marker";
+        marker.value = "1";
+        document.getElementById("editForm").appendChild(marker);
+      }
+
+      fileInput.value = "";
+      previewBox.innerHTML =
+        `<span style="font-size:1.8rem;font-weight:800;color:#345">{{ user.user_name[:1].upper() }}</span>`;
+      removeBtn.style.display = "none";
+    });
+  }
 
 })();
 </script>
+
 {% endblock %}

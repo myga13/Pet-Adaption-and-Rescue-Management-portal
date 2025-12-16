@@ -24,7 +24,7 @@
   background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
   border: 1px solid var(--card-border);
   box-shadow: var(--shadow);
-  color: #eaf6ff;
+  color: #115c84;
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }
 
@@ -59,12 +59,12 @@
 /* labels & inputs */
 .form-label { display:block; margin-bottom:6px; color:var(--muted); font-weight:600; }
 .form-control, .form-select {
-  width:100%;
+  width:90%;
   padding:11px 12px;
   border-radius:10px;
-  border:1px solid rgba(255,255,255,0.06);
-  background: rgba(255,255,255,0.02);
-  color: #eaf6ff;
+  border:1px solid rgba(0, 0, 0, 0);
+  background: rgba(20, 96, 107, 0.02);
+  color: #07253c;
   font-size:15px;
   outline:none;
   transition: box-shadow .12s ease, border-color .12s ease, transform .06s ease;
@@ -163,6 +163,11 @@
         <label class="form-label" for="{{ form.pet_type.id }}">{{ form.pet_type.label.text }}</label>
         {{ form.pet_type(class="form-control", id=form.pet_type.id, placeholder="e.g. Dog, Cat") }}
       </div>
+      <div class="col-6">
+        <label class="form-label" for="{{ form.pet_breed.id }}">{{ form.pet_breed.label.text }}</label>
+        {{ form.pet_breed(class="form-control", id=form.pet_breed.id, placeholder="e.g. Labrador, Persian, German Shepherd") }}
+        {% for err in form.pet_breed.errors %}<div class="text-danger">{{ err }}</div>{% endfor %}
+      </div>
 
       <div class="col-6">
         <label class="form-label" for="{{ form.pet_colour.id }}">{{ form.pet_colour.label.text }}</label>
@@ -180,7 +185,7 @@
         {% for err in form.pet_male_female.errors %}<div class="text-danger">{{ err }}</div>{% endfor %}
       </div>
 
-      <div class="col-6">
+      <div class="col-6"> 
         <label class="form-label" for="{{ form.pet_img.id }}">{{ form.pet_img.label.text }}</label>
         <div class="preview-wrap">
           <div class="preview-box" id="preview-box">Preview</div>

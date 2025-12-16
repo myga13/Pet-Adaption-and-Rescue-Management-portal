@@ -269,6 +269,16 @@ textarea.form-control{
         {{ form.address(class="form-control", id=form.address.id, placeholder="Street address") }}
         <span class="form-control-wrapper" aria-hidden="true"></span>
       </div>
+      <div>
+        <label for="{{ form.pincode.id }}">{{ form.pincode.label.text }}</label>
+        {{ form.pincode(class="form-control", id=form.pincode.id, placeholder="Pincode") }}
+        <span class="form-control-wrapper" aria-hidden="true"></span>
+        {% for e in form.pincode.errors %}
+          <div class="helper" style="color:var(--danger)">{{ e }}</div>
+        {% endfor %}
+      </div>
+
+    
 
       <!-- Password -->
       <div>

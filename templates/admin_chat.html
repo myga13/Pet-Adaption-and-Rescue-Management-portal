@@ -1,0 +1,272 @@
+{% extends "admin_base.html" %}
+{% block title %}Admin Chat{% endblock %}
+
+{% block content %}
+
+<style>
+/* ============ CHAT PAGE LAYOUT ============ */
+.chat-wrapper {
+    display: flex;
+    height: 90vh;
+    background: #ffffff;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #dcdcdc;
+}
+
+/* Sidebar */
+.chat-sidebar {
+    width: 26%;
+    background: #f3f4f6;
+    border-right: 1px solid #dcdcdc;
+    overflow-y: auto;
+}
+
+.sidebar-header {
+    padding: 18px;
+    font-size: 18px;
+    font-weight: bold;
+    background: #e5e7eb;
+    border-bottom: 1px solid #ccc;
+}
+
+/* Search */
+.search-box { padding: 10px; border-bottom: 1px solid #ccc; }
+.search-box input {
+    width: 98%; padding: 8px; border-radius: 6px;
+    border: 1px solid #aaa; font-size: 14px;
+}
+
+/* User list */
+.user-list { padding: 10px; }
+.user-item {
+    display: flex; gap: 12px; padding: 10px; cursor: pointer;
+    border-radius: 8px; align-items: center; transition: 0.2s;
+    border: 1px solid transparent;
+}
+.user-item:hover { background: #e1e1e1; }
+.user-item.active { background: #d4d4d4; border-color: #a3a3a3; }
+.user-item img {
+    width: 45px; height: 45px; border-radius: 50%; object-fit: cover;
+}
+
+.user-info { display: flex; flex-direction: column; }
+.user-info .name { font-weight: 600; }
+
+/* CHAT WINDOW */
+.chat-window { width: 74%; display: flex; flex-direction: column; }
+.chat-header {
+    padding: 15px; font-size: 17px; font-weight: bold;
+    border-bottom: 1px solid #d4d4d4; background: #fafafa;
+}
+.chat-messages {
+    flex-grow: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background: #fdfdfd;
+    display: flex;
+    flex-direction: column;
+}
+
+.msg {
+    max-width: 70%;
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    display: block !important;
+}
+
+.msg-self { background: #d1ffd6; margin-left: auto; }
+.msg-other { background: #e8e8e8; margin-right: auto; }
+.msg-time { font-size: 11px; color: #555; margin-top: 3px; }
+
+/* Input area */
+.chat-input-area {
+    padding: 14px; display: flex; border-top: 1px solid #cfcfcf;
+    background: #f7f7f7;
+}
+.chat-input-area input {
+    flex-grow: 1; padding: 12px; border-radius: 6px;
+    border: 1px solid #bcbcbc; font-size: 15px;
+}
+.chat-input-area button {
+    padding: 12px 18px; margin-left: 10px; background: #2563eb;
+    border: none; border-radius: 6px; color: white;
+    font-weight: 600; cursor: pointer; transition: 0.2s;
+}
+.chat-input-area button:hover { background: #1d4ed8; }
+
+/* Empty */
+.empty-chat {
+    display: flex; justify-content: center; align-items: center;
+    height: 100%; font-size: 20px; color: #999;
+}
+</style>
+
+<div class="chat-wrapper">
+
+    <!-- ========== SIDEBAR ========== -->
+    <div class="chat-sidebar">
+
+        <div class="sidebar-header">Users</div>
+
+        <!-- SEARCH -->
+        <div class="search-box">
+            <input type="text" id="userSearch" placeholder="Search users..."
+                   onkeyup="filterUsers()">
+        </div>
+
+        <div class="user-list" id="userList">
+            {% for u in users %}
+            <div class="user-item {% if open_user_id and open_user_id|int == u.id %}active{% endif %}"
+                 data-name="{{ u.name|lower }}"
+                 data-id="{{ u.id }}"
+                 onclick="openChat({{ u.id }})">
+
+                <img src="{{ url_for('main.media', filename=u.avatar) }}" alt="avatar">
+
+                <div class="user-info">
+                    <span class="name">{{ u.name }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+
+    <!-- ========== CHAT WINDOW ========== -->
+    <div class="chat-window">
+
+        {% if open_user_id %}
+        
+        <div class="chat-header" id="chatHeader"></div>
+        <div id="chat-messages" class="chat-messages"></div>
+
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Type a message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+
+        {% else %}
+        <div class="empty-chat">Select a user to begin chat.</div>
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<!-- ========== SOCKET + CHAT LOGIC ========== -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+<script>
+const CURRENT_ADMIN_ID = {{ current_user.user_id }};   // IMPORTANT ✔ mirrored ID
+const OPEN_USER_ID = {{ open_user_id if open_user_id else 'null' }};
+const TOKEN = "{{ token }}";
+
+const socket = io({ auth: { token: TOKEN } });
+
+/*** SEARCH USERS ***/
+function filterUsers() {
+    const search = document.getElementById("userSearch").value.toLowerCase();
+    document.querySelectorAll("#userList .user-item").forEach(u => {
+        const name = u.dataset.name;
+        const id = u.dataset.id;
+        u.style.display = (name.includes(search) || id.includes(search)) ? "flex" : "none";
+    });
+}
+
+/*** OPEN CHAT ***/
+function openChat(id) {
+    window.location.href = "/admin/chat/" + id;
+}
+const activeUser = document.querySelector(".user-item.active .name");
+if (activeUser) {
+    document.getElementById("chatHeader").innerText =
+        "Chat with " + activeUser.innerText;
+}
+/*** LOAD MESSAGES ***/
+if (OPEN_USER_ID) {
+    fetch(`/api/conversations/${OPEN_USER_ID}`)
+        .then(r => r.json())
+        .then(data => {
+            const box = document.getElementById("chat-messages");
+            box.innerHTML = "";
+
+            data.messages.forEach(m =>
+                addMessage(m, m.sender_id === CURRENT_ADMIN_ID)
+            );
+
+            box.scrollTop = box.scrollHeight;
+        });
+}
+
+/*** SEND MESSAGE ***/
+function sendMessage() {
+    let text = document.getElementById("chat-input").value.trim();
+    if (!text) return;
+
+    fetch("/messages/send", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            recipient_id: OPEN_USER_ID,
+            content: text
+        })
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.ok) {
+            addMessage(res.message, true);
+            document.getElementById("chat-input").value = "";
+        }
+    });
+}
+
+/*** RECEIVE MESSAGE REAL-TIME ***/
+socket.on("new_direct_message", msg => {
+    if (parseInt(msg.sender_id) === OPEN_USER_ID ||
+        parseInt(msg.recipient_id) === CURRENT_ADMIN_ID) {
+        addMessage(msg, false);
+    }
+});
+
+/*** RENDER MESSAGE ***/
+function addMessage(msg, mine) {
+    const box = document.getElementById("chat-messages");
+
+    let div = document.createElement("div");
+    div.className = mine ? "msg msg-self" : "msg msg-other";
+
+    div.innerHTML = `
+        <div>${msg.content}</div>
+        <div class="msg-time">${new Date(msg.created_at).toLocaleTimeString()}</div>
+    `;
+
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+}
+/* ================================
+   AUTO REFRESH EVERY 4 SECONDS
+================================ */
+setInterval(() => {
+    if (!OPEN_USER_ID) return;
+
+    fetch(`/api/conversations/${OPEN_USER_ID}`)
+        .then(r => r.json())
+        .then(data => {
+            const box = document.getElementById("chat-messages");
+            box.innerHTML = "";
+
+            data.messages.forEach(m =>
+                addMessage(m, m.sender_id === CURRENT_ADMIN_ID)
+            );
+
+            box.scrollTop = box.scrollHeight;
+        });
+}, 4000);
+
+</script>
+
+{% endblock %}

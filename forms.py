@@ -12,6 +12,7 @@ from wtforms import (
 from wtforms.validators import (
     DataRequired,
     Email,
+    Regexp,
     Length,
     Optional,
     EqualTo,
@@ -42,6 +43,17 @@ class RegisterForm(FlaskForm):
     state = StringField("State", validators=[Optional(), Length(max=100)])
     country = StringField("Country", validators=[Optional(), Length(max=100)])
     address = StringField("Address", validators=[Optional(), Length(max=255)])
+    # forms.py — inside RegisterForm
+    pincode = StringField(
+        "Pincode",
+        validators=[
+            Optional(),
+            Length(min=3, max=10),
+            Regexp(r'^[0-9A-Za-z\s-]+$')
+            ],
+)
+
+    
 
     email = StringField(
         "Email",
@@ -93,9 +105,9 @@ class PetForm(FlaskForm):
         validators=[DataRequired(), NumberRange(min=1)],
     )
 
-    pet_age = IntegerField(
+    pet_age = StringField(
         "Pet Age",
-        validators=[Optional(), NumberRange(min=0)],
+        validators=[DataRequired(), Length(max=100)],
     )
     pet_licence_id = StringField(
         "Licence ID",
@@ -105,6 +117,15 @@ class PetForm(FlaskForm):
         "Pet Type",
         validators=[Optional(), Length(max=50)],
     )
+    pet_breed = StringField(
+    "Pet Breed",
+    validators=[
+        Optional(),
+        Length(max=50, message="Breed must be 50 characters or less")
+    ]
+    )
+
+
     pet_colour = StringField(
         "Colour",
         validators=[Optional(), Length(max=50)],

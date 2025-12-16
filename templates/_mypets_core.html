@@ -12,6 +12,7 @@
   --focus-ring: 0 8px 30px rgba(94,168,255,0.10);
 }
 
+/* layout */
 .container-wide { max-width:1200px; margin:0 auto; }
 
 .header { display:flex; gap:12px; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; }
@@ -23,7 +24,7 @@
 .search input { background:transparent; border:none; color:var(--text); outline:none; width:240px; font-size:0.95rem; }
 
 .select, .btn { padding:8px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.05); background:transparent; color:var(--text); cursor:pointer; font-weight:600; }
-.btn.primary { background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#51b5af; border:none; box-shadow:0 10px 30px rgba(94,168,255,0.12); }
+.btn.primary { background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#051829; border:none; box-shadow:0 10px 30px rgba(94,168,255,0.12); }
 
 .pets-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-w), 1fr)); gap:var(--gap); justify-items:center; }
 
@@ -38,6 +39,19 @@
 .pet-body { padding:14px 16px 18px; display:flex; flex-direction:column; gap:8px; align-items:center; text-align:center; }
 .pet-title { font-size:1.05rem; font-weight:800; margin:0; color:var(--text); }
 .pet-meta { color:var(--muted); font-size:0.95rem; line-height:1.45; }
+
+/* small adoption status badge */
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.8rem;
+  background: rgba(255,255,255,0.03);
+  color: var(--accent);
+  border: 1px solid rgba(255,255,255,0.04);
+  margin-left: 6px;
+}
 
 .pet-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; justify-content:center; }
 .btn-sm { padding:8px 10px; border-radius:8px; font-weight:700; cursor:pointer; border:none; }
@@ -108,10 +122,11 @@ button:focus, a:focus { box-shadow: var(--focus-ring); border-radius:8px; outlin
   <div id="petsGrid" class="pets-grid" role="list" aria-live="polite">
     {%- for pet in pets -%}
     <article class="pet-card"
+             role="listitem"
              data-name="{{ (pet.pet_name or '')|lower }}"
              data-type="{{ (pet.pet_type or '')|lower }}"
              data-age="{{ pet.pet_age or '' }}">
-      <div class="pet-image" tabindex="0">
+      <div class="pet-image" tabindex="0" aria-hidden="false">
         {% if pet.pet_img %}
           <img data-src="{{ url_for('main.media', filename=pet.pet_img) }}"
                alt="{{ pet.pet_name }}" loading="lazy">
@@ -122,38 +137,61 @@ button:focus, a:focus { box-shadow: var(--focus-ring); border-radius:8px; outlin
 
       <div class="pet-body">
         <h3 class="pet-title">{{ pet.pet_name }}</h3>
-        <div class="pet-meta">
+        <div class="pet-meta" aria-label="Pet details">
           <div><strong>Type:</strong> {{ pet.pet_type or "—" }}</div>
           <div><strong>Age:</strong> {{ pet.pet_age or "—" }}</div>
           <div><strong>Colour:</strong> {{ pet.pet_colour or "—" }}</div>
+
+          {%- if pet.for_adoption %}
+            <div aria-live="polite"><strong>Status:</strong> <span class="badge">For Adoption</span></div>
+          {%- endif %}
         </div>
 
-        <div class="pet-actions" role="toolbar"
-             aria-label="Actions for {{ pet.pet_name }}">
-          <a class="btn-sm btn-outline"
-             href="{{ url_for('main.view_pet', pet_id=pet.pet_id) }}">
-            View
-          </a>
+        <div class="pet-actions" role="toolbar" aria-label="Actions for {{ pet.pet_name }}">
+          <a class="btn-sm btn-outline" href="{{ url_for('main.view_pet', pet_id=pet.pet_id) }}">View</a>
 
-          <a class="btn-sm btn-edit"
-             href="{{ url_for('main.edit_pet', pet_id=pet.pet_id) }}">
-            Edit
-          </a>
+          <a class="btn-sm btn-edit" href="{{ url_for('main.edit_pet', pet_id=pet.pet_id) }}">Edit</a>
 
           <form method="post"
                 action="{{ url_for('main.delete_pet', pet_id=pet.pet_id) }}"
                 style="display:inline;"
                 onsubmit="return confirm('Delete this pet?');">
+            {% if csrf_token_value %}
+  <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+{% endif %}
+
             <button type="submit" class="btn-sm btn-delete">Delete</button>
           </form>
-          {# NEW: send for adoption #}
-  <form method="post"
-        action="{{ url_for('main.send_for_adoption', pet_id=pet.pet_id) }}"
-        style="display:inline;">
-    <button type="submit" class="btn-sm btn-outline">
-      Send for Adoption
-    </button>
-  </form>
+
+          {# Adoption toggle: owner-facing: Remove if already for adoption, otherwise Send #}
+          {%- if pet.for_adoption %}
+            <form method="post"
+                  action="{{ url_for('main.remove_from_adoption', pet_id=pet.pet_id) }}"
+
+
+                  style="display:inline;"
+                  onsubmit="return confirm('Remove this pet from adoption?');">
+              {% if csrf_token_value %}
+  <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+{% endif %}
+
+              <button type="submit" class="btn-sm btn-outline" aria-pressed="true">
+                Remove from Adoption
+              </button>
+            </form>
+          {%- else %}
+            <form method="post"
+                  action="{{ url_for('main.send_for_adoption', pet_id=pet.pet_id) }}"
+                  style="display:inline;">
+              {% if csrf_token_value %}
+  <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+{% endif %}
+
+              <button type="submit" class="btn-sm btn-outline" aria-pressed="false">
+                Send for Adoption
+              </button>
+            </form>
+          {%- endif %}
         </div>
       </div>
     </article>
@@ -164,8 +202,7 @@ button:focus, a:focus { box-shadow: var(--focus-ring); border-radius:8px; outlin
   <div id="empty" class="empty" hidden>No pets match your search.</div>
 </div>
 
-<div id="lightbox" class="lightbox" role="dialog" aria-modal="true"
-     aria-hidden="true" onclick="hideLightbox()">
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-hidden="true" onclick="hideLightbox()">
   <img id="lightboxImg" src="" alt="Enlarged pet photo">
 </div>
 

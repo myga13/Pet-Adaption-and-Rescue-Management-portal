@@ -594,6 +594,45 @@
       grid-template-columns: minmax(0, 1fr);
     }
   }
+  /* Minimal modal styles — adjust to match your app theme */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(2,6,23,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1200;
+    padding: 20px;
+  }
+  .modal-backdrop.open { display: flex; }
+
+  .modal-card {
+    background: #ffffff;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 680px;
+    box-shadow: 0 10px 30px rgba(2,6,23,0.25);
+    overflow: hidden;
+  }
+  .modal-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 20px;
+    border-bottom:1px solid #eef2f6;
+  }
+  .modal-body { padding:20px; display:grid; grid-template-columns: 92px 1fr; gap:16px; align-items:start; }
+  .modal-avatar { width:92px; height:92px; border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#eef2ff; border:1px solid #e5e7eb; font-weight:700; font-size:28px; color:#042033; }
+  .modal-row { margin-bottom:8px; font-size:14px; }
+  .modal-label { color: #6b7280; font-size:12px; margin-bottom:4px; display:block; }
+  .modal-close { background:transparent; border:0; font-size:18px; cursor:pointer; }
+  .btn-details { padding:8px 12px; border-radius:8px; font-size:13px; cursor:pointer; border:1px solid #d1d5db; background:#fff; }
+  .actions-cell { display:flex; gap:8px; align-items:center; }
+  @media (max-width:600px) {
+    .modal-body { grid-template-columns: 1fr; }
+    .modal-avatar { margin: 0 auto; }
+  }
 </style>
 <meta name="csrf-token" content="{% if csrf_token is defined %}{{ csrf_token() }}{% else %}{% endif %}">
 
@@ -629,7 +668,7 @@
     </nav>
 
     <div class="admin-menu-footer">
-      <button class="admin-menu-btn" onclick="window.location.href='{{ url_for('main.profile') }}'">
+      <button class="admin-menu-btn" onclick="window.location.href='{{ url_for('main.logout') }}'">
         <span class="icon">🚪</span> Logout
       </button>
     </div>
@@ -645,10 +684,8 @@
       </div>
 
       <div class="admin-search-wrapper">
-        <div class="admin-search">
-          <input type="text" placeholder="Search users, pets, reports…">
-          <span>🔍</span>
-        </div>
+        <a href="{{ url_for('main.admin_chat') }}" class="messages-btn" style="display:inline-block;padding:10px 16px;border-radius:6px;background-color:#2563eb;color:white;text-decoration:none;font-size:14px;">Messages</a>
+
       </div>
     </div>
 
@@ -672,22 +709,21 @@
             <div class="admin-welcome-meta">
               <div class="meta-item">
                 Today’s pending tasks
-                <span>7</span>
+                <span>{{ pending_lost + pending_found }}</span>
               </div>
-              <div class="meta-item">
+              <!--<div class="meta-item">
                 New registrations this week
                 <span>18</span>
-              </div>
+              </div>-->
               <div class="meta-item">
                 Open lost/found cases
-                <span>12</span>
+                <span>{{ found_reports | length + lost_reports | length }}</span>
               </div>
             </div>
 
             <div class="admin-welcome-actions">
-              <button class="btn-primary">Go to Admin Dashboard</button>
               <button class="btn-outline"
-                      onclick="window.location.href='{{ url_for('main.login') }}'">
+                      onclick="window.location.href='{{ url_for('main.index') }}'">
                 View User Portal
               </button>
             </div>
@@ -724,17 +760,17 @@
             </ul>
 
             <div class="admin-mini-stats">
-              <div class="mini-card">
+              <div class="mini-card"  data-target="admin-users" style="cursor:pointer;">
                 Total users
-                <strong>214</strong>
+                <strong> {{ total_users }}</strong>
               </div>
-              <div class="mini-card">
+              <div class="mini-card" data-target="admin-pets" style="cursor:pointer;">
                 Pets registered
-                <strong>389</strong>
+                <strong> {{ total_pets }}</strong>
               </div>
-              <div class="mini-card">
+              <div class="mini-card" data-target="admin-adoption" style="cursor:pointer;">
                 Adoptions
-                <strong>97</strong>
+                <strong>{{ completed_adoptions }}</strong>
               </div>
             </div>
           </aside>
@@ -744,37 +780,37 @@
 
       <!-- Quick stats cards -->
       <div class="admin-stats-grid">
-        <div class="stat-card">
+        <div class="stat-card" data-target="admin-users" style="cursor:pointer;">
           <div>
             <div class="stat-label">Total Users</div>
-            <div class="stat-value">214</div>
-            <div class="stat-pill">+12 this week</div>
+            <div class="stat-value"> {{ total_users }}</div>
+            
           </div>
           <div class="stat-icon">👥</div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card"  data-target="admin-pets" style="cursor:pointer;">
           <div>
             <div class="stat-label">Registered Pets</div>
-            <div class="stat-value">389</div>
+            <div class="stat-value"> {{ total_pets }}</div>
             <div class="stat-pill">Dogs, Cats &amp; others</div>
           </div>
           <div class="stat-icon">🐾</div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card" data-target="admin-adoption" style="cursor:pointer;">
           <div>
             <div class="stat-label">Adoptions Completed</div>
-            <div class="stat-value">97</div>
-            <div class="stat-pill">+5 this month</div>
+            <div class="stat-value">{{ completed_adoptions }}</div>
+          
           </div>
           <div class="stat-icon">🏡</div>
         </div>
 
         <div class="stat-card">
           <div>
-            <div class="stat-label">Open Lost/Found Cases</div>
-            <div class="stat-value">23</div>
+            <div class="stat-label">Accepted Cases / Rejected Cases</div>
+            <div class="stat-value">{{ completed_found + completed_lost }}/{{ reject_found + reject_lost }}</div>
             <div class="stat-pill">Need review</div>
           </div>
           <div class="stat-icon">⚠️</div>
@@ -782,159 +818,563 @@
       </div>
 
       <div class="admin-table-card">
-        <h3>Recent User Activity</h3>
+        <h3>Recent Registered Users</h3>
         <table class="admin-table">
-          <thead>
+          
+<div class="admin-content-section" id="admin-users">
+  <div class="admin-table-card">
+    <h3>All Users</h3>
+    <!--<form method="get" action="{{ url_for('main.webapp_userdetails') }}" style="display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap;">
+      <input name="q" value="{{ request.args.get('q','') }}" placeholder="Search users by name or email" style="padding:8px 10px; border-radius:8px; border:1px solid #e5e7eb; min-width:220px;">
+      <button type="submit" class="btn-primary" style="padding:8px 12px; font-size:13px;">Search</button>
+    </form> -->
+
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Email</th>
+          <th>Pets</th>
+          <th>Role</th>
+          <th>Actions</th> <!-- replaced "Status" with "Actions" -->
+        </tr>
+      </thead>
+      <tbody>
+        {% if webapp_userdetails %}
+          {% for user in webapp_userdetails[:3] %}
             <tr>
-              <th>User</th>
-              <th>Email</th>
-              <th>Action</th>
-              <th>Date</th>
-              <th>Status</th>
+              <td style="display:flex; align-items:center; gap:10px;">
+                <div style="width:36px; height:36px; border-radius:50%; overflow:hidden; background:#eef2ff; border:1px solid #e5e7eb; display:flex; align-items:center; justify-content:center;">
+                  {% if user.user_img %}
+                    <img src="{{ url_for('main.media', filename=user.user_img) }}" alt="{{ user.user_name }}" style="width:36px; height:36px; object-fit:cover;" onerror="this.style.display='none'">
+                  {% else %}
+                    <span style="font-weight:700; color:#042033;">{{ (user.user_name[:1] if user.user_name) | upper }}</span>
+                  {% endif %}
+                </div>
+                <div>
+                  <div style="font-weight:700;">{{ user.user_name | default('—') }}</div>
+                  <div style="font-size:12px; color:var(--text-muted);">ID: {{ user.user_id or '—' }}</div>
+                </div>
+              </td>
+
+              <td>{{ user.email | default('—') }}</td>
+
+              <td>
+                {% if user.pets_count is not none %}
+                  {{ user.pets_count }}
+                {% elif user.pets is defined and user.pets %}
+                  {{ user.pets|length }}
+                {% else %}
+                  0
+                {% endif %}
+              </td>
+
+              <td>{{ user.role | default('User') }}</td>
+
+              <td class="actions-cell">
+                {# Full details button: we embed the necessary fields as data- attributes #}
+                <button
+                  type="button"
+                  class="btn-details btn-open-details"
+                  data-user-id="{{ user.user_id }}"
+                  data-user-name="{{ user.user_name|e }}"
+                  data-email="{{ user.email|e }}"
+                  data-role="{{ user.role|e }}"
+                  data-pets-count="{{ user.pets_count }}"
+                  data-created-at="{{ user.created_at }}"
+                  data-last-active="{{ user.last_active }}"
+                  data-user-img="{{ (url_for('main.media', filename=user.user_img) if user.user_img else '') }}"
+                >
+                  Full details
+                </button>
+                {# If you also want quick actions in future (ban/edit) add more buttons here #}
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Mahesh</td>
-              <td>mahesh@example.com</td>
-              <td>Added new pet “Buddy”</td>
-              <td>Today</td>
-              <td><span class="status-pill status-active">OK</span></td>
-            </tr>
-            <tr>
-              <td>Ananya</td>
-              <td>ananya@example.com</td>
-              <td>Requested adoption for “Milo”</td>
-              <td>Today</td>
-              <td><span class="status-pill status-pending">Pending Review</span></td>
-            </tr>
-            <tr>
-              <td>Rahul</td>
-              <td>rahul@example.com</td>
-              <td>Reported found pet near park</td>
-              <td>Yesterday</td>
-              <td><span class="status-pill status-active">Verified</span></td>
-            </tr>
-          </tbody>
-        </table>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="5" style="text-align:center; padding:12px; color:#6b7280;">
+              No users found.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal markup (single modal used for all users) -->
+<div id="user-details-modal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true" >
+  <div class="modal-card" role="document" aria-labelledby="modal-title">
+    <div class="modal-header">
+      <strong id="modal-title">User details</strong>
+      <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-avatar" id="modal-avatar">
+        <!-- avatar img or initial inserted here -->
+      </div>
+
+      <div>
+        <div class="modal-row">
+          <span class="modal-label">Name</span>
+          <div id="modal-name" style="font-weight:700;">—</div>
+        </div>
+
+        <div class="modal-row">
+          <span class="modal-label">Email</span>
+          <div id="modal-email">—</div>
+        </div>
+
+        <div class="modal-row">
+          <span class="modal-label">User ID</span>
+          <div id="modal-id">—</div>
+        </div>
+
+        <div class="modal-row">
+          <span class="modal-label">Role</span>
+          <div id="modal-role">—</div>
+        </div>
+
+        <div class="modal-row">
+          <span class="modal-label">Pets</span>
+          <div id="modal-pets">—</div>
+        </div>
+
+        <div class="modal-row">
+          <span class="modal-label">Created at</span>
+          <div id="modal-created">—</div>
+        </div>
+
+        <div class="modal-row">
+          <span class="modal-label">Last active</span>
+          <div id="modal-last-active">—</div>
+        </div>
+
+        <!-- Additional details area (expandable) -->
+        <div class="modal-row" id="modal-extra" style="margin-top:12px; font-size:13px; color:#374151;"></div>
       </div>
     </div>
+  </div>
+</div>
+
+
 
     <!-- ========== ALL USERS ========== -->
-    <div class="admin-content-section" id="admin-users">
-      <div class="admin-table-card">
-        <h3>All Users</h3>
-        <table class="admin-table">
-          <thead>
+
+  
+
+<div class="admin-content-section" id="admin-users">
+  <div class="admin-table-card">
+    <h3>All Users</h3>
+    <!--<form method="get" action="{{ url_for('main.webapp_userdetails') }}" style="display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap;">
+      <input name="q" value="{{ request.args.get('q','') }}" placeholder="Search users by name or email" style="padding:8px 10px; border-radius:8px; border:1px solid #e5e7eb; min-width:220px;">
+      <button type="submit" class="btn-primary" style="padding:8px 12px; font-size:13px;">Search</button>
+    </form> -->
+
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Email</th>
+          <th>Pets</th>
+          <th>Role</th>
+          <th>Actions</th>
+          <th>Message</th> <!-- replaced "Status" with "Actions" -->
+        </tr>
+      </thead>
+      <tbody>
+        {% if webapp_userdetails %}
+          {% for user in webapp_userdetails %}
             <tr>
-              <th>User</th>
-              <th>Email</th>
-              <th>Pets</th>
-              <th>Role</th>
-              <th>Status</th>
+              <td style="display:flex; align-items:center; gap:10px;">
+                <div style="width:36px; height:36px; border-radius:50%; overflow:hidden; background:#eef2ff; border:1px solid #e5e7eb; display:flex; align-items:center; justify-content:center;">
+                  {% if user.user_img %}
+                    <img src="{{ url_for('main.media', filename=user.user_img) }}" alt="{{ user.user_name }}" style="width:36px; height:36px; object-fit:cover;" onerror="this.style.display='none'">
+                  {% else %}
+                    <span style="font-weight:700; color:#042033;">{{ (user.user_name[:1] if user.user_name) | upper }}</span>
+                  {% endif %}
+                </div>
+                <div>
+                  <div style="font-weight:700;">{{ user.user_name | default('—') }}</div>
+                  <div style="font-size:12px; color:var(--text-muted);">ID: {{ user.user_id or '—' }}</div>
+                </div>
+              </td>
+
+              <td>{{ user.email | default('—') }}</td>
+
+              <td>
+                {% if user.pets_count is not none %}
+                  {{ user.pets_count }}
+                {% elif user.pets is defined and user.pets %}
+                  {{ user.pets|length }}
+                {% else %}
+                  0
+                {% endif %}
+              </td>
+
+              <td>{{ user.role | default('User') }}</td>
+
+              <td class="actions-cell">
+                {# Full details button: we embed the necessary fields as data- attributes #}
+                <button
+                  type="button"
+                  class="btn-details btn-open-details"
+                  data-user-id="{{ user.user_id }}"
+                  data-user-name="{{ user.user_name|e }}"
+                  data-email="{{ user.email|e }}"
+                  data-role="{{ user.role|e }}"
+                  data-pets-count="{{ user.pets_count }}"
+                  data-created-at="{{ user.created_at }}"
+                  data-last-active="{{ user.last_active }}"
+                  data-user-img="{{ (url_for('main.media', filename=user.user_img) if user.user_img else '') }}"
+                >
+                  Full details
+                </button>
+                {# If you also want quick actions in future (ban/edit) add more buttons here #}
+              </td>
+              <td>
+                {# Full details button: we embed the necessary fields as data- attributes #}
+                
+                <a href="chat/{{user.user_id }}">
+                  Chat with user</a>
+                
+                {# If you also want quick actions in future (ban/edit) add more buttons here #}
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Mahesh</td>
-              <td>mahesh@example.com</td>
-              <td>2</td>
-              <td>User</td>
-              <td><span class="status-pill status-active">Active</span></td>
-            </tr>
-            <tr>
-              <td>Admin</td>
-              <td>admin@example.com</td>
-              <td>0</td>
-              <td>Admin</td>
-              <td><span class="status-pill status-active">Active</span></td>
-            </tr>
-            <tr>
-              <td>Test User</td>
-              <td>test@example.com</td>
-              <td>1</td>
-              <td>User</td>
-              <td><span class="status-pill status-blocked">Blocked</span></td>
-            </tr>
-          </tbody>
-        </table>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="5" style="text-align:center; padding:12px; color:#6b7280;">
+              No users found.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal markup (single modal used for all users) -->
+<div id="user-details-modal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true" >
+  <div class="modal-card" role="document" aria-labelledby="modal-title">
+    <div class="modal-header">
+      <strong id="modal-title">User details</strong>
+      <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-avatar" id="modal-avatar">
+        <!-- avatar img or initial inserted here -->
+      </div>
+
+      <div>
+        <div class="modal-row">
+          <span class="modal-label">Name</span>
+          <div id="modal-name" style="font-weight:700;">—</div>
+        </div>
+
+        <div class="modal-row">
+          <span class="modal-label">Email</span>
+          <div id="modal-email">—</div>
+        </div>
+
+        <div class="modal-row">
+          <span class="modal-label">User ID</span>
+          <div id="modal-id">—</div>
+        </div>
+
+        <div class="modal-row">
+          <span class="modal-label">Role</span>
+          <div id="modal-role">—</div>
+        </div>
+
+        <div class="modal-row">
+          <span class="modal-label">Pets</span>
+          <div id="modal-pets">—</div>
+        </div>
+
+        <div class="modal-row">
+          <span class="modal-label">Created at</span>
+          <div id="modal-created">—</div>
+        </div>
+
+        <div class="modal-row">
+          <span class="modal-label">Last active</span>
+          <div id="modal-last-active">—</div>
+        </div>
+
+        <!-- Additional details area (expandable) -->
+        <div class="modal-row" id="modal-extra" style="margin-top:12px; font-size:13px; color:#374151;"></div>
       </div>
     </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    // Utility: format text for empty values
+    function safeText(v) { return (v === undefined || v === null || v === 'None') ? '—' : String(v); }
+
+    // Populate modal fields and open modal
+    function openUserModal(dataset) {
+      const name = safeText(dataset.userName || dataset.user_name || dataset['user-name']);
+      const email = safeText(dataset.email);
+      const id = safeText(dataset.userId || dataset.user_id || dataset['user-id']);
+      const role = safeText(dataset.role);
+      const petsCount = safeText(dataset.petsCount || dataset.pets_count || dataset['pets-count']);
+      const createdAt = safeText(dataset.createdAt || dataset.created_at || dataset['created-at']);
+      const lastActive = safeText(dataset.lastActive || dataset.last_active || dataset['last-active']);
+      const img = dataset.userImg || dataset.user_img || dataset['user-img'] || '';
+
+      // Avatar element: if img present use <img>, else show initial
+      const avatarEl = document.getElementById('modal-avatar');
+      avatarEl.innerHTML = '';
+      if (img) {
+        const i = document.createElement('img');
+        i.src = img;
+        i.alt = name;
+        i.style.width = '100%';
+        i.style.height = '100%';
+        i.style.objectFit = 'cover';
+        i.onerror = function(){ avatarEl.textContent = (name ? name.charAt(0).toUpperCase() : '—'); };
+        avatarEl.appendChild(i);
+      } else {
+        avatarEl.textContent = name ? name.charAt(0).toUpperCase() : '—';
+      }
+
+      document.getElementById('modal-name').textContent = name;
+      document.getElementById('modal-email').textContent = email;
+      document.getElementById('modal-id').textContent = id;
+      document.getElementById('modal-role').textContent = role;
+      document.getElementById('modal-pets').textContent = petsCount;
+      document.getElementById('modal-created').textContent = createdAt;
+      document.getElementById('modal-last-active').textContent = lastActive;
+
+      // Optional: fill extra info for demonstration (you can adapt or remove)
+      document.getElementById('modal-extra').textContent =
+        "This panel shows basic user metadata coming from the server. Add more fields to data- attributes above to show them here.";
+
+      // show modal
+      const modal = document.getElementById('user-details-modal');
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeUserModal() {
+      const modal = document.getElementById('user-details-modal');
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    // wire buttons
+    document.addEventListener('click', function (ev) {
+      const btn = ev.target.closest('.btn-open-details');
+      if (btn) {
+        // dataset is a DOMStringMap of data- attributes (kebab->camelCase)
+        openUserModal(btn.dataset);
+        return;
+      }
+
+      // close on backdrop click
+      if (ev.target.id === 'user-details-modal' || ev.target.id === 'modal-close') {
+        closeUserModal();
+        return;
+      }
+    });
+
+    // close on ESC
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape') {
+        closeUserModal();
+      }
+    });
+  })();
+</script>
 
     <!-- ========== ALL PETS (with NGO Verification) ========== -->
-    <div class="admin-content-section" id="admin-pets">
-      <div class="admin-table-card">
-        <h3>All Pets</h3>
-        <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">
-          Overview of all pets registered in PawCare and their NGO verification status.
-        </p>
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Pet</th>
-              <th>Type</th>
-              <th>Owner</th>
-              <th>Portal Status</th>
-              <th>NGO Verification</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Buddy</td>
-              <td>Dog</td>
-              <td>Mahesh</td>
-              <td><span class="status-pill status-active">Active</span></td>
-              <td><span class="status-pill status-active">✅ NGO Verified</span></td>
-            </tr>
-            <tr>
-              <td>Milo</td>
-              <td>Cat</td>
-              <td>Ananya</td>
-              <td><span class="status-pill status-pending">For Adoption</span></td>
-              <td><span class="status-pill status-pending">Pending NGO</span></td>
-            </tr>
-            <tr>
-              <td>Snowy</td>
-              <td>Dog</td>
-              <td>Rahul</td>
-              <td><span class="status-pill status-pending">Lost</span></td>
-              <td><span class="status-pill status-blocked">NGO Rejected</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <!-- ========== ALL PETS (dynamic from DB) ========== -->
+<div class="admin-content-section" id="admin-pets">
+  <div class="admin-table-card">
+    <h3>All Pets</h3>
+    <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">
+      Overview of all pets registered in PawCare and their NGO verification status.
+    </p>
 
-    <!-- ========== ADOPTION PETS ========== -->
-    <div class="admin-content-section" id="admin-adoption">
-      <div class="admin-table-card">
-        <h3>Pets Sent for Adoption</h3>
-        <table class="admin-table">
-          <thead>
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Pet</th>
+          <th>Type</th>
+          <th>Owner</th>
+          <th>Portal Status</th>
+          <th>NGO Verification</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if pets %}
+          {% for pet in pets %}
             <tr>
-              <th>Pet</th>
-              <th>Owner</th>
-              <th>Requests</th>
-              <th>Last Action</th>
+              <!-- Pet column: image + name -->
+              <td style="display:flex; align-items:center; gap:10px;">
+                <div style="width:56px; height:56px; border-radius:8px; overflow:hidden; background:#f3f4f6; border:1px solid #e5e7eb; display:flex; align-items:center; justify-content:center;">
+                  {% if pet.pet_img or pet.image %}
+                    <img src="{{ url_for('main.media', filename=(pet.pet_img or pet.image)) }}"
+                         alt="{{ pet.pet_name or 'Pet' }}" style="width:56px; height:56px; object-fit:cover;" onerror="this.style.display='none'">
+                  {% else %}
+                    <span style="font-weight:700; color:#042033;">{{ (pet.name[:1] if pet.name) | upper }}</span>
+                  {% endif %}
+                </div>
+
+                <div>
+                  <div style="font-weight:700;">{{ pet.pet_name | default('—') }}</div>
+                  <div style="font-size:12px; color:var(--text-muted);">ID: {{ pet.pet_id or '—' }}</div>
+                </div>
+              </td>
+
+              <!-- Type -->
+              <td>{{ pet.pet_type | default('—') }}</td>
+
+              <!-- Owner -->
+              <td>
+                {# Support multiple owner shapes: pet.owner.full_name, pet.owner.user_name, pet.owner_name or pet.owner_email #}
+                {% if pet.owner %}
+                  {{ pet.owner.full_name or pet.owner.user_name or pet.owner.email or '—' }}
+                {% elif pet.owner_name %}
+                  {{ pet.owner_name }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+
+              <!-- Portal status -->
+              <td>
+                {% set pst = (pet.portal_status or '') | lower %}
+                {% if 'active' in pst %}
+                  <span class="status-pill status-active">Active</span>
+                {% elif 'lost' in pst %}
+                  <span class="status-pill status-pending">Lost</span>
+                {% elif 'for adoption' in pst or 'adoption' in pst %}
+                  <span class="status-pill status-pending">For Adoption</span>
+                {% else %}
+                  <span class="status-pill">{{ pet.portal_status | default('—') }}</span>
+                {% endif %}
+              </td>
+
+              <!-- NGO verification -->
+              <td>
+                {% set ngo = (pet.ngo_status or '') | lower %}
+                {% if ngo in ['verified', 'approved', 'yes'] %}
+                  <span class="status-pill status-active">✅ NGO Verified</span>
+                {% elif ngo in ['pending', 'in_review'] %}
+                  <span class="status-pill status-pending">Pending NGO</span>
+                {% elif ngo in ['rejected', 'rejected_by_ngo', 'no'] %}
+                  <span class="status-pill status-blocked">NGO Rejected</span>
+                {% else %}
+                  <span class="status-pill">{{ pet.ngo_status | default('Not submitted') }}</span>
+                {% endif %}
+              </td>
             </tr>
-          </thead>
-          <tbody>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="5" style="text-align:center; padding:12px; color:#6b7280;">
+              No pets found.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ========== ADOPTION PETS (dynamic from DB) ========== -->
+<div class="admin-content-section" id="admin-adoption">
+  <div class="admin-table-card">
+    <h3>Pets Sent for Adoption</h3>
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Pet</th>
+          <th>Owner</th>
+          <th>Requests</th>
+          <th>Status</th>
+          <th>Last Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if adoption_entries %}
+          {% for entry in adoption_entries %}
+            {# entry is AdoptionList model instance; entry.pet is PetDetails (may be None) #}
+            {% set pet = entry.pet %}
             <tr>
-              <td>Milo</td>
-              <td>Ananya</td>
-              <td>3</td>
-              <td>NGO verification pending</td>
+              <td>
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="width:48px; height:48px; border-radius:8px; overflow:hidden; background:#f3f4f6; display:flex; align-items:center; justify-content:center;">
+                    {% if pet and pet.pet_img %}
+                      <img src="{{ url_for('main.media', filename=pet.pet_img) }}" alt="{{ pet.pet_name }}" style="width:48px; height:48px; object-fit:cover;">
+                    {% else %}
+                      <span style="font-weight:700; color:#042033;">{{ (pet.pet_name[:1] if pet and pet.pet_name) | upper }}</span>
+                    {% endif %}
+                  </div>
+                  <div>
+                    <div style="font-weight:700;">{{ pet.pet_name if pet else ('Pet ID ' ~ entry.pet_id) }}</div>
+                    <div style="font-size:12px; color:var(--text-muted);">ID: {{ pet.pet_id if pet else entry.pet_id }}</div>
+                  </div>
+                </div>
+              </td>
+
+              <td>
+                {% if pet and pet.owner %}
+                  {{ pet.owner.user_name or pet.owner.user_name or pet.owner.email or '—' }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+
+              <td style="text-align:center;">
+                {% set info = adoption_requests_map.get((pet.pet_id if pet else entry.pet_id)) %}
+                {% if info %}
+                  {{ info.req_count }}
+                {% else %}
+                  0
+                {% endif %}
+              </td>
+              <td>
+                {% set st = entry.status.lower() %}
+                {% if st == 'pending' %}
+                  <span class="status-pill status-pending">Pending</span>
+                {% elif st == 'completed' %}
+                  <span class="status-pill status-active">Completed</span>
+                {% elif st == 'rejected' %}
+                  <span class="status-pill status-blocked">Rejected</span>
+                {% else %}
+                  <span class="status-pill">{{ entry.status }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {# show last request time if available, otherwise show adoption entry status/time #}
+                {% if info and info.last_requested %}
+                  {{ info.last_requested }}
+                {% else %}
+                  {{ entry.status | default('Pending') }}{% if entry.updated_at %} · {{ entry.updated_at }}{% endif %}
+                {% endif %}
+              </td>
             </tr>
-            <tr>
-              <td>Coco</td>
-              <td>Rahul</td>
-              <td>1</td>
-              <td>Request accepted</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="4" style="text-align:center; padding:12px; color:#6b7280;">
+              No adoption pets found.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
 
     <!-- ========== NGO VERIFICATION ========== -->
     <div class="admin-content-section" id="admin-ngo">
@@ -945,398 +1385,259 @@
           Admin can monitor, approve, or request more details.
         </p>
 
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Request ID</th>
-              <th>Pet</th>
-              <th>Owner</th>
-              <th>Partner NGO</th>
-              <th>Purpose</th>
-              <th>Submitted</th>
-              <th>NGO Status</th>
-              <th>Admin Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>#NGO-301</td>
-              <td>Buddy (Dog)</td>
-              <td>Mahesh</td>
-              <td>PawCare Trust</td>
-              <td>Adoption Profile</td>
-              <td>Today</td>
-              <td><span class="status-pill status-pending">Awaiting NGO Docs</span></td>
-              <td>
-                <button style="font-size:11px; padding:4px 8px; border-radius:999px; border:none;
-                               background:#eff6ff; cursor:pointer;">
-                  Request Docs
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <td>#NGO-298</td>
-              <td>Snowy (Dog)</td>
-              <td>Rahul</td>
-              <td>Happy Paws Foundation</td>
-              <td>Lost/Found Match</td>
-              <td>Yesterday</td>
-              <td><span class="status-pill status-active">NGO Verified</span></td>
-              <td>
-                <button style="font-size:11px; padding:4px 8px; border-radius:999px; border:none;
-                               background:#22c55e; color:white; cursor:pointer;">
-                  Mark Pet Verified
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <td>#NGO-292</td>
-              <td>Milo (Cat)</td>
-              <td>Ananya</td>
-              <td>City Animal Welfare</td>
-              <td>Adoption Profile</td>
-              <td>3 days ago</td>
-              <td><span class="status-pill status-blocked">NGO Rejected</span></td>
-              <td>
-                <button style="font-size:11px; padding:4px 8px; border-radius:999px; border:none;
-                               background:#fee2e2; color:#b91c1c; cursor:pointer;">
-                  Review &amp; Notify User
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <h2 style="margin-top:24px;">Pet Claim Requests</h2>
+<table style="width:100%;border-collapse:collapse;margin-top:12px;">
+  <thead>
+    <tr style="background:#f1f5f9;">
+      <th>User</th>
+      <th>Email</th>
+      <th>Report</th>
+      <th>Date</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
 
-      <!-- Partner NGOs list -->
-      <div class="admin-table-card" style="margin-top:18px;">
-        <h3>Collaborating NGOs</h3>
-        <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">
-          Verified NGOs that can perform identity checks, health checks, and adoption verification.
-        </p>
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>NGO Name</th>
-              <th>City</th>
-              <th>Contact</th>
-              <th>Verified Since</th>
-              <th>Pets Verified</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>PawCare Trust</td>
-              <td>Chennai</td>
-              <td>support@pawcaretrust.org</td>
-              <td>2023</td>
-              <td>57</td>
-            </tr>
-            <tr>
-              <td>Happy Paws Foundation</td>
-              <td>Bangalore</td>
-              <td>contact@happypaws.org</td>
-              <td>2022</td>
-              <td>89</td>
-            </tr>
-            <tr>
-              <td>City Animal Welfare</td>
-              <td>Hyderabad</td>
-              <td>hello@cityanimal.org</td>
-              <td>2024</td>
-              <td>21</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+  <tbody>
+    {% for r in requests %}
+    <tr>
+      <td>{{ r.user_name }}</td>
+      <td>{{ r.user_email }}</td>
 
-    <!-- ========== FOUND PETS ========== -->
-    <div class="admin-content-section" id="admin-found">
-      <div class="admin-table-card">
-        <h3>Found Pets Reports</h3>
-        <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">
-          Detailed reports submitted by users when they find a lost pet.
-        </p>
+      <!-- BUTTON instead of ID -->
+      <td style="text-align:center;">
+        <button
+          type="button"
+          class="btn-details open-found-modal"
+          data-pet-type="{{ r.report.pet_type }}"
+          data-location="{{ r.report.found_location }}"
+          data-date="{{ r.report.date_found.strftime('%d %b %Y') if r.report.date_found else '-' }}"
+          data-condition="{{ r.report.pet_condition }}"
+          data-finder="{{ r.report.finder_name }}"
+          data-phone="{{ r.report.finder_phone }}"
+          data-email="{{ r.report.finder_email }}"
+          data-img="{{ url_for('main.media', filename=r.report.pet_img) if r.report.pet_img else '' }}"
+        >
+          View #{{ r.report_id }}
+        </button>
+      </td>
 
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Report ID</th>
-              <th>Pet Type</th>
-              <th>Found Location</th>
-              <th>Lat / Lng</th>
-              <th>Date Found</th>
-              <th>Condition</th>
-              <th>Finder Name</th>
-              <th>Phone</th>
-              <th>WhatsApp</th>
-              <th>Email</th>
-              <th>Notes</th>
-              <th>Image</th>
-              <th>Status</th>
-              <th>Reported At</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for report in found_reports %}
-            <tr>
-              <td>#F-{{ report.id }}</td>
-              <td>{{ report.pet_type }}</td>
-              <td>{{ report.found_location }}</td>
+      <td>{{ r.created_at.strftime('%d %b %Y') }}</td>
 
-              <td>
-                {% if report.latitude is not none and report.longitude is not none %}
-                  {{ '%.5f'|format(report.latitude) }},
-                  {{ '%.5f'|format(report.longitude) }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
+      <td>
+        <span class="status-pill">{{ r.status }}</span>
+      </td>
 
-              <td>
-                {% if report.date_found %}
-                  {{ report.date_found.strftime('%d %b %Y') }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-
-              <td>
-                {% if report.pet_condition %}
-                  {{ report.pet_condition }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-
-              <td>{{ report.finder_name }}</td>
-              <td>{{ report.finder_phone }}</td>
-              <td>{{ report.finder_whatsapp or '-' }}</td>
-              <td>{{ report.finder_email }}</td>
-
-              <td style="max-width:220px;">
-                {% if report.finder_notes %}
-                  {{ report.finder_notes }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-
-              <!-- Image preview button -->
-              <td>
-                {% if report.pet_img %}
-                  <button type="button"
-                          class="btn-img-view"
-                          data-img-url="{{ url_for('main.media', filename=report.pet_img) }}">
-                    View
-                  </button>
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-
-              <td class="status-cell"
-    data-report-id="{{ report.id }}"
-    data-update-url="{{ url_for('main.update_found_pet_status', report_id=report.id) }}"
->
-    <div class="status-label" aria-live="polite" style="margin-bottom:6px;">
-        {{ report.status|default('pending') }}
-    </div>
-
-    {% if report.status|lower == 'pending' %}
-    <div class="status-actions">
-        <button class="btn-action accept-btn" data-status="accepted">Accept</button>
-        <button class="btn-action reject-btn" data-status="rejected">Reject</button>
-
-        <noscript>
-            <form method="post" action="{{ url_for('main.update_found_pet_status', report_id=report.id) }}" style="display:inline;">
-                {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
-                <input type="hidden" name="status" value="accepted">
-                <button type="submit" class="btn-action accept-btn">Accept</button>
-            </form>
-
-            <form method="post" action="{{ url_for('main.update_found_pet_status', report_id=report.id) }}" style="display:inline;">
-                {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
-                <input type="hidden" name="status" value="rejected">
-                <button type="submit" class="btn-action reject-btn">Reject</button>
-            </form>
-        </noscript>
-    </div>
+      <td>
+        <a href="{{ url_for('main.approve_request', id=r.id) }}">Approve</a>
+        <a href="{{ url_for('main.reject_request', id=r.id) }}">Reject</a>
+      </td>
+    </tr>
     {% else %}
-    <div class="status-final">
-        {% if report.status|lower == 'accepted' %}
-            ✅ Accepted
-        {% elif report.status|lower == 'rejected' %}
-            ⛔ Rejected
+    <tr>
+      <td colspan="6" style="text-align:center;">No requests</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div id="found-modal" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <strong>Found Pet Details</strong>
+      <button id="found-close">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <img id="fm-img" style="max-width:100%;border-radius:8px;margin-bottom:10px">
+
+      <p><b>Pet Type:</b> <span id="fm-pet-type"></span></p>
+      <p><b>Location:</b> <span id="fm-location"></span></p>
+      <p><b>Date:</b> <span id="fm-date"></span></p>
+      <p><b>Condition:</b> <span id="fm-condition"></span></p>
+      <p><b>Finder:</b> <span id="fm-finder"></span></p>
+      <p><b>Phone:</b> <span id="fm-phone"></span></p>
+      <p><b>Email:</b> <span id="fm-email"></span></p>
+    </div>
+  </div>
+</div>
+
+     </div>
+    </div>
+<!-- ========== FOUND PETS ========== -->
+<div class="admin-content-section" id="admin-found">
+  <div class="admin-table-card">
+    <h3>Found Pets Reports</h3>
+    <p class="text-muted small">
+      Detailed reports submitted by users when they find a lost pet.
+    </p>
+
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Report ID</th>
+          <th>Pet Type</th>
+          <th>Found Location</th>
+          <th>Lat / Lng</th>
+          <th>Date Found</th>
+          <th>Condition</th>
+          <th>Finder</th>
+          <th>Phone</th>
+          <th>WhatsApp</th>
+          <th>Email</th>
+          <th>Notes</th>
+          <th>Image</th>
+          <th>Status</th>
+          <th>Reported At</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for report in found_reports %}
+        {% set status = (report.status or 'pending')|lower %}
+        <tr>
+          <td>#F-{{ report.id }}</td>
+          <td>{{ report.pet_type }}</td>
+          <td>{{ report.found_location }}</td>
+
+          <td>
+            {% if report.latitude is not none and report.longitude is not none %}
+              {{ '%.5f'|format(report.latitude) }},
+              {{ '%.5f'|format(report.longitude) }}
+            {% else %}-{% endif %}
+          </td>
+
+          <td>{{ report.date_found.strftime('%d %b %Y') if report.date_found else '-' }}</td>
+          <td>{{ report.pet_condition or '-' }}</td>
+          <td>{{ report.finder_name }}</td>
+          <td>{{ report.finder_phone }}</td>
+          <td>{{ report.finder_whatsapp or '-' }}</td>
+          <td>{{ report.finder_email }}</td>
+          <td class="truncate">{{ report.finder_notes or '-' }}</td>
+
+          <td>
+            {% if report.pet_img %}
+              <button type="button"
+                      class="btn-img-view"
+                      data-img-url="{{ url_for('main.media', filename=report.pet_img) }}">
+                View
+              </button>
+            {% else %}-{% endif %}
+          </td>
+
+          <!-- STATUS -->
+          <td class="status-cell"
+              data-report-id="{{ report.id }}"
+              data-update-url="{{ url_for('main.update_found_pet_status', report_id=report.id) }}">
+
+            {% if status == 'pending' %}
+              <div class="status-label">pending</div>
+              <div class="status-actions">
+                <button class="btn-action accept-btn" data-status="accepted">Accept</button>
+                <button class="btn-action reject-btn" data-status="rejected">Reject</button>
+              </div>
+            {% else %}
+              <div class="status-final">
+                {{ '✅ Accepted' if status == 'accepted'
+                   else '⛔ Rejected' if status == 'rejected'
+                   else report.status }}
+              </div>
+            {% endif %}
+          </td>
+
+          <td>{{ report.created_at.strftime('%d %b %Y %H:%M') if report.created_at else '-' }}</td>
+        </tr>
         {% else %}
-            {{ report.status }}
-        {% endif %}
-    </div>
-    {% endif %}
-</td>
+        <tr>
+          <td colspan="14" class="empty-row">No found pet reports yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<!-- ========== LOST PETS ========== -->
+<div class="admin-content-section" id="admin-lost">
+  <div class="admin-table-card">
+    <h3>Lost Pets Reports</h3>
+    <p class="text-muted small">
+      Reports submitted by owners who lost their pets.
+    </p>
 
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Report ID</th>
+          <th>Pet Name</th>
+          <th>Pet Type</th>
+          <th>Last Seen</th>
+          <th>Date Lost</th>
+          <th>Owner</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>Notes</th>
+          <th>Face</th>
+          <th>Full</th>
+          <th>Marks</th>
+          <th>Status</th>
+          <th>Reported At</th>
+        </tr>
+      </thead>
 
-              <td>
-                {% if report.created_at %}
-                  {{ report.created_at.strftime('%d %b %Y %H:%M') }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-            </tr>
+      <tbody>
+        {% for report in lost_reports %}
+        {% set status = (report.status or 'pending')|lower %}
+        <tr>
+          <td>#L-{{ report.id }}</td>
+          <td>{{ report.pet_name }}</td>
+          <td>{{ report.pet_type or '-' }}</td>
+          <td>{{ report.last_seen_location }}</td>
+          <td>{{ report.date_lost.strftime('%d %b %Y') if report.date_lost else '-' }}</td>
+          <td>{{ report.owner_name }}</td>
+          <td>{{ report.owner_phone }}</td>
+          <td>{{ report.owner_email }}</td>
+          <td class="truncate">{{ report.owner_notes or '-' }}</td>
+
+          {% for img in [report.pet_img_face, report.pet_img_full, report.pet_img_marks] %}
+          <td>
+            {% if img %}
+              <button class="btn-img-view" data-img-url="{{ url_for('main.media', filename=img) }}">View</button>
+            {% else %}-{% endif %}
+          </td>
+          {% endfor %}
+
+          <!-- STATUS -->
+          <td class="status-cell"
+              data-report-id="{{ report.id }}"
+              data-update-url="{{ url_for('main.update_lost_pet_status', report_id=report.id) }}">
+
+            {% if status == 'pending' %}
+              <div class="status-label">pending</div>
+              <div class="status-actions">
+                <button class="btn-action accept-btn" data-status="accepted">Accept</button>
+                <button class="btn-action reject-btn" data-status="rejected">Reject</button>
+              </div>
             {% else %}
-            <tr>
-              <td colspan="14" style="text-align:center; padding:12px; color:#6b7280;">
-                No found pet reports yet.
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
+              <div class="status-final">
+                {{ '✅ Accepted' if status == 'accepted'
+                   else '⛔ Rejected' if status == 'rejected'
+                   else report.status }}
+              </div>
+            {% endif %}
+          </td>
 
-    <!-- ========== LOST PETS ========== -->
-    <div class="admin-content-section" id="admin-lost">
-      <div class="admin-table-card">
-        <h3>Lost Pets Reports</h3>
-        <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">
-          Reports submitted by owners who lost their pets.
-        </p>
+          <td>{{ report.created_at.strftime('%d %b %Y %H:%M') if report.created_at else '-' }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="14" class="empty-row">No lost pet reports yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Report ID</th>
-              <th>Pet Name</th>
-              <th>Pet Type</th>
-              <th>Last Seen Location</th>
-              <th>Date Lost</th>
-              <th>Owner</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Notes</th>
-              <th>Image (Face)</th>
-              <th>Image (Full)</th>
-              <th>Image (Marks)</th>
-              <th>Status</th>
-              <th>Reported At</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for report in lost_reports %}
-            <tr>
-              <td>#L-{{ report.id }}</td>
-              <td>{{ report.pet_name }}</td>
-              <td>{{ report.pet_type or '-' }}</td>
-              <td>{{ report.last_seen_location }}</td>
-
-              <td>
-                {% if report.date_lost %}
-                  {{ report.date_lost.strftime('%d %b %Y') }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-
-              <td>{{ report.owner_name }}</td>
-              <td>{{ report.owner_phone }}</td>
-              <td>{{ report.owner_email }}</td>
-
-              <td style="max-width:220px;">
-                {% if report.owner_notes %}
-                  {{ report.owner_notes }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-
-              <!-- Image buttons -->
-              <td>
-                {% if report.pet_img_face %}
-                  <button type="button" class="btn-img-view" data-img-url="{{ url_for('main.media', filename=report.pet_img_face) }}">View</button>
-                {% else %} - {% endif %}
-              </td>
-              <td>
-                {% if report.pet_img_full %}
-                  <button type="button" class="btn-img-view" data-img-url="{{ url_for('main.media', filename=report.pet_img_full) }}">View</button>
-                {% else %} - {% endif %}
-              </td>
-              <td>
-                {% if report.pet_img_marks %}
-                  <button type="button" class="btn-img-view" data-img-url="{{ url_for('main.media', filename=report.pet_img_marks) }}">View</button>
-                {% else %} - {% endif %}
-              </td>
-
-              {# Status cell: we put a per-row data-update-url to avoid url_for build-time issues #}
-              <td class="status-cell"
-                  data-report-id="{{ report.id }}"
-                  data-update-url="{{ url_for('main.update_lost_pet_status', report_id=report.id) }}">
-                <div class="status-label" aria-live="polite" style="margin-bottom:6px;">
-                  {{ report.status }}
-                </div>
-
-                {# Use case-insensitive check for 'pending' (handles older values like 'Searching') #}
-                {% if report.status|lower == 'pending' %}
-                  <div class="status-actions" role="group" aria-label="Actions for report {{ report.id }}">
-                    <button class="btn-action accept-btn" data-status="accepted" type="button" aria-label="Accept report {{ report.id }}">Accept</button>
-                    <button class="btn-action reject-btn" data-status="rejected" type="button" aria-label="Reject report {{ report.id }}">Reject</button>
-
-                    <noscript>
-                      <div style="margin-top:8px;">
-                        <form method="post" action="{{ url_for('main.update_lost_pet_status', report_id=report.id) }}" style="display:inline">
-                          
-                          {% if csrf_token is defined %}
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-{% endif %}
-                          <input type="hidden" name="status" value="accepted">
-                          <button type="submit" class="btn-action accept-btn">Accept</button>
-                        </form>
-                        <form method="post" action="{{ url_for('main.update_lost_pet_status', report_id=report.id) }}" style="display:inline">
-                          
-                          {% if csrf_token is defined %}
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-{% endif %}
-
-                          <input type="hidden" name="status" value="rejected">
-                          <button type="submit" class="btn-action reject-btn">Reject</button>
-                        </form>
-                      </div>
-                    </noscript>
-                  </div>
-                {% else %}
-                  <div class="status-final" style="font-weight:700;color:#334155">
-                    {% if report.status|lower == 'accepted' %}
-                      ✅ Accepted
-                    {% elif report.status|lower == 'rejected' %}
-                      ⛔ Rejected
-                    {% else %}
-                      {{ report.status }}
-                    {% endif %}
-                  </div>
-                {% endif %}
-              </td>
-
-              <td>
-                {% if report.created_at %}
-                  {{ report.created_at.strftime('%d %b %Y %H:%M') }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-            </tr>
-            {% else %}
-            <tr>
-              <td colspan="14" style="text-align:center; padding:12px; color:#6b7280;">
-                No lost pet reports yet.
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
 
     <!-- ========== NOTIFICATIONS ========== -->
     <div class="admin-content-section" id="admin-notify">
@@ -1366,8 +1667,20 @@
   // Sidebar tab switching
   const sidebarButtons = document.querySelectorAll(".admin-menu-btn[data-target]");
   const sections = document.querySelectorAll(".admin-content-section");
-
+  const sidebarButton = document.querySelectorAll(".stat-card[data-target]");
   sidebarButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.getAttribute("data-target");
+
+      sidebarButtons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      sections.forEach(sec => {
+        sec.classList.toggle("active", sec.id === targetId);
+      });
+    });
+  });
+  sidebarButton.forEach(btn => {
     btn.addEventListener("click", () => {
       const targetId = btn.getAttribute("data-target");
 
@@ -1415,34 +1728,73 @@
     });
   });
 </script>
+<script>
+document.addEventListener("click", function(e) {
+  const btn = e.target.closest(".open-found-modal");
+  if (!btn) return;
+
+  document.getElementById("fm-pet-type").textContent = btn.dataset.petType;
+  document.getElementById("fm-location").textContent = btn.dataset.location;
+  document.getElementById("fm-date").textContent = btn.dataset.date;
+  document.getElementById("fm-condition").textContent = btn.dataset.condition;
+  document.getElementById("fm-finder").textContent = btn.dataset.finder;
+  document.getElementById("fm-phone").textContent = btn.dataset.phone;
+  document.getElementById("fm-email").textContent = btn.dataset.email;
+
+  const img = document.getElementById("fm-img");
+  if (btn.dataset.img) {
+    img.src = btn.dataset.img;
+    img.style.display = "block";
+  } else {
+    img.style.display = "none";
+  }
+
+  document.getElementById("found-modal").classList.add("open");
+});
+
+document.getElementById("found-close").onclick = () =>
+  document.getElementById("found-modal").classList.remove("open");
+</script>
+
+
 
 <script>
-(function() {
-  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+(function () {
 
-  async function updateStatus(reportId, status, button) {
-    const cell = document.querySelector(`.status-cell[data-report-id="${reportId}"]`);
-    if (!cell) return;
+  // Get CSRF token (Flask-WTF safe)
+  const csrfToken =
+    document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
+  /**
+   * Update status for a specific row (FOUND or LOST)
+   * @param {HTMLElement} cell - .status-cell element
+   * @param {string} status - accepted | rejected
+   */
+  async function updateStatus(cell, status) {
     const updateUrl = cell.getAttribute('data-update-url');
+
     if (!updateUrl) {
-      alert('Update URL not configured for this report. Contact admin.');
+      alert('Update URL not found.');
       return;
     }
 
     if (status === 'rejected') {
-      const ok = confirm('Are you sure you want to reject this report?');
-      if (!ok) return;
+      const confirmReject = confirm('Are you sure you want to reject this report?');
+      if (!confirmReject) return;
     }
 
-    const actionGroup = cell.querySelector('.status-actions');
-    if (actionGroup) actionGroup.querySelectorAll('button').forEach(b => b.disabled = true);
+    // Disable buttons
+    const actions = cell.querySelector('.status-actions');
+    if (actions) {
+      actions.querySelectorAll('button').forEach(btn => btn.disabled = true);
+    }
 
+    // Show saving state
     const label = cell.querySelector('.status-label');
     if (label) label.textContent = 'Saving...';
 
     try {
-      const res = await fetch(updateUrl, {
+      const response = await fetch(updateUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1452,46 +1804,59 @@
         body: JSON.stringify({ status })
       });
 
-      const data = await res.json().catch(() => ({}));
+      const data = await response.json();
 
-      if (!res.ok || !data.ok) {
-        const err = data.error || 'Request failed';
-        throw new Error(err);
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || 'Request failed');
       }
 
-      // render final state
+      // Replace cell with final status
       cell.innerHTML = '';
+
       const final = document.createElement('div');
       final.className = 'status-final';
-      final.style.fontWeight = 700;
-      final.style.color = '#334155';
-      if (data.status === 'accepted' || data.status === 'Accepted') {
+      final.style.fontWeight = '700';
+
+      if (data.status === 'accepted') {
         final.innerHTML = '✅ Accepted';
-      } else if (data.status === 'rejected' || data.status === 'Rejected') {
+      } else if (data.status === 'rejected') {
         final.innerHTML = '⛔ Rejected';
       } else {
-        final.innerHTML = data.status || 'Updated';
+        final.textContent = data.status;
       }
+
       cell.appendChild(final);
 
-    } catch (err) {
-      console.error('Failed to update status', err);
-      alert('Failed to update status. Please try again or reload the page.');
-      if (actionGroup) actionGroup.querySelectorAll('button').forEach(b => b.disabled = false);
-      if (label) label.textContent = 'Pending';
+    } catch (error) {
+      console.error('Status update failed:', error);
+      alert('Failed to update status. Please refresh and try again.');
+
+      // Re-enable buttons on failure
+      if (actions) {
+        actions.querySelectorAll('button').forEach(btn => btn.disabled = false);
+      }
+
+      if (label) label.textContent = 'pending';
     }
   }
 
-  document.addEventListener('click', function(e){
-    const btn = e.target.closest('.btn-action');
-    if (!btn) return;
-    const cell = btn.closest('.status-cell');
+  /**
+   * Global click handler (event delegation)
+   * Works for BOTH Found & Lost pets
+   */
+  document.addEventListener('click', function (event) {
+    const button = event.target.closest('.btn-action');
+    if (!button) return;
+
+    const cell = button.closest('.status-cell');
     if (!cell) return;
-    const reportId = cell.getAttribute('data-report-id');
-    const status = btn.getAttribute('data-status');
-    if (!reportId || !status) return;
-    updateStatus(reportId, status, btn);
+
+    const status = button.getAttribute('data-status');
+    if (!status) return;
+
+    updateStatus(cell, status);
   });
+
 })();
 </script>
 

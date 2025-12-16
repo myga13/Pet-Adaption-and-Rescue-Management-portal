@@ -131,54 +131,174 @@
         <li>Volunteer, foster, or donate</li>
       </ul>
     </aside>
+<main class="login-card" role="main" aria-labelledby="login-title">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
+    <div class="brand-row" aria-hidden="true" style="display:flex; gap:12px; align-items:center;">
+      <div class="brand-logo" aria-hidden="true">PC</div>
+      <div style="text-align:left">
+        <h1 id="login-title" class="title" style="margin:0;">Welcome back</h1>
+        <div class="subtitle">Sign in to continue</div>
+      </div>
+    </div>
 
-    <main class="login-card" role="main" aria-labelledby="login-title">
-      <div class="brand-row" aria-hidden="true">
-        <div class="brand-logo" aria-hidden="true">PC</div>
-        <div style="text-align:center">
-          <h1 id="login-title" class="title">Welcome back</h1>
-          <div class="subtitle">Sign in to continue</div>
-        </div>
+    <!-- Swap button -->
+    <div>
+      <button id="swapBtn" type="button" aria-pressed="false"
+              style="padding:8px 12px; border-radius:999px; border:1px solid rgba(9,19,37,0.06);
+                     background:transparent; cursor:pointer; font-weight:700;">
+        Switch to Admin
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTAINER: both forms (only one visible at a time) -->
+  <div id="loginContainer" aria-live="polite">
+    <!-- USER LOGIN (uses Flask-WTF form passed as `form`) -->
+    <form method="post" novalidate id="userLoginForm" aria-describedby="form-help" style="display:block;">
+      {{ form.hidden_tag() }}
+      <input type="hidden" name="next" value="{{ next }}">
+      <input type="hidden" name="role" id="roleInput" value="staff">
+
+      <div class="form-row">
+        <label class="form-label" for="{{ form.email.id }}">{{ form.email.label.text }}</label>
+        {{ form.email(class="form-control", id=form.email.id, placeholder="email address", type="email", autofocus=True) }}
+        {% for e in form.email.errors %}<div class="text-danger">{{ e }}</div>{% endfor %}
       </div>
 
-      <form method="post" novalidate id="loginForm" aria-describedby="form-help">
-        {{ form.hidden_tag() }}
-        <input type="hidden" name="next" value="{{ next }}">
-        <input type="hidden" name="role" id="roleInput" value="staff">
+      <div class="form-row">
+        <label class="form-label" for="{{ form.password.id }}">{{ form.password.label.text }}</label>
+        {{ form.password(class="form-control", id=form.password.id, placeholder="password") }}
+        {% for e in form.password.errors %}<div class="text-danger">{{ e }}</div>{% endfor %}
+      </div>
 
-        <div class="form-row">
-          <label class="form-label" for="{{ form.email.id }}">{{ form.email.label.text }}</label>
-          {{ form.email(class="form-control", id=form.email.id, placeholder="email address", type="email", autofocus=True) }}
-          {% for e in form.email.errors %}<div class="text-danger">{{ e }}</div>{% endfor %}
-        </div>
+      <div class="form-row form-check">
+        {{ form.remember(class="form-check-input", id=form.remember.id) }}
+        <label for="{{ form.remember.id }}">{{ form.remember.label.text }}</label>
+      </div>
 
-        <div class="form-row">
-          <label class="form-label" for="{{ form.password.id }}">{{ form.password.label.text }}</label>
-          {{ form.password(class="form-control", id=form.password.id, placeholder="password") }}
-          {% for e in form.password.errors %}<div class="text-danger">{{ e }}</div>{% endfor %}
-        </div>
+      <div class="form-row">
+        {{ form.submit(class="btn-primary", type="submit", id="submitBtn") }}
+      </div>
 
-        <div class="form-row form-check">
-          {{ form.remember(class="form-check-input", id=form.remember.id) }}
-          <label for="{{ form.remember.id }}">{{ form.remember.label.text }}</label>
-        </div>
+      <div id="form-help" class="text-muted">
+        If you don't have an account
+        <a href="{{ url_for('main.register') }}">Register</a>
+      </div>
+      <div class="text-muted" style="margin-top:6px;">
+        Are you an admin? Use the <strong>Switch to Admin</strong> button.
+      </div>
+    </form>
 
-        <div class="form-row">
-          {{ form.submit(class="btn-primary", type="submit", id="submitBtn") }}
-        </div>
+    <!-- ADMIN LOGIN (separate form that posts to admin_login) -->
+    <form action="{{ url_for('main.admin_login') }}" method="post" id="adminLoginForm" style="display:none;" aria-hidden="true">
+      <input type="hidden" name="next" value="{{ next }}">
+      <input type="hidden" name="role" value="admin">
 
-        <div id="form-help" class="text-muted">
-          If you don't have an account
-          <a href="{{ url_for('main.register') }}">Register</a>
-        </div>
-        <div id="form-help" class="text-muted">
-          If you are an admin Login here 
-          <a href="{{ url_for('main.admin_login') }}">Admin Login</a>
-        </div>
-      </form>
-    </main>
+      <p class="admin-hint">Login using your admin email and password. An OTP will be sent to your email for verification.</p>
+
+      <div class="form-row">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" required
+               class="form-control" placeholder="admin email"
+               style="padding:10px;">
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" required
+               class="form-control" placeholder="password"
+               style="padding:10px;">
+      </div>
+
+      <div class="form-row">
+        <button type="submit" class="btn-primary">Send OTP &amp; Continue</button>
+      </div>
+
+      <div class="text-muted" style="margin-top:8px;">
+        New admin? <a href="{{ url_for('main.admin_register') }}">Register here</a>.
+      </div>
+    </form>
   </div>
-</div>
+</main>
+
+<script>
+(function(){
+  // Swap logic
+  const swapBtn = document.getElementById('swapBtn');
+  const userForm = document.getElementById('userLoginForm');
+  const adminForm = document.getElementById('adminLoginForm');
+  const roleInput = document.getElementById('roleInput');
+
+  // Keep the original submit behavior / validation for the user form (existing code expects #loginForm)
+  // Basic swap function that toggles visibility and updates aria attributes + hidden role.
+  function showRole(role){
+    if(role === 'admin'){
+      userForm.style.display = 'none';
+      userForm.setAttribute('aria-hidden', 'true');
+
+      adminForm.style.display = 'block';
+      adminForm.removeAttribute('aria-hidden');
+
+      swapBtn.innerText = 'Switch to User';
+      swapBtn.setAttribute('aria-pressed', 'true');
+      if(roleInput) roleInput.value = 'admin';
+    } else {
+      adminForm.style.display = 'none';
+      adminForm.setAttribute('aria-hidden', 'true');
+
+      userForm.style.display = 'block';
+      userForm.removeAttribute('aria-hidden');
+
+      swapBtn.innerText = 'Switch to Admin';
+      swapBtn.setAttribute('aria-pressed', 'false');
+      if(roleInput) roleInput.value = 'staff';
+    }
+  }
+
+  swapBtn.addEventListener('click', function(){
+    const currentlyAdmin = swapBtn.getAttribute('aria-pressed') === 'true';
+    showRole(currentlyAdmin ? 'user' : 'admin');
+  });
+
+  // Preserve the user form validation UX (adapted from your original client-side code)
+  const submit = document.getElementById('submitBtn');
+  if(submit){
+    const form = userForm;
+    form.addEventListener('submit', function(e){
+      const email = form.querySelector('input[name="{{ form.email.name }}"]');
+      const pass = form.querySelector('input[name="{{ form.password.name }}"]');
+      let invalid = false;
+      if(email && email.value.trim()===''){ invalid = true; email.classList.add('invalid'); }
+      if(pass && pass.value.trim()===''){ invalid = true; pass.classList.add('invalid'); }
+      if(invalid){
+        e.preventDefault();
+        const firstErr = form.querySelector('.invalid');
+        if(firstErr){
+          firstErr.focus();
+          firstErr.style.outline = '3px solid rgba(228,87,87,0.18)';
+          setTimeout(()=> firstErr.style.outline = '', 1400);
+        }
+        return false;
+      }
+      submit.disabled = true;
+      submit.classList.add('loading');
+      const original = submit.innerText;
+      submit.innerText = 'PLEASE WAIT...';
+      setTimeout(()=>{
+        submit.disabled=false;
+        submit.classList.remove('loading');
+        submit.innerText = original;
+      }, 3000);
+    });
+  }
+
+  // Initialize in user view
+  showRole('user');
+})();
+</script>
+
+
+
 
 <script>
 (function(){

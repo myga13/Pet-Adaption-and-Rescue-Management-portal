@@ -155,6 +155,13 @@
         {{ form.pet_type(class="form-control", id=form.pet_type.id) }}
         {% for e in form.pet_type.errors %}<div class="text-danger">{{ e }}</div>{% endfor %}
       </div>
+            
+      <div class="col-6">
+        <label class="form-label" for="{{ form.pet_breed.id }}">{{ form.pet_breed.label.text }}</label>
+        {{ form.pet_breed(class="form-control", id=form.pet_breed.id) }}
+        {% for e in form.pet_breed.errors %}<div class="text-danger">{{ e }}</div>{% endfor %}
+      </div>
+
 
       <div class="col-6">
         <label class="form-label" for="{{ form.pet_colour.id }}">{{ form.pet_colour.label.text }}</label>

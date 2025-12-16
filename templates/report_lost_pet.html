@@ -2,7 +2,7 @@
 <html>
 <head>
   <title>Report Lost Pet</title>
-
+  <meta name="csrf-token" content="{{ csrf_token_value }}">
   <style>
     /* WRAPPER SECTION */
     .report-section {
@@ -163,6 +163,7 @@
     </p>
 
     <form method="post" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
       <!-- PET DETAILS -->
       <div class="section-title">🐶 Pet Details</div>

@@ -1,0 +1,470 @@
+{# templates/chat.html - PawCare Chat UI (Jinja2) #}
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PawCare — Chat & Rooms</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap">
+<style>
+  :root{ --wa:#075E54; --wa-2:#0a7867; --bg:#ece5dd; --panel:#fff; --muted:#888; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,Segoe UI,Helvetica,Arial;background:var(--bg);height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
+  .app{width:98%;height:90%;background:var(--panel);border-radius:10px;overflow:hidden;display:flex;box-shadow:0 8px 30px rgba(0,0,0,.15)}
+  .sidebar{width:34%;border-right:1px solid #e6e6e6;display:flex;flex-direction:column;background:#fff}
+  .sidebar-header{display:flex;align-items:center;gap:10px;padding:14px;background:linear-gradient(90deg,var(--wa),var(--wa-2));color:#fff}
+  .sidebar-header .title{font-weight:700;font-size:16px}
+  .sidebar-controls{padding:12px;display:flex;gap:8px;align-items:center;background:#fbfbfb}
+  .search{flex:1;position:relative}
+  .search input{width:100%;padding:10px 40px 10px 36px;border-radius:10px;border:1px solid #e3e3e3;outline:none;font-size:14px;background:transparent}
+  .search input:focus{ box-shadow:0 0 0 4px rgba(6, 106, 246, 0.06); border-color:rgba(7,94,84,0.2); }
+  .search .icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:18px;height:18px;opacity:0.8;display:inline-block;pointer-events:none}
+  .search .clear-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:6px;border:none;background:#f0f0f0;color:#333;cursor:pointer;display:grid;place-items:center;font-size:14px}
+  .control-buttons{display:flex;gap:8px}
+  .btn{background:var(--wa);color:#fff;border:none;padding:9px 12px;border-radius:8px;cursor:pointer}
+  .btn--muted{background:#f0f0f0;color:#333;border:1px solid #e8e8e8}
+  .btn--icon{width:40px;height:40px;border-radius:10px;display:inline-grid;place-items:center;padding:0}
+  .user-list{flex:1;overflow:auto;background:#fff}
+  .user{display:flex;gap:10px;align-items:center;padding:12px;border-bottom:1px solid #f2f2f2;cursor:pointer;transition:background .12s}
+  .user:hover{background:#fafafa}
+  .user img{width:44px;height:44px;border-radius:50%;object-fit:cover}
+  .user .meta{display:flex;flex-direction:column}
+  .user .name{font-weight:600}
+  .user .sub{font-size:13px;color:var(--muted);margin-top:3px}
+  .user .badge{font-size:11px;background:#f0f0f0;padding:3px 6px;border-radius:10px;margin-left:6px}
+  .no-result{padding:24px;text-align:center;color:#777}
+  .chat{width:66%;display:flex;flex-direction:column;background:#e5ddd5;position:relative}
+  .default-page{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#444;padding:20px;text-align:center}
+  .default-page img{width:120px;opacity:.6;margin-bottom:20px}
+  .chat-img{width:40px;height:40px;border-radius:50%;object-fit:cover}
+  .chat-header{display:none;align-items:center;gap:12px;padding:12px 14px;background:linear-gradient(90deg,var(--wa),var(--wa-2));color:#fff}
+  .chat-header .back{background:rgba(255,255,255,0.1);border-radius:8px;padding:6px 10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .chat-body{display:none;flex:1;padding:16px;overflow:auto}
+  .msg{max-width:72%;padding:10px;border-radius:10px;margin:8px 0;word-wrap:break-word;position:relative}
+  .sent{background:#dcf8c6;margin-left:auto}
+  .recv{background:#fff;margin-right:auto}
+  .msg .meta-time{font-size:11px;color:#555;margin-top:6px;opacity:.75;text-align:right}
+  .chat-input{display:none;padding:12px;background:#f0f0f0;gap:10px;align-items:center}
+  .chat-input input{flex:1;padding:10px;border-radius:22px;border:1px solid #ddd;outline:none}
+  .chat-input button{padding:10px 12px;border-radius:50%;border:none;background:var(--wa);color:#fff;cursor:pointer}
+  .hidden { display: none !important; }
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:40}
+  .modal{background:#fff;border-radius:10px;padding:18px;width:420px;max-width:92%;box-shadow:0 12px 50px rgba(0,0,0,.3)}
+  .modal h3{margin:0 0 10px 0}
+  .unread-note {
+  display:block;
+  font-size:12px;
+  color:#d9534f;
+  margin-top:3px;
+}
+
+.unread-badge {
+  background:#d9534f;
+  color:#fff;
+  padding:2px 6px;
+  font-size:11px;
+  border-radius:10px;
+  margin-left:6px;
+}
+
+  .modal .scroll{max-height:260px;overflow:auto;border:1px solid #f0f0f0;padding:8px;border-radius:8px}
+  .modal .user-row{display:flex;align-items:center;gap:10px;padding:8px;border-radius:6px}
+  .modal .user-row:hover{background:#fafafa}
+  .modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+  @media (max-width:920px){ .app{width:100%;height:92vh} .sidebar{width:38%} .chat{width:62%} }
+  @media (max-width:720px){ .app{flex-direction:column;height:96vh;width:100%} .sidebar{width:100%;height:34%;border-right:none;border-bottom:1px solid #eee} .chat{width:100%;height:66%} }
+</style>
+</head>
+<body>
+    
+<div class="app" role="application" aria-label="PawCare Chat app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" aria-label="User list sidebar">
+    <div class="sidebar-header">
+      <div class="title">PawCare Contacts</div>
+      <div class="actions" aria-hidden="false">
+        <button class="btn btn--icon" id="btnNewRoom" title="Create chat room">+</button>
+      </div>
+    </div>
+
+    <div class="sidebar-controls">
+      <div class="search" role="search">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16a6.471 6.471 0 0 0 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14A4.5 4.5 0 1 1 14 9.5 4.505 4.505 0 0 1 9.5 14z"/></svg>
+        <input id="searchInput" placeholder="Search users, rooms or pets..." aria-label="Search users or rooms">
+        <button id="clearSearch" class="search-clear clear-btn" title="Clear search" aria-label="Clear search" style="display:none">✕</button>
+      </div>
+
+      <div class="control-buttons">
+        <button id="btnSearch" class="btn--muted" title="Filter">Filter</button>
+        <button id="btnClear" class="btn--muted" title="Reset">Reset</button>
+      </div>
+    </div>
+
+    <div id="userList" class="user-list" aria-live="polite">
+      {# Render initial users from server-side #}
+      {% for u in users %}
+      <div class="user" data-id="{{ u.id }}" role="button" tabindex="0">
+        {% if u.avatar %}
+          <img src="{{ url_for('main.media', filename=u.avatar) }}" alt="">
+        {% else %}
+          <img src="{{ url_for('static', filename='default-avatar.png') }}" alt="">
+        {% endif %}
+        <div class="meta">
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="name">{{ u.name|e }}{% if u.is_room %} (room){% endif %}</div>
+            {% if u.is_admin %}<span class="badge">Admin</span>{% endif %}
+          </div>
+          <div class="sub">{{ u.last|default('')|e }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </aside>
+
+  <!-- CHAT AREA -->
+  <main class="chat">
+    <div id="defaultPage" class="default-page" aria-hidden="false">
+      <img src="https://cdn-icons-png.flaticon.com/512/1946/1946429.png" alt="">
+      <h2>Welcome to PawCare</h2>
+      <p>Report lost pets, post found/adoption notices and chat with others or our PawCare Admin for support.</p>
+      <div style="margin-top:16px;display:flex;gap:8px">
+        <!--<button class="btn btn--muted" id="ctaContactAdmin">Contact Admin</button>-->
+      </div>
+    </div>
+
+    <div id="chatHeader" class="chat-header" role="banner" aria-hidden="true">
+      <div class="back" id="backBtn" title="Back to contacts" aria-label="Back to contacts">◀</div>
+      <img id="chatAvatar" src="" alt="" class="chat-img">
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div id="chatName" style="font-weight:700;font-size:15px">User</div>
+          <div id="chatBadge" class="badge" style="display:none;background:rgba(255,255,255,0.15);padding:4px 8px;border-radius:10px;font-size:12px;color:#fff"></div>
+        </div>
+        <div id="chatStatus" style="font-size:12px;opacity:.92">online</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        
+      </div>
+    </div>
+
+    <div id="chatBody" class="chat-body" role="log" aria-live="polite"></div>
+
+    <div id="chatInput" class="chat-input" role="region" aria-hidden="true">
+      <input id="msgInput" placeholder="Type a message..." autocomplete="off">
+      <button id="sendBtn" title="Send">➤</button>
+    </div>
+  </main>
+</div>
+
+<!-- CREATE ROOM MODAL -->
+<div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal" role="document">
+    <h3>Create Chat Room</h3>
+    <label style="display:block;margin-bottom:8px">Room name</label>
+    <input id="roomName" placeholder="e.g., Rescue Volunteers" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px">
+    <label style="display:block;margin:6px 0 8px">Select members</label>
+    <div class="scroll" id="roomUsersList" tabindex="0"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;justify-content:space-between;align-items:center">
+      <div style="font-size:13px;color:#666" id="selectedCount">0 selected</div>
+      <div class="actions">
+        <button class="btn--muted" id="modalCancel">Cancel</button>
+        <button class="btn" id="modalCreate">Create</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- socket.io client -->
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+
+<script>
+  const CURRENT_USER = { id: {{ current_user.user_id }}, name: "{{ current_user.user_name|e }}", is_admin: {{ 1 if current_user_is_admin else 0 }} };
+  const TOKEN = "{{ token }}";
+  const ADMIN_USER = {{ admin_user|tojson }};
+
+  let users = [];
+  document.querySelectorAll('#userList .user').forEach(el=>{
+    const label = el.querySelector('.name')?.textContent || "";
+
+    users.push({
+        id: parseInt(el.getAttribute('data-id')),
+        name: label.replace("(Admin)", "").trim(),
+        avatar: el.querySelector('img')?.src,
+        is_room: label.includes("(room)"),
+        is_admin: label.includes("(Admin)")
+    });
+
+  });
+
+  let chats = {};
+  let activeId = null;
+  let nextRoomId = 100000;
+  let unread = {};
+
+  const userListEl = document.getElementById('userList');
+  const searchInput = document.getElementById('searchInput');
+  const clearSearch = document.getElementById('clearSearch');
+  const defaultPage = document.getElementById('defaultPage');
+  const chatHeader = document.getElementById('chatHeader');
+  const chatBody = document.getElementById('chatBody');
+  const chatInput = document.getElementById('chatInput');
+  const chatAvatar = document.getElementById('chatAvatar');
+  const chatName = document.getElementById('chatName');
+  const chatStatus = document.getElementById('chatStatus');
+  const msgInput = document.getElementById('msgInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const backBtn = document.getElementById('backBtn');
+  const contactAdminBtn = document.getElementById('contactAdminBtn');
+
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function getGroupAvatar(u){ if(!u) return "/static/images/default-avatar.png"; if(u.is_room) return 'https://cdn-icons-png.flaticon.com/512/1946/1946429.png'; return u.avatar || "/static/images/default-avatar.png"; }
+  function getLastTimestamp(u) {
+    // 1) Prefer message timestamp from loaded chats
+    if (chats[u.id] && chats[u.id].length > 0) {
+        const lastMsg = chats[u.id][chats[u.id].length - 1];
+        return new Date(lastMsg.created_at).getTime();
+    }
+
+    // 2) Otherwise fallback to `u.last` if it's a timestamp
+    if (u.last) {
+        const t = Date.parse(u.last);
+        if (!isNaN(t)) return t;
+    }
+
+    return 0;  // no valid timestamp → push to bottom
+}
+
+  function renderUserList(filter=''){
+    userListEl.innerHTML = '';
+    const q = (filter||'').trim().toLowerCase();
+    users
+  .slice()
+  .sort((a, b) => getLastTimestamp(b) - getLastTimestamp(a))
+  .forEach(u => {
+      if(q && !((u.name||'').toLowerCase().includes(q) || (u.is_room && (u.name||'').toLowerCase().includes(q)))) return;
+      const row = document.createElement('div');
+      row.className='user';
+      row.setAttribute('data-id', u.id);
+      row.innerHTML = `
+    <img src="${getGroupAvatar(u)}" alt="ADMIN">
+    <div class="meta">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="name">
+           ${escapeHtml(u.name)}${u.is_room ? " (room)" : ""}
+           ${u.is_admin ? '<span class="badge">Admin</span>' : ""}
+        </div>
+      </div>
+      <div class="sub">
+          ${escapeHtml(u.last || "")}
+          ${unread[u.id] ? `<span class="unread-note">${unread[u.id]} unread</span>` : ""}
+      </div>
+    </div>`;
+
+      row.onclick = ()=> onContactClick(u.id);
+      userListEl.appendChild(row);
+    });
+    if(!users.length) userListEl.innerHTML = '<div class="no-result">No contacts available.</div>';
+  }
+  /* -------------------------------------------------------
+   AUTO REFRESH CHAT (poll every 5 seconds)
+--------------------------------------------------------*/
+setInterval(async () => {
+    if (!activeId) return;   // no chat selected → do nothing
+
+    try {
+        const resp = await fetch(`/api/conversations/${activeId}`, {
+            headers: { 'Accept': 'application/json' }
+        });
+
+        if (!resp.ok) return;
+
+        const data = await resp.json();
+        chats[activeId] = (data.messages || []).map(m => ({
+            from: (m.sender_id === CURRENT_USER.id ? 'me' : 'them'),
+            text: m.content,
+            created_at: m.created_at
+        }));
+
+        if (activeId) renderChat();
+        renderUserList(searchInput.value);
+    } catch (e) {
+        console.error('Auto-refresh failed:', e);
+    }
+}, 5000);  // reload every 5 sec
+
+  async function openChat(id){
+    activeId = id;
+    unread[id] = 0;
+    renderUserList(searchInput.value);
+    const entry = users.find(x=>x.id===id);
+    defaultPage.style.display='none';
+    chatHeader.style.display='flex';
+    chatBody.style.display='block';
+    chatInput.style.display='flex';
+    chatHeader.setAttribute('aria-hidden','false');
+    chatInput.setAttribute('aria-hidden','false');
+
+    if(entry && entry.is_room){
+      chatAvatar.src = getGroupAvatar(entry);
+      chatName.textContent = entry.name + ' (room)';
+      chatStatus.textContent = `${(entry.members||[]).length} members`;
+    } else if(entry && !entry.is_room){
+      chatAvatar.src = getGroupAvatar(entry);
+      chatName.textContent = entry.name;
+      chatStatus.textContent = 'online';
+    } else {
+      chatAvatar.src='';
+      chatName.textContent='Chat';
+      chatStatus.textContent='';
+    }
+
+    if(chats[id] && chats[id].length){ renderChat(); return; }
+
+    try{
+      const resp = await fetch(`/api/conversations/${id}`, { headers: { 'Accept': 'application/json' } });
+      if(!resp.ok){ chats[id] = []; }
+      else{
+        const data = await resp.json();
+        chats[id] = (data.messages || []).map(m => ({ from: (m.sender_id === CURRENT_USER.id ? 'me' : 'them'), text: m.content, created_at: m.created_at }));
+      }
+    }catch(e){ console.error('failed to load conversation', e); chats[id]=[]; }
+
+    renderChat();
+  }
+
+  function formatTime(ts) {
+    try {
+      const d = new Date(ts);
+      let h = d.getHours();
+      let m = d.getMinutes().toString().padStart(2, '0');
+      h = h % 12 || 12;
+      const ampm = d.getHours() >= 12 ? 'PM' : 'AM';
+      return `${h}:${m} ${ampm}`;
+    } catch(e){ return ''; }
+  }
+
+  function renderChat(){
+    chatBody.innerHTML = '';
+    const ms = chats[activeId] || [];
+    ms.forEach(m=>{
+      const d = document.createElement('div');
+      d.className = 'msg ' + (m.from === 'me' ? 'sent' : 'recv');
+      d.innerHTML = `<div>${escapeHtml(m.text)}</div><div class="meta-time">${m.created_at ? formatTime(m.created_at) : ''}</div>`;
+      chatBody.appendChild(d);
+    });
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  function onContactClick(id){
+    const u = users.find(x => x.id === id);
+    if(!u) return;
+    if(u.is_room){ openChat(id); return; }
+    if(CURRENT_USER.is_admin){ openOrCreatePrivateRoomForAdmin(u); } else { openChat(id); }
+  }
+
+  function openOrCreatePrivateRoomForAdmin(user){
+    let room = users.find(r => r.is_room && r.is_private && Array.isArray(r.members) && r.members.includes(user.id) && r.members.includes(CURRENT_USER.id));
+    if(!room){
+      const rid = nextRoomId++;
+      room = { id: rid, name: `Support: ${user.name}`, is_room: true, is_private: true, members: [CURRENT_USER.id, user.id], last:'Support room (admin initiated)' };
+      users.unshift(room);
+      chats[rid] = [{from:'them', text:`Support room created by Admin for ${user.name}.`, created_at: new Date().toISOString()}];
+      renderUserList(searchInput.value);
+    }
+    openChat(room.id);
+  }
+
+  // socket & realtime
+  let socket = null;
+  function startSocket(){
+    if(!TOKEN && !document.cookie.includes('session')) { console.info('No token or session cookie present — socket not started'); return; }
+    socket = io(window.location.origin, { transports: ['websocket'] });
+    window.socket = socket;
+    socket.on('connect', ()=> { console.info('socket connected', socket.id); socket.emit('authenticate', { token: TOKEN }); });
+    socket.on('auth_success', (d)=> { console.info('socket auth success', d); });
+    socket.on('auth_error', (d)=> { console.warn('socket auth error', d); });
+    socket.on('new_direct_message', (msg)=> {
+    console.log("🔥 Incoming message:", msg);
+
+    const chatId = (msg.sender_id === CURRENT_USER.id) 
+        ? msg.recipient_id 
+        : msg.sender_id;
+
+    console.log("🔥 resolved chatId:", chatId, " activeId:", activeId);
+
+    chats[chatId] = chats[chatId] || [];
+    chats[chatId].push({
+        from: (msg.sender_id === CURRENT_USER.id ? 'me' : 'them'),
+        text: msg.content,
+        created_at: msg.created_at
+    });
+
+    // DEBUG unread
+    if (activeId !== chatId) {
+        unread[chatId] = (unread[chatId] || 0) + 1;
+        console.log("📌 unread increased:", unread);
+    } else {
+        unread[chatId] = 0;
+        console.log("📌 unread reset:", unread);
+    }
+
+    if(activeId === chatId) renderChat();
+    renderUserList(searchInput.value);
+});
+
+
+    socket.on('message_sent', (ack)=> { console.info('message_sent ack', ack); });
+    socket.on('pm_error', e => console.warn('pm_error', e));
+    socket.on('disconnect', ()=> console.info('socket disconnected'));
+  }
+
+  async function sendMessage(){
+    const text = msgInput.value.trim();
+    if(!text || !activeId) return;
+    const nowIso = new Date().toISOString();
+    chats[activeId] = chats[activeId] || [];
+    chats[activeId].push({ from:'me', text: text, created_at: nowIso });
+    msgInput.value=''; renderChat();
+
+    if(window.socket && window.socket.connected){
+      try { socket.emit('private_message', { recipient_id: activeId, content: text }); return; } catch(e){ console.warn('socket emit failed, falling back to REST', e); }
+    }
+
+    try{
+      const resp = await fetch('/messages/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With':'XMLHttpRequest' },
+        body: new URLSearchParams({ recipient_id: activeId, content: text })
+      });
+      if(!resp.ok){ console.warn('message send failed', resp.status); }
+    }catch(e){ console.error('failed to send', e); }
+  }
+
+  // UI wiring
+  searchInput.addEventListener('input', e=>{ const v=e.target.value; renderUserList(v); clearSearch.style.display = v.trim() ? 'inline-grid' : 'none'; });
+  clearSearch.addEventListener('click', ()=>{ searchInput.value=''; renderUserList(''); clearSearch.style.display='none'; searchInput.focus(); });
+  sendBtn.addEventListener('click', sendMessage);
+  msgInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); sendMessage(); } });
+  backBtn.addEventListener('click', ()=>{ activeId = null; defaultPage.style.display='flex'; chatHeader.style.display='none'; chatBody.style.display='none'; chatInput.style.display='none'; chatHeader.setAttribute('aria-hidden','true'); chatInput.setAttribute('aria-hidden','true'); });
+
+  // init
+  renderUserList();
+  window.addEventListener('load', ()=>{ startSocket(); });
+  window._pawcare = { users, chats, renderUserList, openChat, startSocket };
+
+  // AUTO-OPEN CHAT WHEN PAGE LOADS (if open_user_id passed from Flask)
+const AUTO_OPEN_ID = {{ open_user_id|default('null') }};
+
+window.addEventListener("load", () => {
+    startSocket();
+
+    if (AUTO_OPEN_ID) {
+        console.log("Auto-opening chat with user:", AUTO_OPEN_ID);
+        setTimeout(() => openChat(Number(AUTO_OPEN_ID)), 300);
+    }
+});
+
+</script>
+</body>
+</html>

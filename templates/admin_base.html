@@ -263,7 +263,10 @@
                     href="{{ url_for('main.admin_edit', admin_id=g.admin.id) }}">
                     Edit Profile
                   </a> #}
-
+              <a class="btn-pop btn-logout"
+                 href="{{ url_for('main.admin_chat') }}">
+                CHATS
+              </a>
               <a class="btn-pop btn-logout"
                  href="{{ url_for('main.logout') }}">
                 Logout
@@ -276,7 +279,7 @@
              tabindex="-1" aria-hidden="true"></div>
 
       {% else %}
-        <a class="profile-btn" href="{{ url_for('main.admin_login') }}">
+        <a class="profile-btn" href="{{ url_for('main.login') }}">
           Admin Sign In
         </a>
       {% endif %}

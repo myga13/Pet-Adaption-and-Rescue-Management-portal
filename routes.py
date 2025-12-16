@@ -1,3 +1,5 @@
+# routes.py
+from py_compile import main
 from flask import (
     Blueprint,
     render_template,
@@ -17,8 +19,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from urllib.parse import urlparse, urljoin
 from functools import wraps
 from flask_wtf.csrf import generate_csrf
-
+from sqlalchemy.exc import SQLAlchemyError
+from types import SimpleNamespace
+from sqlalchemy.orm import joinedload
 import os
+from models import PetRequest, db, Notification
+from models import Notification
+from flask_wtf.csrf import generate_csrf
+
+
 from time import time
 from datetime import datetime, timedelta
 import traceback
@@ -27,6 +36,9 @@ import string
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from flask import jsonify, g, current_app
+from sqlalchemy import text
+from datetime import datetime
 
 from extensions import db
 from models import (
@@ -40,8 +52,11 @@ from models import (
     FoundPetReport,
     LostPetReport,
 )
-from models import LostPetReport 
+from models import PetDetails as Pet
+
 from forms import RegisterForm, PetForm, LoginForm
+from extensions import socketio
+
 
 bp = Blueprint("main", __name__)
 
@@ -51,7 +66,6 @@ ALLOWED_EXT = {"jpg", "jpeg", "png", "gif"}
 # ============================
 #  AUTH DECORATORS & HELPERS
 # ============================
-
 
 def login_required(view):
     """For normal user login."""
@@ -69,7 +83,7 @@ def admin_login_required(view):
     def wrapped_view(*args, **kwargs):
         if "admin_id" not in session:
             flash("Please log in as admin to access this page.", "warning")
-            return redirect(url_for("main.admin_login", next=request.path))
+            return redirect(url_for("main.login", next=request.path))
         return view(*args, **kwargs)
     return wrapped_view
 
@@ -102,10 +116,17 @@ def load_logged_in_user():
         g.admin = Admin.query.get(admin_id)
 
 
-
 # ============================
 #  ADOPTION NOTIFICATION INJECTION
 # ============================
+from models import Notification
+from flask import g
+
+
+@bp.app_context_processor
+def inject_csrf_token():
+    return dict(csrf_token_value=generate_csrf())
+
 
 @bp.context_processor
 def inject_adoption_notifications():
@@ -120,10 +141,20 @@ def inject_adoption_notifications():
             pending_adoption_count=0,
             pending_adoption_requests=[],
             my_adoption_updates=[],
+            unread_notifications_count=0,
+            notifications=[]
         )
 
     user_id = g.user.user_id
+    
 
+    notifications = (
+        Notification.query
+        .filter_by(user_id=user_id)
+        .order_by(Notification.created_at.desc())
+        .limit(10)
+        .all()
+    )
     # 1) Requests for pets YOU own (owner side, pending only)
     owner_requests = (
         db.session.query(
@@ -139,7 +170,7 @@ def inject_adoption_notifications():
         .filter(
             PetDetails.pet_owner_id == user_id,
             PetAdoptionRequest.request_status == "pending",
-            AdoptionList.status == "pending",  # only if pet is still open for adoption
+            AdoptionList.status == "pending",
         )
         .all()
     )
@@ -163,10 +194,17 @@ def inject_adoption_notifications():
         .all()
     )
 
+    unread_count = Notification.query.filter_by(
+    user_id=g.user.user_id,
+    is_read=False
+).count()
+
     return dict(
         pending_adoption_count=len(owner_requests),
         pending_adoption_requests=owner_requests,
         my_adoption_updates=my_updates,
+        unread_notifications_count=unread_count,
+        notifications=notifications
     )
 
 
@@ -203,6 +241,74 @@ def send_for_adoption(pet_id):
         db.session.rollback()
         current_app.logger.exception(f"Error in send_for_adoption: {e}")
         flash("Error sending pet for adoption.", "danger")
+
+    return redirect(url_for("main.my_pets"))
+
+
+# ============================
+#  ADOPTION: REMOVE FROM ADOPTION
+# ============================
+from sqlalchemy.exc import SQLAlchemyError
+
+@bp.route("/pets/<int:pet_id>/remove-for-adoption", methods=["POST"], endpoint="remove_from_adoption")
+@login_required
+def remove_for_adoption(pet_id):
+    """Owner removes their pet from the adoption list.
+
+    - Marks any pending adoption requests as 'rejected' (safe default).
+    - Deletes the AdoptionList entry for the pet.
+    """
+    user = getattr(g, "user", None)
+    if user is None:
+        flash("Please sign in to perform this action.", "warning")
+        return redirect(url_for("main.login"))
+
+    pet = PetDetails.query.get_or_404(pet_id)
+
+    # only owner can remove
+    if pet.pet_owner_id != user.user_id:
+        flash("You are not allowed to remove this pet from adoption.", "danger")
+        return redirect(url_for("main.my_pets"))
+
+    adoption = AdoptionList.query.filter_by(pet_id=pet_id).first()
+    if not adoption:
+        flash("This pet is not currently listed for adoption.", "info")
+        return redirect(url_for("main.my_pets"))
+
+    try:
+        # Safely update any pending adoption requests to 'rejected'.
+        # Use no_autoflush to avoid Query-invoked autoflush errors.
+        try:
+            with db.session.no_autoflush:
+                # prefer a status value you know exists in DB; 'rejected' is used elsewhere
+                PetAdoptionRequest.query.filter_by(
+                    pet_id=pet_id,
+                    request_status="pending"
+                ).update({"request_status": "rejected"})
+        except Exception:
+            # fallback: update rows one-by-one (slower, but avoids bulk-update issues)
+            current_app.logger.exception("Bulk update failed, falling back to per-row update")
+            pending_reqs = PetAdoptionRequest.query.filter_by(
+                pet_id=pet_id, request_status="pending"
+            ).all()
+            for r in pending_reqs:
+                r.request_status = "rejected"
+                db.session.add(r)
+
+        # Now delete the adoption list entry (safe approach)
+        db.session.delete(adoption)
+        db.session.commit()
+        flash("Pet removed from adoption list.", "success")
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.exception("Error in remove_for_adoption: %s", e)
+        # If the failure was due to an invalid enum value in an earlier attempt to set 'cancelled',
+        # the safe fallback is to delete the row (which we attempted). Let user know something went wrong.
+        flash("Could not remove pet from adoption (database error). Please try again.", "danger")
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.exception("Unhandled error in remove_for_adoption: %s", e)
+        flash("An unexpected error occurred while removing the pet from adoption.", "danger")
 
     return redirect(url_for("main.my_pets"))
 
@@ -356,7 +462,7 @@ def reject_adoption(request_id):
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SENDER_EMAIL = "pawcarengo@gmail.com"
-SENDER_PASSWORD = "bhqravwitybfnspi"  # app password
+SENDER_PASSWORD = "bhqravwitybfnspi"  # app password (keep secret / env var in real app)
 
 
 def send_otp_email(to_email: str, otp: str):
@@ -661,25 +767,280 @@ def admin_verify_otp():
     return render_template("admin_verify_otp.html", email=email)
 
 
+# ============================
+#  ADMIN DASHBOARD & user list integration
+# ============================
 @bp.route("/admin/dashboard")
 @admin_login_required
 def admin_dashboard():
-    # load reports
-    found_reports = FoundPetReport.query.order_by(FoundPetReport.created_at.desc()).all()
-    lost_reports = LostPetReport.query.order_by(LostPetReport.created_at.desc()).all()
+    # ------------------------
+    # 1. Load found & lost reports
+    # ------------------------
+    found_reports = FoundPetReport.query.order_by(
+        FoundPetReport.created_at.desc()
+    ).all()
 
-    # derive img filename if g.admin exists and has profile image
+    lost_reports = LostPetReport.query.order_by(
+        LostPetReport.created_at.desc()
+    ).all()
+
+    # ------------------------
+    # 2. Admin profile image
+    # ------------------------
     img_filename = None
     if getattr(g, "admin", None) and getattr(g.admin, "profile_image", None):
         img_filename = f"admin_profiles/{g.admin.profile_image}"
+
+    # ------------------------
+    # 3. Build user + admin list (merged)
+    # ------------------------
+    webapp_userdetails = []
     csrf_token_value = generate_csrf()
+    try:
+        # --- Normal WebApp Users ---
+        users = UserDetails.query.order_by(UserDetails.user_id.desc()).all()
+        for u in users:
+            if u.user_id < 1000000:
+                webapp_userdetails.append(SimpleNamespace(
+                    user_id=u.user_id,
+                    user_name=u.user_name or "",
+                    email=u.email,
+                    role="User",
+                    status="active",
+                    created_at=u.created_at,
+                    last_active=u.updated_at,
+                    pets=u.pets,
+                    pets_count=len(u.pets) if u.pets else 0,
+                    user_img=u.user_img,
+                    _model=u
+                ))
+
+        # --- Admin Users ---
+        '''admins = Admin.query.order_by(Admin.id.desc()).all()
+        for a in admins:
+            admin_img = a.profile_image
+            webapp_userdetails.append(SimpleNamespace(
+                user_id=a.id,
+                user_name=a.full_name or "",
+                email=a.email,
+                role=a.admin_role or "Admin",
+                status="active" if a.is_active else "blocked",
+                created_at=a.created_at,
+                last_active=a.created_at,  # adjust if you track this
+                pets=None,
+                pets_count=0,
+                user_img=f"admin_profiles/{admin_img}" if admin_img else None,
+                _model=a
+            ))'''
+
+    except Exception:
+        current_app.logger.exception("Error loading user/admin details")
+        webapp_userdetails = []
+
+    # ------------------------
+    # 4. Load all pets (PetDetails)
+    # ------------------------
+    try:
+        pets = (
+            PetDetails.query
+            .options(joinedload(PetDetails.owner))  # load owner efficiently
+            .order_by(PetDetails.created_at.desc())
+            .all()
+        )
+    except Exception:
+        current_app.logger.exception("Error loading pets")
+        pets = []
+
+    # ------------------------
+    # 5. Count totals for UI stats
+    # ------------------------
+    # Count completed adoptions
+    completed_adoptions = (
+        AdoptionList.query
+        .filter(AdoptionList.status == "completed")
+        .count()
+    )
+    # Count Pending Lost Pet reports
+    pending_lost = (
+        LostPetReport.query
+        .filter(LostPetReport.status == "pending")
+        .count()
+    )
+    completed_lost = (
+        LostPetReport.query
+        .filter(LostPetReport.status == "accepted")
+        .count()
+    )
+    reject_lost = (
+        LostPetReport.query
+        .filter(LostPetReport.status == "rejected")
+        .count()
+    )
+
+
+# Count Pending Found Pet reports
+    pending_found = (
+        FoundPetReport.query
+        .filter(FoundPetReport.status == "pending")
+        .count()
+    )
+    completed_found = (
+        FoundPetReport.query
+        .filter(FoundPetReport.status == "accepted")
+        .count()
+    )
+    reject_found = (
+        FoundPetReport.query
+        .filter(FoundPetReport.status == "rejected")
+        .count()
+    )
+
+    total_users = len(webapp_userdetails)
+    total_pets = sum((u.pets_count or 0) for u in webapp_userdetails)
+    from sqlalchemy import func
+
+# --- Adoption entries (one per pet placed in adoption_list) ---
+    try:
+        adoption_entries = (
+            AdoptionList.query
+            .options(joinedload(AdoptionList.pet).joinedload(PetDetails.owner))
+            .order_by(AdoptionList.created_at.desc())
+            .all()
+        )
+    except Exception:
+        current_app.logger.exception("Error loading adoption list")
+        adoption_entries = []
+
+# --- Aggregate adoption requests per pet (count + last requested_at) ---
+    try:
+        req_rows = (
+            db.session.query(
+                PetAdoptionRequest.pet_id,
+                func.count(PetAdoptionRequest.request_id).label("req_count"),
+                func.max(PetAdoptionRequest.requested_at).label("last_requested")
+            )
+            .group_by(PetAdoptionRequest.pet_id)
+            .all()
+        )
+    # convert to mapping for quick lookup in template
+        adoption_requests_map = {
+            int(r.pet_id): {"req_count": int(r.req_count), "last_requested": r.last_requested}
+            for r in req_rows
+        }
+    except Exception:
+        current_app.logger.exception("Error aggregating adoption requests")
+        adoption_requests_map = {}
+
+# Later, pass into render_template
+# ... existing render_template(...) add:
+# 
+
+    # ------------------------
+    # 6. CSRF for forms
+    # ------------------------
+
+    requests = PetRequest.query.order_by(PetRequest.created_at.desc()).all()
+    # ------------------------
+    # 7. Render dashboard
+    # ------------------------
     return render_template(
         "admin_dashboard.html",
         found_reports=found_reports,
         lost_reports=lost_reports,
         img_filename=img_filename,
-        csrf_token_value=csrf_token_value
+        pets=pets,
+        webapp_userdetails=webapp_userdetails,
+        csrf_token_value=csrf_token_value,
+        total_users=total_users,
+        total_pets=total_pets,
+        adoption_entries=adoption_entries,
+        adoption_requests_map=adoption_requests_map,
+        completed_adoptions=completed_adoptions,
+        pending_lost=pending_lost,         
+        pending_found=pending_found,
+        completed_lost=completed_lost,
+        completed_found=completed_found,
+        reject_lost=reject_lost,
+        reject_found=reject_found,
+        requests=requests,
     )
+
+
+# Dedicated endpoint for "webapp_userdetails" (so url_for('main.webapp_userdetails') works)
+@bp.route("/admin/webapp_userdetails", endpoint="webapp_userdetails")
+@admin_login_required
+def webapp_userdetails_view():
+    q = (request.args.get("q") or "").strip()
+    rows = []
+    try:
+        users_q = UserDetails.query
+        if q:
+            ilike = f"%{q}%"
+            users_q = users_q.filter(
+                (UserDetails.user_name.ilike(ilike)) |
+                (UserDetails.email.ilike(ilike))
+            )
+        users = users_q.order_by(UserDetails.user_id.desc()).all()
+        for u in users:
+            rows.append(SimpleNamespace(
+                user_id = getattr(u, "user_id", getattr(u, "id", None)),
+                user_name = getattr(u, "user_name", None) or "",
+                email = getattr(u, "email", None),
+                role = "User",
+                status = getattr(u, "status", None) or ("active" if getattr(u, "is_active", True) else "inactive"),
+                created_at = getattr(u, "created_at", None),
+                last_active = getattr(u, "last_active", None),
+                pets = getattr(u, "pets", None),
+                pets_count = len(getattr(u, "pets", [])) if getattr(u, "pets", None) is not None else 0,
+                user_img = getattr(u, "user_img", None),
+                _model = u
+            ))
+
+        admins_q = Admin.query
+        if q:
+            ilike = f"%{q}%"
+            admins_q = admins_q.filter(
+                (Admin.full_name.ilike(ilike)) |
+                (Admin.email.ilike(ilike))
+            )
+        admins = admins_q.order_by(Admin.id.desc()).all()
+        for a in admins:
+            admin_img = getattr(a, "profile_image", None)
+            rows.append(SimpleNamespace(
+                user_id = getattr(a, "id", None),
+                user_name = getattr(a, "full_name", None) or "",
+                email = getattr(a, "email", None),
+                role = getattr(a, "admin_role", "Admin"),
+                status = "active" if getattr(a, "is_active", True) else "blocked",
+                created_at = getattr(a, "created_at", None),
+                last_active = getattr(a, "last_active", None),
+                pets = None,
+                pets_count = 0,
+                user_img = f"admin_profiles/{admin_img}" if admin_img else None,
+                _model = a
+            ))
+
+    except Exception:
+        current_app.logger.exception("Error building webapp_userdetails")
+        rows = []
+
+    # Provide found/lost reports to the template as well (template expects them in admin page)
+    found_reports = FoundPetReport.query.order_by(FoundPetReport.created_at.desc()).all()
+    lost_reports = LostPetReport.query.order_by(LostPetReport.created_at.desc()).all()
+    total_users = len(rows)  # includes users + admins
+    total_pets = sum([u.pets_count for u in rows])
+    
+    csrf_token_value = generate_csrf()
+    return render_template("admin_dashboard.html", webapp_userdetails=rows,
+                           found_reports=found_reports, lost_reports=lost_reports,
+                           csrf_token_value=csrf_token_value,
+                           total_users=total_users,
+                           total_pets=total_pets)
+
+@bp.route("/admin/users", endpoint="admin_users")
+@admin_login_required
+def admin_users():
+    return webapp_userdetails_view()
 
 # ============================
 #  HOME / INDEX (user)
@@ -719,7 +1080,7 @@ def contact():
             db.session.add(contact_msg)
             db.session.commit()
             flash('Thank you for reaching out. We will get back to you soon!', 'success')
-        except Exception as e:
+        except Exception:
             db.session.rollback()
             current_app.logger.exception("Error saving contact message")
             flash('Something went wrong while submitting your message.', 'danger')
@@ -763,6 +1124,7 @@ def register():
             country=form.country.data,
             address=form.address.data,
             email=form.email.data.strip(),
+            pincode=form.pincode.data,
         )
 
         db.session.add(new_user)
@@ -858,129 +1220,67 @@ def user_list():
 @bp.route("/user/edit/<int:user_id>", methods=["GET", "POST"])
 @login_required
 def edit_user(user_id):
-    if not g.user:
-        flash("Please sign in to edit your profile.", "warning")
-        return redirect(url_for("main.login", next=request.path))
 
-    if g.user.user_id != user_id:
-        flash("You are not authorized to edit that profile.", "danger")
-        return redirect(url_for("main.user_list"))
+    if not g.user or g.user.user_id != user_id:
+        flash("Not authorized.", "danger")
+        return redirect(url_for("main.index"))
 
     user = UserDetails.query.get_or_404(user_id)
-    form = RegisterForm(obj=user)
+
+    form = RegisterForm()
+    form.current_user_id = user_id      # <<<<<< REQUIRED FIX
+
+    # Preload values only on GET
+    if request.method == "GET":
+        form.process(obj=user)
 
     if form.validate_on_submit():
-        upload_dir = None
-        try:
-            if "get_user_uploads" in globals():
-                upload_dir = get_user_uploads()
-        except Exception:
-            upload_dir = None
 
-        if not upload_dir:
-            media_root = current_app.config.get("MEDIA_ROOT") or os.path.join(
-                current_app.root_path, "media"
-            )
-            upload_dir = current_app.config.get("USER_IMAGE_UPLOADS") or os.path.join(
-                media_root, "user_images"
-            )
-        try:
-            os.makedirs(upload_dir, exist_ok=True)
-        except Exception:
-            current_app.logger.exception(
-                "Could not create upload directory: %s", upload_dir
-            )
+        # IMAGE DIR
+        upload_dir = current_app.config["USER_IMAGE_UPLOADS"]
+        os.makedirs(upload_dir, exist_ok=True)
 
+        # REMOVE IMAGE
         if request.form.get("remove_image"):
             if user.user_img:
-                try:
-                    old_path = os.path.join(
-                        upload_dir, os.path.basename(user.user_img)
-                    )
-                    if os.path.exists(old_path):
-                        os.remove(old_path)
-                except Exception:
-                    current_app.logger.exception(
-                        "Failed to remove old user image for user %s",
-                        user.user_id,
-                    )
+                old = os.path.join(upload_dir, os.path.basename(user.user_img))
+                if os.path.exists(old):
+                    os.remove(old)
             user.user_img = None
 
+        # NEW UPLOAD
         file = request.files.get("user_img")
-        if file and getattr(file, "filename", None):
+        if file and file.filename:
             fname = secure_filename(file.filename)
-            if fname and allowed_file(fname):
-                uniq_name = f"{int(time())}_{fname}"
-                save_path = os.path.join(upload_dir, uniq_name)
-                try:
-                    file.save(save_path)
-                except Exception:
-                    current_app.logger.exception(
-                        "Failed to save uploaded file for user %s", user.user_id
-                    )
-                    flash("Failed to save uploaded image.", "danger")
-                    return render_template(
-                        "edit_user.html", form=form, user=user
-                    )
-
-                if user.user_img:
-                    try:
-                        old_path = os.path.join(
-                            upload_dir, os.path.basename(user.user_img)
-                        )
-                        if os.path.exists(old_path):
-                            os.remove(old_path)
-                    except Exception:
-                        current_app.logger.exception(
-                            "Failed to cleanup previous avatar for user %s",
-                            user.user_id,
-                        )
-
-                user.user_img = f"user_images/{uniq_name}"
+            if allowed_file(fname):
+                newname = f"{int(time())}_{fname}"
+                file.save(os.path.join(upload_dir, newname))
+                user.user_img = f"user_images/{newname}"
             else:
-                flash(
-                    "Invalid image type (allowed: jpg, jpeg, png, gif).",
-                    "danger",
-                )
-                return render_template(
-                    "edit_user.html", form=form, user=user
-                )
+                flash("Invalid file type.", "danger")
+                return render_template("edit_user.html", form=form, user=user)
 
-        try:
-            user.user_name = (
-                form.user_name.data.strip()
-                if form.user_name.data
-                else user.user_name
-            )
-            user.user_bio = form.user_bio.data
-            user.phone_number = form.phone_number.data
-            user.city = form.city.data
-            user.state = form.state.data
-            user.country = form.country.data
-            user.address = form.address.data
+        # UPDATE FIELDS
+        user.user_name = form.user_name.data.strip() or user.user_name
+        user.email = form.email.data.strip() or user.email
+        user.user_bio = form.user_bio.data
+        user.phone_number = form.phone_number.data
+        user.city = form.city.data
+        user.state = form.state.data
+        user.country = form.country.data
+        user.address = form.address.data
+        user.pincode = form.pincode.data
 
-            if form.email.data:
-                user.email = form.email.data.strip()
+        # PASSWORD UPDATE
+        if form.password.data.strip():
+            user.password = generate_password_hash(form.password.data)
 
-            if form.password.data and form.password.data.strip():
-                user.password = generate_password_hash(
-                    form.password.data.strip()
-                )
+        db.session.commit()
+        flash("Profile updated!", "success")
+        return redirect(url_for("main.user_list"))
 
-            db.session.add(user)
-            db.session.commit()
-            flash("Profile updated successfully.", "success")
-            return redirect(url_for("main.user_list"))
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.exception(
-                "Error updating profile for user %s", user.user_id
-            )
-            flash(f"Error updating profile: {e}", "danger")
-            return render_template("edit_user.html", form=form, user=user)
-
+    # GET or Failed validation
     return render_template("edit_user.html", form=form, user=user)
-
 
 # ============================
 #  MEDIA
@@ -1064,6 +1364,11 @@ def add_pet():
                 if form.pet_type.data
                 else None
             ),
+            pet_breed=(
+                form.pet_breed.data.strip()
+                if form.pet_breed.data
+                else None
+            ),
             pet_colour=(
                 form.pet_colour.data.strip()
                 if form.pet_colour.data
@@ -1076,7 +1381,7 @@ def add_pet():
         try:
             db.session.commit()
             flash("Pet added successfully.", "success")
-            return redirect(url_for("main.pets_list"))
+            return redirect(url_for("main.my_pets"))
         except Exception as e:
             db.session.rollback()
             if filename:
@@ -1151,6 +1456,13 @@ def edit_pet(pet_id):
         pet.pet_type = (
             form.pet_type.data.strip() if form.pet_type.data else None
         )
+              
+        pet.pet_breed = (
+            form.pet_breed.data.strip()
+            if form.pet_breed.data
+            else None
+        )
+
         pet.pet_colour = (
             form.pet_colour.data.strip()
             if form.pet_colour.data
@@ -1204,25 +1516,42 @@ def edit_pet(pet_id):
 @login_required
 def delete_pet(pet_id):
     pet = PetDetails.query.get_or_404(pet_id)
+
+    # Prevent deletion if pet is in the adoption list (any entry)
     try:
+        adoption_entry = AdoptionList.query.filter_by(pet_id=pet_id).first()
+    except Exception:
+        adoption_entry = None
+        current_app.logger.exception("Error checking adoption list for pet %s", pet_id)
+
+    if adoption_entry:
+        # If you want to be stricter and only block when status == 'pending',
+        # change the condition above to filter_by(pet_id=pet_id, status='pending')
+        flash("This pet is currently in the adoption list and cannot be deleted.", "warning")
+        return redirect(url_for("main.my_pets"))
+
+    try:
+        # remove pet image file if present
         if pet.pet_img:
             try:
                 upload_dir = current_app.config.get("USER_IMAGE_UPLOADS")
-                os.remove(
-                    os.path.join(upload_dir, os.path.basename(pet.pet_img))
-                )
+                if upload_dir:
+                    path = os.path.join(upload_dir, os.path.basename(pet.pet_img))
+                    if os.path.exists(path):
+                        os.remove(path)
             except Exception:
-                pass
+                current_app.logger.exception("Failed to remove pet image for pet %s", pet_id)
 
         db.session.delete(pet)
         db.session.commit()
         flash("Pet deleted.", "info")
     except Exception as e:
         db.session.rollback()
-        current_app.logger.exception("Error deleting pet")
+        current_app.logger.exception("Error deleting pet %s: %s", pet_id, e)
         flash(f"Error deleting pet: {e}", "danger")
 
-    return redirect(url_for("main.pets_list"))
+    return redirect(url_for("main.my_pets"))
+
 
 
 # ============================
@@ -1242,7 +1571,24 @@ def my_pets():
         .order_by(PetDetails.pet_id.desc())
         .all()
     )
-    return render_template("mypets.html", pets=pets)
+    csrf_token_value = generate_csrf()
+    # Annotate each pet with .for_adoption boolean for template convenience
+    try:
+        for pet in pets:
+            adoption = AdoptionList.query.filter_by(pet_id=pet.pet_id, status="pending").first()
+            pet.for_adoption = bool(adoption)
+    except Exception:
+        current_app.logger.exception("Error checking adoption status for pets")
+        # fallback: ensure attribute exists
+        for pet in pets:
+            if not hasattr(pet, "for_adoption"):
+                pet.for_adoption = False
+
+    # generate a CSRF token for any forms rendered in template
+
+
+    return render_template("mypets.html", pets=pets, csrf_token_value=csrf_token_value)
+
 
 
 @bp.route("/adoptions")
@@ -1269,6 +1615,7 @@ def adoption_pets():
 #  report PETS (FOUND)
 # ============================
 @bp.route("/report-found-pet", methods=["GET", "POST"])
+@login_required
 def report_found_pet():
     if request.method == "POST":
         pet_type = request.form.get("pet_type")
@@ -1300,7 +1647,7 @@ def report_found_pet():
         # Handle image upload (optional)
         pet_img_filename = None
         file = request.files.get("pet_img")
-
+        
         if file and getattr(file, "filename", None):
             filename_raw = secure_filename(file.filename)
             if filename_raw:
@@ -1323,7 +1670,7 @@ def report_found_pet():
             longitude=lng_val,
             date_found=date_found,
             pet_condition=pet_condition,
-            pet_img=pet_img_filename,  # << field name in model
+            pet_img=pet_img_filename,
             finder_name=finder_name,
             finder_phone=finder_phone,
             finder_whatsapp=finder_whatsapp,
@@ -1344,7 +1691,6 @@ def report_found_pet():
         return redirect(url_for("main.report_found_pet"))
 
     return render_template("report_found_pet.html")
-
 
 
 # ============================
@@ -1375,6 +1721,7 @@ def save_lost_pet_image(field_name: str):
 
 
 @bp.route("/report-lost-pet", methods=["GET", "POST"])
+@login_required
 def report_lost_pet():
     if request.method == "POST":
         # ---------- FORM DATA ----------
@@ -1445,12 +1792,6 @@ def report_lost_pet():
         lng_val = float(longitude) if longitude else None
 
         # ---------- CREATE MODEL INSTANCE ----------
-        # Make sure your LostPetReport model has these fields:
-        #   pet_name, pet_type, description, last_seen_location,
-        #   latitude, longitude, date_lost,
-        #   owner_name, owner_phone, owner_whatsapp, owner_email,
-        #   owner_address, reward_info,
-        #   pet_img_face, pet_img_full, pet_img_marks, status
         report = LostPetReport(
             pet_name=pet_name,
             pet_type=pet_type,
@@ -1471,7 +1812,6 @@ def report_lost_pet():
             status="pending",
         )
 
-        # ---------- SAVE TO DB ----------
         db.session.add(report)
         try:
             db.session.commit()
@@ -1486,6 +1826,7 @@ def report_lost_pet():
     # GET request – just render the form
     return render_template("report_lost_pet.html")
 
+
 # ============================
 #  LOST PET STATUS UPDATE (ADMIN)
 # ============================
@@ -1497,11 +1838,9 @@ def update_lost_pet_status(report_id):
     Accepts JSON { status: 'accepted' } or form-encoded status=accepted.
     Returns JSON.
     """
-    # Ensure g.admin exists (double-check)
     if not getattr(g, "admin", None):
         abort(403)
 
-    # Accept JSON or form data
     if request.is_json:
         payload = request.get_json(silent=True) or {}
         new_status = (payload.get("status") or "").strip().lower()
@@ -1513,8 +1852,6 @@ def update_lost_pet_status(report_id):
 
     report = LostPetReport.query.get_or_404(report_id)
 
-    # normalize statuses in DB as lowercase (optional); here we set lower-case values
-    # If you want to keep titlecase, change below to 'Accepted'/'Rejected'
     current_status = (report.status or "").strip().lower()
     if current_status == new_status:
         return jsonify({"ok": True, "status": current_status})
@@ -1528,6 +1865,7 @@ def update_lost_pet_status(report_id):
         current_app.logger.exception("Failed to update lost pet status for id %s", report_id)
         db.session.rollback()
         return jsonify({"ok": False, "error": "db error"}), 500
+
 
 @bp.route('/admin/found-pet/<int:report_id>/status', methods=['POST'])
 @admin_login_required
@@ -1554,10 +1892,10 @@ def update_found_pet_status(report_id):
     except Exception:
         db.session.rollback()
         return jsonify({"ok": False, "error": "db error"}), 500
-    
 
 
 @bp.route("/found-reports")
+@login_required
 def found_reports():
     # show only accepted/verified found reports if you prefer:
     found_reports = FoundPetReport.query.filter_by(status='accepted') \
@@ -1566,8 +1904,425 @@ def found_reports():
 
 
 @bp.route('/lost-reports')
+@login_required
 def lost_reports():
     # only show reports that admin accepted
     found_reports = FoundPetReport.query.filter_by(status='accepted').order_by(FoundPetReport.created_at.desc()).all()
     lost_reports = LostPetReport.query.filter_by(status='accepted').order_by(LostPetReport.created_at.desc()).all()
     return render_template("lost_reports.html", found_reports=found_reports, lost_reports=lost_reports)
+
+from flask import render_template, url_for, request, redirect, current_app, g
+from werkzeug.routing import BuildError
+
+from functools import wraps
+from flask import session, flash, redirect, url_for, request
+
+def login_or_admin_required(view):
+    @wraps(view)
+    def wrapped_view(*args, **kwargs):
+
+        # Allow normal user
+        if "user_id" in session:
+            return view(*args, **kwargs)
+
+        # Allow admin
+        if "admin_id" in session:
+            return view(*args, **kwargs)
+
+        # Neither logged in
+        flash("Please log in to access this page.", "warning")
+        return redirect(url_for("main.login", next=request.path))
+
+    return wrapped_view
+def ensure_admin_in_userdetails(admin):
+    pseudo_id = admin.id + 1000000  # completely separate ID space
+
+    existing = UserDetails.query.get(pseudo_id)
+    if existing:
+        return pseudo_id
+
+    new_user = UserDetails(
+        user_id=pseudo_id,
+        user_name=admin.full_name or "Admin",
+        email=admin.email,
+        password=generate_password_hash("admin_placeholder_password"),
+        user_img="user_images/default-avatar.png",
+        phone_number=admin.phone,
+        city=admin.city,
+        state=admin.state,
+        country="",
+        address=admin.address,
+        pincode="",
+        user_bio="Admin Account (auto-generated)"
+    )
+
+    db.session.add(new_user)
+    db.session.commit()
+
+    return pseudo_id
+
+
+@bp.route("/admin/chat/<int:user_id>")
+@admin_login_required
+def admin_chat_with_user(user_id):
+    return redirect(url_for("main.admin_chat", open_user_id=user_id))
+
+@bp.route('/chat')
+@login_or_admin_required
+def chat():
+    """
+    Chat UI route — uses g.user (set by load_logged_in_user).
+    Renders template with a minimal users list and a JWT token (if create_token exists).
+    """
+    if g.admin:
+        return redirect(url_for("main.admin_chat"))
+    # Use g.user (your app sets this in before_request)
+    cu = getattr(g, "user", None)
+    if cu is None:
+        # User not logged in — redirect to blueprint login endpoint
+        try:
+            return redirect(url_for("main.login", next=request.path))
+        except Exception:
+            current_app.logger.info("main.login endpoint not found; falling back to '/'")
+            return redirect("/")
+
+    # Build a minimal users list for the sidebar (exclude current user)
+    users = []
+    try:
+        orm_users = (
+            UserDetails.query
+            .with_entities(UserDetails.user_id, UserDetails.user_name, UserDetails.user_img)
+            .filter(UserDetails.user_id != cu.user_id)
+            .order_by(UserDetails.user_id.desc())
+            .limit(200)
+            .all()
+        )
+        for r in orm_users:
+            uid = int(r[0])
+            uname = r[1] or ""
+            uimg = r[2] or url_for('static', filename='img/default-avatar.png')
+            is_admin = (uid >= 1000000)
+            users.append({
+                "id": uid,
+                "name": uname,
+                "avatar": uimg,
+                "last": "",
+                "is_admin": is_admin
+            })
+    except Exception as e:
+        current_app.logger.exception("Failed to load users for chat sidebar: %s", e)
+        users = []
+
+    # Load a single admin record (optional)
+    admin_user = None
+    try:
+        admin_row = db.session.execute(text("SELECT id, full_name FROM admins ORDER BY id LIMIT 1")).fetchone()
+        if admin_row:
+            admin_user = {"id": int(admin_row.id), "name": admin_row.full_name}
+    except Exception:
+        current_app.logger.info("No admins table or failed to fetch admin; using fallback admin_user")
+        admin_user = {"id": 999, "name": "PawCare Admin"}
+
+    # Create JWT token for socket auth if create_token is available
+    token = ""
+    try:
+        create_token_fn = globals().get("create_token") or getattr(current_app, "create_token", None)
+        if callable(create_token_fn):
+            token = create_token_fn(cu.user_id)
+    except Exception:
+        current_app.logger.exception("Failed to create token for chat; continuing without token")
+        token = ""
+    open_user_id = request.args.get("open_user_id", type=int)
+    return render_template(
+        'chat.html',
+        current_user=cu,
+        current_user_is_admin=(getattr(g, "admin", None) is not None),
+        token=token,
+        users=users,
+        admin_user=admin_user,
+        open_user_id=request.args.get("open_user_id", None)
+    )
+
+
+@bp.route("/chat/start/<int:user_id>")
+@login_or_admin_required
+def chat_start(user_id):
+    return redirect(url_for("main.chat", open_user_id=user_id))
+
+
+from sqlalchemy import text
+from flask import redirect, url_for, current_app
+
+from sqlalchemy import text
+
+@bp.route("/chat/pet/<int:pet_id>")
+@login_or_admin_required
+def chat_with_pet_owner(pet_id):
+    try:
+        row = db.session.execute(
+            text("SELECT pet_owner_id FROM pets_details WHERE pet_id = :pid"),
+            {"pid": pet_id}
+        ).fetchone()
+    except Exception:
+        current_app.logger.exception("DB error fetching owner for pet %s", pet_id)
+        return ("DB error", 500)
+
+    if not row:
+        return ("Pet not found", 404)
+
+    owner_id = row[0]
+    return redirect(url_for("main.chat", open_user_id=owner_id))
+
+
+@bp.route('/api/conversations/<int:other_id>', methods=['GET'])
+@login_or_admin_required
+def api_conversation(other_id):
+    user = getattr(g, 'user', None)
+    admin = getattr(g, 'admin', None)
+
+    if user:
+        me = user.user_id
+    elif admin:
+        me = ensure_admin_in_userdetails(admin)
+    else:
+        return jsonify({'error': 'unauthenticated'}), 401
+
+    try:
+        rows = db.session.execute(
+            text("""
+                SELECT id, sender_id, recipient_id, content, created_at
+                FROM messages
+                WHERE (sender_id = :me AND recipient_id = :other)
+                   OR (sender_id = :other AND recipient_id = :me)
+                ORDER BY created_at ASC, id ASC
+            """),
+            {"me": me, "other": other_id}
+        ).fetchall()
+
+        messages = [{
+            'id': int(r.id),
+            'sender_id': int(r.sender_id),
+            'recipient_id': int(r.recipient_id),
+            'content': r.content,
+            'created_at': r.created_at.isoformat()
+        } for r in rows]
+
+        return jsonify({'messages': messages})
+    except Exception as e:
+        current_app.logger.exception('Error loading conversation: %s', e)
+        return jsonify({'messages': []}), 500
+
+@bp.route('/messages/send', methods=['POST'])
+@login_or_admin_required
+def api_send_message():
+    """
+    Save a new message and return JSON.
+    Supports both: 
+    - logged-in normal users (g.user)
+    - logged-in admins (g.admin)
+    """
+
+    # Identify sender (user or admin)
+    sender_user = getattr(g, 'user', None)
+    sender_admin = getattr(g, 'admin', None)
+
+    if sender_user:
+        sender_id = sender_user.user_id
+    elif sender_admin:
+        sender_id = ensure_admin_in_userdetails(sender_admin)
+    else:
+        return jsonify({'ok': False, 'error': 'unauthenticated'}), 401
+
+
+    # Payload
+    payload = request.get_json(silent=True) or {}
+    recipient = request.form.get('recipient_id') or payload.get('recipient_id')
+    content = request.form.get('content') or payload.get('content')
+
+    try:
+        recipient = int(recipient)
+    except Exception:
+        return jsonify({'ok': False, 'error': 'invalid recipient'}), 400
+
+    if not content or not str(content).strip():
+        return jsonify({'ok': False, 'error': 'empty message'}), 400
+
+    try:
+        insert_sql = text("""
+            INSERT INTO messages (sender_id, recipient_id, content, created_at)
+            VALUES (:s, :r, :c, NOW())
+        """)
+        db.session.execute(insert_sql, {'s': sender_id, 'r': recipient, 'c': content})
+        db.session.commit()
+
+        out_msg = {
+            'sender_id': sender_id,
+            'recipient_id': recipient,
+            'content': content,
+            'created_at': datetime.utcnow().isoformat()
+        }
+
+        # Notify both users via socket.io
+        try:
+            socketio.emit('new_direct_message', out_msg, room=f"user_{recipient}")
+            socketio.emit('message_sent', out_msg, room=f"user_{sender_id}")
+        except Exception:
+            current_app.logger.exception("Socket emit failed")
+
+        return jsonify({'ok': True, 'message': out_msg})
+
+    except Exception as e:
+        current_app.logger.exception("Failed to store message: %s", e)
+        db.session.rollback()
+        return jsonify({'ok': False, 'error': 'db_error'}), 500
+
+from types import SimpleNamespace
+@bp.route('/admin/chat')
+@admin_login_required
+def admin_chat():
+    admin = g.admin
+
+    # --------------------------------------------
+    # 1) Ensure admin exists in UserDetails table
+    # --------------------------------------------
+    admin_user_id = ensure_admin_in_userdetails(admin)
+
+    # Admin identity for chat UI
+    admin_chat_user = SimpleNamespace(
+        user_id = admin_user_id,
+        user_name = admin.full_name,
+        user_img = (
+            f"admin_profiles/{admin.profile_image}"
+            if admin.profile_image else "img/admin.png"
+        )
+    )
+
+    # --------------------------------------------
+    # 2) Load all users EXCEPT the admin mirror
+    # --------------------------------------------
+    users = []
+    try:
+        orm_users = (
+            UserDetails.query
+            .with_entities(
+                UserDetails.user_id,
+                UserDetails.user_name,
+                UserDetails.user_img
+            )
+            .order_by(UserDetails.user_id.desc())
+            .all()
+        )
+
+        for u in orm_users:
+
+            # Skip the admin's own mirrored record
+            if u.user_id == admin_user_id:
+                continue
+
+            avatar = u.user_img
+
+            # --------------------------------------------
+            # FIX: Normalize avatar path so template can load it
+            # Template expects ONLY relative path (no url_for!)
+            # --------------------------------------------
+            if avatar:
+                # If DB contains filename only -> assume user_images/
+                if not avatar.startswith(("user_images/", "admin_profiles/", "img/")):
+                    avatar = f"user_images/{avatar}"
+            else:
+                avatar = "img/default-avatar.png"   # stored inside /media/img/
+
+            users.append({
+                "id": u.user_id,
+                "name": u.user_name or "",
+                "avatar": avatar,   # <---- IMPORTANT: RELATIVE PATH ONLY
+                "last": "",
+                "is_admin": u.user_name.lower().startswith("admin")  # or any admin check you want
+            })
+
+    except Exception as e:
+        current_app.logger.exception("Failed loading user list for admin chat: %s", e)
+
+    # --------------------------------------------
+    # 3) Render the page
+    # --------------------------------------------
+    return render_template(
+        "admin_chat.html",
+        current_user=admin_chat_user,
+        users=users,
+        current_user_is_admin=True,
+        token="",   # use JWT if needed later
+        open_user_id=request.args.get("open_user_id")
+    )
+
+@bp.route('/request-pet/<int:report_id>',methods=["POST"])
+@login_required
+def request_pet(report_id):
+    user = g.user
+    if not user:
+        flash("Please login first.", "warning")
+        return redirect(url_for('main.login'))
+
+    # prevent duplicate request
+    existing = PetRequest.query.filter_by(
+        report_id=report_id,
+        user_id=user.user_id
+    ).first()
+
+    if existing:
+        flash("You have already requested this pet.", "info")
+        return redirect(url_for('main.found_reports'))
+    
+    
+    req = PetRequest(
+        report_id=report_id,
+        user_id=user.user_id,
+        user_name=user.user_name,
+        user_email=user.email,
+        message="User claims this pet",
+    )
+
+    db.session.add(req)
+    db.session.commit()
+
+    flash("Your request has been sent to admin.", "success")
+    return redirect(url_for('main.found_reports'))
+
+@bp.route('/admin/request/<int:id>/approve', methods=["POST"])
+@admin_login_required
+def approve_request(id):
+    r = PetRequest.query.get_or_404(id)
+    r.status = 'approved'
+
+    # 🔔 notify user
+    notification = Notification(
+        user_id=r.user_id,
+        title="Pet Request Approved ✅",
+        message=f"Your request for found pet (Report ID #{r.report_id}) has been approved. Admin will contact you soon."
+    )
+
+    db.session.add(notification)
+    db.session.commit()
+
+    flash("Request approved and user notified.", "success")
+    return redirect(url_for('main.admin_dashboard'))
+
+
+@bp.route('/admin/request/<int:id>/reject',methods=["POST"])
+@admin_login_required
+def reject_request(id):
+    r = PetRequest.query.get_or_404(id)
+    r.status = 'rejected'
+
+    # 🔔 notify user
+    notification = Notification(
+        user_id=r.user_id,
+        title="Pet Request Rejected ❌",
+        message=f"Your request for found pet (Report ID #{r.report_id}) has been rejected."
+    )
+
+    db.session.add(notification)
+    db.session.commit()
+
+    flash("Request rejected and user notified.", "info")
+    return redirect(url_for('main.admin_dashboard'))

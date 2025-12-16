@@ -4,6 +4,7 @@ from sqlalchemy import Enum as SAEnum
 import enum
 
 
+
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
@@ -49,6 +50,8 @@ class AdoptionList(db.Model):
         "PetDetails",
         backref=db.backref("adoption_entry", uselist=False)
     )
+    status = db.Column(db.String(20), default="pending")
+
 
 class PetAdoptionRequest(db.Model):
     __tablename__ = "pet_adoption_requests"
@@ -139,6 +142,7 @@ class UserDetails(db.Model):
     country = db.Column(db.String(100), nullable=True)
     address = db.Column(db.String(255), nullable=True)
     email = db.Column(db.String(150), unique=True, nullable=False)
+    pincode = db.Column(db.String(10), nullable=True) 
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -172,6 +176,7 @@ class PetDetails(db.Model):
     pet_age = db.Column(db.String(10), nullable=True)
     pet_licence_id = db.Column(db.String(100), nullable=True)
     pet_type = db.Column(db.String(50), nullable=True)
+    pet_breed = db.Column(db.String(50), nullable=True)
     pet_colour = db.Column(db.String(50), nullable=True)
     pet_male_female = db.Column(SAEnum(GenderEnum), nullable=False)
 
@@ -225,7 +230,7 @@ class FoundPetReport(db.Model):
     finder_whatsapp = db.Column(db.String(30), nullable=True)
     finder_email = db.Column(db.String(120), nullable=False)
     finder_notes = db.Column(db.Text, nullable=True)
-
+    
     status = db.Column(db.String(20), nullable=False, default="pending")
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
@@ -259,4 +264,76 @@ class LostPetReport(db.Model):
     pet_img_marks = db.Column(db.String(255))
 
     status = db.Column(db.String(50), default="pending", nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+from datetime import datetime
+from extensions import db
+
+
+class ChatRoom(db.Model):
+    __tablename__ = "chat_rooms"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    is_private = db.Column(db.Boolean, default=False)
+    created_by = db.Column(db.Integer, db.ForeignKey("admin.id"), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class ChatRoomMember(db.Model):
+    __tablename__ = "chat_room_members"
+
+    id = db.Column(db.Integer, primary_key=True)
+    room_id = db.Column(db.Integer, db.ForeignKey("chat_rooms.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user_details.user_id"), nullable=False)
+
+
+class ChatMessage(db.Model):
+    __tablename__ = "chat_messages"
+
+    id = db.Column(db.Integer, primary_key=True)
+    room_id = db.Column(db.Integer, db.ForeignKey("chat_rooms.id"), nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey("user_details.user_id"), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+from datetime import datetime
+from extensions import db
+
+class PetRequest(db.Model):
+    __tablename__ = 'pet_requests'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    report_id = db.Column(
+        db.Integer,
+        db.ForeignKey('found_pet_reports.id'),
+        nullable=False
+    )
+
+    user_id = db.Column(db.Integer, nullable=False)
+    user_name = db.Column(db.String(120))
+    user_email = db.Column(db.String(120))
+
+    message = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(20), default='pending')
+
+    # ✅ relationship
+    report = db.relationship('FoundPetReport', backref='requests')
+
+from datetime import datetime
+from extensions import db
+
+class Notification(db.Model):
+    __tablename__ = "notifications"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(db.Integer, nullable=False)
+    title = db.Column(db.String(120), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+
+    is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

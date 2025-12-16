@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>{% block title %}Pet Rescue{% endblock %}</title>
+  <meta name="csrf-token" content="{{ csrf_token_value }}">
 
   <style>
     /* -------------------------
@@ -231,8 +232,8 @@
     </div>
 
     <nav class="nav-links" role="navigation" aria-label="Main navigation">
-     <a class="" href="{{ url_for('main.found_reports') }}">Found Reports</a>
-     <a class="" href="{{ url_for('main.lost_reports') }}">Lost Reports</a>
+     <a class="" href="{{ url_for('main.found_reports') }}">Found Your Pets</a>
+     <a class="" href="{{ url_for('main.lost_reports') }}">Losted Pets</a>
     </nav>
 
     <div class="profile-area" aria-hidden="{{ 'false' if g.user else 'true' }}">

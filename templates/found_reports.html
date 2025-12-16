@@ -2,6 +2,7 @@
 {% extends "base.html" %}
 
 {% block content %}
+<meta name="csrf-token" content="{{ csrf_token_value }}">
 <style>
   :root{--bg:#f6f7fb;--card:#fff;--muted:#64748b;--accent:#2563eb}
   body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;margin:0;background:var(--bg);color:#071029}
@@ -36,6 +37,16 @@
   .meta-row{margin-bottom:8px}
   .meta-row b{display:block;font-size:13px;color:#0b1220;margin-bottom:3px}
   .meta-row .val{color:#111827;font-weight:600}
+  .card-footer{
+  gap:8px;
+}
+
+.card-footer form button{
+  background:#fff;
+  border:1px solid #cbd5f5;
+  color:#1e3a8a;
+}
+
 </style>
 
 <div class="wrap">
@@ -75,6 +86,15 @@
           data-email="{{ f.finder_email or '' }}"
           data-notes="{{ (f.finder_notes or '')|e }}"
         >View details</button>
+        <form
+    method="POST"
+    action="{{ url_for('main.request_pet', report_id=f.id) }}"
+    style="margin:0;"
+  ><input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+    <button type="submit" class="btn">
+      Request this pet
+    </button>
+  </form>
       </div>
     </article>
     {% else %}
