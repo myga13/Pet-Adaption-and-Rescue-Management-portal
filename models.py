@@ -280,23 +280,6 @@ class ChatRoom(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-class ChatRoomMember(db.Model):
-    __tablename__ = "chat_room_members"
-
-    id = db.Column(db.Integer, primary_key=True)
-    room_id = db.Column(db.Integer, db.ForeignKey("chat_rooms.id"), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("user_details.user_id"), nullable=False)
-
-
-class ChatMessage(db.Model):
-    __tablename__ = "chat_messages"
-
-    id = db.Column(db.Integer, primary_key=True)
-    room_id = db.Column(db.Integer, db.ForeignKey("chat_rooms.id"), nullable=False)
-    sender_id = db.Column(db.Integer, db.ForeignKey("user_details.user_id"), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
 
 from datetime import datetime
 from extensions import db
@@ -337,3 +320,92 @@ class Notification(db.Model):
 
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+from datetime import datetime
+from app import db
+class Room(db.Model):
+    __tablename__ = "rooms"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+    created_by_admin = db.Column(
+        db.Integer,
+        db.ForeignKey("admins.id"),
+        nullable=False
+    )
+    is_closed = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class RoomMember(db.Model):
+    __tablename__ = "room_members"
+
+    room_id = db.Column(
+        db.Integer,
+        db.ForeignKey("rooms.id", ondelete="CASCADE"),
+        primary_key=True
+    )
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("webapp_userdetails.user_id", ondelete="CASCADE"),
+        primary_key=True
+    )
+
+
+class RoomMessage(db.Model):
+    __tablename__ = "room_messages"
+
+    id = db.Column(db.Integer, primary_key=True)
+    room_id = db.Column(
+        db.Integer,
+        db.ForeignKey("rooms.id", ondelete="CASCADE")
+    )
+    sender_id = db.Column(
+        db.Integer,
+        db.ForeignKey("webapp_userdetails.user_id")
+    )
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+from datetime import datetime
+from extensions import db   # or from app import db (use what your project uses)
+
+class LostPetRequest(db.Model):
+    __tablename__ = "lost_pet_requests"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # 🔗 relationship to lost pet report
+    lost_report_id = db.Column(
+        db.Integer,
+        db.ForeignKey("lost_pet_reports.id"),
+        nullable=False
+    )
+
+    # finder (logged-in user)
+    finder_id = db.Column(db.Integer, nullable=False)
+    finder_name = db.Column(db.String(120))
+    finder_email = db.Column(db.String(120))
+
+    message = db.Column(db.Text)
+
+    status = db.Column(
+        db.String(20),
+        default="pending",
+        nullable=False
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    # ORM relationship (VERY IMPORTANT for admin dashboard)
+    lost_report = db.relationship(
+        "LostPetReport",
+        backref=db.backref("requests", lazy=True)
+    )
+
+    def __repr__(self):
+        return f"<LostPetRequest {self.id} | Report {self.lost_report_id} | {self.status}>"

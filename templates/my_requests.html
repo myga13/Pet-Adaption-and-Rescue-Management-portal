@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+/* ================================
+   MY REQUESTS PAGE – MODERN UI
+================================ */
+
+.requests-container {
+    max-width: 1100px;
+    margin: 30px auto;
+    padding: 20px;
+}
+
+.requests-container h2 {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.section-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+/* ================================
+   REQUEST CARD
+================================ */
+
+.request-card {
+    display: flex;
+    gap: 18px;
+    padding: 15px;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 15px;
+    transition: box-shadow 0.2s ease;
+}
+
+.request-card:hover {
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+.pet-thumb {
+    width: 110px;
+    height: 110px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: #f1f5f9;
+}
+
+/* ================================
+   DETAILS
+================================ */
+
+.request-details {
+    flex: 1;
+}
+
+.request-details h4 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.detail-row {
+    font-size: 14px;
+    color: #475569;
+    margin-bottom: 4px;
+}
+
+/* ================================
+   STATUS BADGE
+================================ */
+
+.status-badge {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-block;
+    margin-top: 6px;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-accepted {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.date-text {
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 6px;
+}
+
+/* ================================
+   CHAT BUTTON
+================================ */
+
+.chat-btn {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #ffffff;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.chat-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(79, 70, 229, 0.35);
+}
+
+/* ================================
+   EMPTY STATE
+================================ */
+
+.empty-state {
+    text-align: center;
+    padding: 25px;
+    color: #64748b;
+}
+
+/* ================================
+   RESPONSIVE
+================================ */
+
+@media (max-width: 768px) {
+    .request-card {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+}
+</style>
+
+<div class="requests-container">
+
+    <h2>📋 My Requests Status</h2>
+
+    <!-- ================= FOUND PET REQUESTS ================= -->
+    <div class="section-card">
+        <div class="section-title">🐾 My Found Pet Requests</div>
+
+        {% if found_pet_requests %}
+            {% for req in found_pet_requests %}
+            <div class="request-card">
+
+                <img class="pet-thumb"
+                     src="{{ url_for('main.media', filename=req.report.pet_img) if req.report.pet_img else url_for('static', filename='images/pet-placeholder.png') }}">
+
+                <div class="request-details">
+                    <h4>Found {{ req.report.pet_type or "Pet" }}</h4>
+
+                    <div class="detail-row">📍 Location: {{ req.report.found_location }}</div>
+                    <div class="detail-row">💬 Message: {{ req.message or "—" }}</div>
+
+                    <span class="status-badge status-{{ req.status }}">
+                        {{ req.status }}
+                    </span>
+
+                    {% if req.status == 'approved' %}
+                        <br>
+                        <a href="{{ url_for('main.user_chat', report_type='found', report_id=req.report.id) }}"
+                           class="chat-btn">
+                            💬 Open Chat
+                        </a>
+                    {% endif %}
+
+                    <div class="date-text">
+                        Requested on {{ req.created_at.strftime("%d %b %Y") }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">No found-pet requests yet.</div>
+        {% endif %}
+    </div>
+
+    <!-- ================= LOST PET REQUESTS ================= -->
+    <div class="section-card">
+        <div class="section-title">🔍 My Lost Pet Finder Requests</div>
+
+        {% if lost_pet_requests %}
+            {% for req in lost_pet_requests %}
+            <div class="request-card">
+
+                <img class="pet-thumb"
+                     src="{{ url_for('main.media', filename=req.lost_report.pet_img_face) if req.lost_report.pet_img_face else url_for('static', filename='images/pet-placeholder.png') }}">
+
+                <div class="request-details">
+                    <h4>{{ req.lost_report.pet_name }}</h4>
+
+                    <div class="detail-row">🐶 Type: {{ req.lost_report.pet_type or "—" }}</div>
+                    <div class="detail-row">📍 Last Seen: {{ req.lost_report.last_seen_location }}</div>
+                    <div class="detail-row">💬 Message: {{ req.message or "—" }}</div>
+
+                    <span class="status-badge status-{{ req.status }}">
+                        {{ req.status }}
+                    </span>
+
+                    {% if req.status == 'approved' %}
+                        <br>
+                        <a href="{{ url_for('main.user_chat', report_type='lost', report_id=req.lost_report.id) }}"
+                           class="chat-btn">
+                            💬 Open Chat
+                        </a>
+                    {% endif %}
+
+                    <div class="date-text">
+                        Requested on {{ req.created_at.strftime("%d %b %Y") }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">No lost-pet finder requests yet.</div>
+        {% endif %}
+    </div>
+
+</div>
+
+{% endblock %}

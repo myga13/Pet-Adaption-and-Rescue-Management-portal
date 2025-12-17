@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>{% block title %}PawCare Admin{% endblock %}</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
 
   <style>
     :root{

@@ -1,271 +1,251 @@
 {% extends "admin_base.html" %}
 {% block title %}Admin Chat{% endblock %}
-
 {% block content %}
 
 <style>
-/* ============ CHAT PAGE LAYOUT ============ */
+:root {
+  --border:#ddd;
+  --bg-light:#f9fafb;
+  --bg-hover:#e5e7eb;
+  --bg-active:#dbeafe;
+  --admin:#1d4ed8;
+  --user:#047857;
+}
+
 .chat-wrapper {
-    display: flex;
-    height: 90vh;
-    background: #ffffff;
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid #dcdcdc;
+  display:flex;
+  height:90vh;
+  border:1px solid var(--border);
+  border-radius:6px;
+  overflow:hidden;
 }
 
-/* Sidebar */
-.chat-sidebar {
-    width: 26%;
-    background: #f3f4f6;
-    border-right: 1px solid #dcdcdc;
-    overflow-y: auto;
+/* ---------- SIDEBAR ---------- */
+.sidebar {
+  width:30%;
+  background:var(--bg-light);
+  border-right:1px solid var(--border);
+  padding:12px;
+  overflow-y:auto;
 }
 
-.sidebar-header {
-    padding: 18px;
-    font-size: 18px;
-    font-weight: bold;
-    background: #e5e7eb;
-    border-bottom: 1px solid #ccc;
+.room-item {
+  padding:10px;
+  margin-bottom:6px;
+  border-radius:6px;
+  cursor:pointer;
+}
+.room-item:hover { background:var(--bg-hover); }
+.room-item.active { background:var(--bg-active); font-weight:bold; }
+.room-item.closed { opacity:.6; }
+
+/* ---------- CHAT ---------- */
+.chat-panel {
+  width:70%;
+  display:flex;
+  flex-direction:column;
 }
 
-/* Search */
-.search-box { padding: 10px; border-bottom: 1px solid #ccc; }
-.search-box input {
-    width: 98%; padding: 8px; border-radius: 6px;
-    border: 1px solid #aaa; font-size: 14px;
-}
-
-/* User list */
-.user-list { padding: 10px; }
-.user-item {
-    display: flex; gap: 12px; padding: 10px; cursor: pointer;
-    border-radius: 8px; align-items: center; transition: 0.2s;
-    border: 1px solid transparent;
-}
-.user-item:hover { background: #e1e1e1; }
-.user-item.active { background: #d4d4d4; border-color: #a3a3a3; }
-.user-item img {
-    width: 45px; height: 45px; border-radius: 50%; object-fit: cover;
-}
-
-.user-info { display: flex; flex-direction: column; }
-.user-info .name { font-weight: 600; }
-
-/* CHAT WINDOW */
-.chat-window { width: 74%; display: flex; flex-direction: column; }
 .chat-header {
-    padding: 15px; font-size: 17px; font-weight: bold;
-    border-bottom: 1px solid #d4d4d4; background: #fafafa;
+  padding:12px;
+  border-bottom:1px solid var(--border);
+  font-weight:bold;
 }
+
 .chat-messages {
-    flex-grow: 1;
-    padding: 15px;
-    overflow-y: auto;
-    background: #fdfdfd;
-    display: flex;
-    flex-direction: column;
+  flex:1;
+  padding:12px;
+  overflow-y:auto;
 }
 
-.msg {
-    max-width: 70%;
-    margin-bottom: 14px;
-    padding: 10px 12px;
-    border-radius: 10px;
-    display: block !important;
+.msg { margin-bottom:12px; }
+.msg.admin b { color:var(--admin); }
+.msg.user b { color:var(--user); }
+
+.chat-input {
+  display:none;
+  gap:8px;
+  padding:10px;
+  border-top:1px solid var(--border);
+  background:#f3f4f6;
+}
+.chat-input input {
+  flex:1;
+  padding:8px;
 }
 
-.msg-self { background: #d1ffd6; margin-left: auto; }
-.msg-other { background: #e8e8e8; margin-right: auto; }
-.msg-time { font-size: 11px; color: #555; margin-top: 3px; }
+/* ---------- MODAL ---------- */
+.modal-backdrop {
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.4);
+}
 
-/* Input area */
-.chat-input-area {
-    padding: 14px; display: flex; border-top: 1px solid #cfcfcf;
-    background: #f7f7f7;
-}
-.chat-input-area input {
-    flex-grow: 1; padding: 12px; border-radius: 6px;
-    border: 1px solid #bcbcbc; font-size: 15px;
-}
-.chat-input-area button {
-    padding: 12px 18px; margin-left: 10px; background: #2563eb;
-    border: none; border-radius: 6px; color: white;
-    font-weight: 600; cursor: pointer; transition: 0.2s;
-}
-.chat-input-area button:hover { background: #1d4ed8; }
-
-/* Empty */
-.empty-chat {
-    display: flex; justify-content: center; align-items: center;
-    height: 100%; font-size: 20px; color: #999;
+.modal {
+  width:420px;
+  background:#fff;
+  padding:20px;
+  border-radius:6px;
 }
 </style>
 
 <div class="chat-wrapper">
 
-    <!-- ========== SIDEBAR ========== -->
-    <div class="chat-sidebar">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <h3>Rooms</h3>
+    {% for r in rooms %}
+      <div class="room-item {% if r.is_closed %}closed{% endif %}"
+           id="room-{{ r.id }}"
+           onclick="openRoom({{ r.id }}, '{{ r.name }}', {{ r.is_closed|int }})">
+        {{ r.name }} {% if r.is_closed %}(closed){% endif %}
+      </div>
+    {% endfor %}
+    <button style="width:100%;margin-top:10px" onclick="openModal()">➕ Create Room</button>
+  </aside>
 
-        <div class="sidebar-header">Users</div>
-
-        <!-- SEARCH -->
-        <div class="search-box">
-            <input type="text" id="userSearch" placeholder="Search users..."
-                   onkeyup="filterUsers()">
-        </div>
-
-        <div class="user-list" id="userList">
-            {% for u in users %}
-            <div class="user-item {% if open_user_id and open_user_id|int == u.id %}active{% endif %}"
-                 data-name="{{ u.name|lower }}"
-                 data-id="{{ u.id }}"
-                 onclick="openChat({{ u.id }})">
-
-                <img src="{{ url_for('main.media', filename=u.avatar) }}" alt="avatar">
-
-                <div class="user-info">
-                    <span class="name">{{ u.name }}</span>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-
+  <!-- CHAT -->
+  <section class="chat-panel">
+    <div class="chat-header" id="chatHeader">Select a room</div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input" id="chatInput">
+      <input id="msgInput" placeholder="Type message…"
+             onkeydown="if(event.key==='Enter')sendMessage()">
+      <button onclick="sendMessage()">Send</button>
     </div>
-
-
-    <!-- ========== CHAT WINDOW ========== -->
-    <div class="chat-window">
-
-        {% if open_user_id %}
-        
-        <div class="chat-header" id="chatHeader"></div>
-        <div id="chat-messages" class="chat-messages"></div>
-
-        <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Type a message...">
-            <button onclick="sendMessage()">Send</button>
-        </div>
-
-        {% else %}
-        <div class="empty-chat">Select a user to begin chat.</div>
-        {% endif %}
-
-    </div>
-
+  </section>
 </div>
 
+<!-- CREATE ROOM MODAL -->
+<div class="modal-backdrop" id="roomModal">
+  <div class="modal">
+    <h3>Create Room</h3>
+    <input id="roomName" placeholder="Room name" style="width:100%;padding:8px">
 
-<!-- ========== SOCKET + CHAT LOGIC ========== -->
+    <div style="max-height:200px;overflow:auto;margin:10px 0">
+      {% for u in users %}
+        <label>
+          <input type="checkbox" value="{{ u.user_id }}"> {{ u.user_name }}
+        </label><br>
+      {% endfor %}
+    </div>
+
+    <div style="text-align:right">
+      <button onclick="closeModal()">Cancel</button>
+      <button onclick="createRoom()">Create</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-
 <script>
-const CURRENT_ADMIN_ID = {{ current_user.user_id }};   // IMPORTANT ✔ mirrored ID
-const OPEN_USER_ID = {{ open_user_id if open_user_id else 'null' }};
-const TOKEN = "{{ token }}";
+const socket = io({ transports:["websocket"] });
 
-const socket = io({ auth: { token: TOKEN } });
+let currentRoomId = null;
 
-/*** SEARCH USERS ***/
-function filterUsers() {
-    const search = document.getElementById("userSearch").value.toLowerCase();
-    document.querySelectorAll("#userList .user-item").forEach(u => {
-        const name = u.dataset.name;
-        const id = u.dataset.id;
-        u.style.display = (name.includes(search) || id.includes(search)) ? "flex" : "none";
-    });
+/* ---------- MODAL ---------- */
+const roomModal = document.getElementById("roomModal");
+function openModal(){ roomModal.style.display = "flex"; }
+function closeModal(){ roomModal.style.display = "none"; }
+
+/* ---------- OPEN ROOM ---------- */
+function openRoom(id, name, closed){
+  if (currentRoomId) {
+    socket.emit("leave_room", { room_id: currentRoomId });
+  }
+
+  currentRoomId = id;
+
+  document.querySelectorAll(".room-item").forEach(r => r.classList.remove("active"));
+  document.getElementById(`room-${id}`).classList.add("active");
+
+  chatHeader.textContent = name;
+  chatMessages.innerHTML = "";
+  chatInput.style.display = closed ? "none" : "flex";
+
+  socket.emit("join_room", { room_id: id });
+  loadMessages();
 }
 
-/*** OPEN CHAT ***/
-function openChat(id) {
-    window.location.href = "/admin/chat/" + id;
-}
-const activeUser = document.querySelector(".user-item.active .name");
-if (activeUser) {
-    document.getElementById("chatHeader").innerText =
-        "Chat with " + activeUser.innerText;
-}
-/*** LOAD MESSAGES ***/
-if (OPEN_USER_ID) {
-    fetch(`/api/conversations/${OPEN_USER_ID}`)
-        .then(r => r.json())
-        .then(data => {
-            const box = document.getElementById("chat-messages");
-            box.innerHTML = "";
-
-            data.messages.forEach(m =>
-                addMessage(m, m.sender_id === CURRENT_ADMIN_ID)
-            );
-
-            box.scrollTop = box.scrollHeight;
-        });
-}
-
-/*** SEND MESSAGE ***/
-function sendMessage() {
-    let text = document.getElementById("chat-input").value.trim();
-    if (!text) return;
-
-    fetch("/messages/send", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            recipient_id: OPEN_USER_ID,
-            content: text
-        })
-    })
+/* ---------- LOAD MESSAGES ---------- */
+function loadMessages(){
+  fetch(`/api/rooms/${currentRoomId}`, { credentials:"same-origin" })
     .then(r => r.json())
-    .then(res => {
-        if (res.ok) {
-            addMessage(res.message, true);
-            document.getElementById("chat-input").value = "";
-        }
-    });
+    .then(d => {
+      chatMessages.innerHTML = "";
+      (d.messages || []).forEach(renderMessage);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    })
+    .catch(err => console.error("Load messages failed:", err));
 }
 
-/*** RECEIVE MESSAGE REAL-TIME ***/
-socket.on("new_direct_message", msg => {
-    if (parseInt(msg.sender_id) === OPEN_USER_ID ||
-        parseInt(msg.recipient_id) === CURRENT_ADMIN_ID) {
-        addMessage(msg, false);
-    }
+/* ---------- SEND MESSAGE ---------- */
+function sendMessage(){
+  const text = msgInput.value.trim();
+  if (!text || !currentRoomId) return;
+
+  fetch("/rooms/send", {
+  method:"POST",
+  credentials:"same-origin",
+  headers:{ "Content-Type":"application/json" },
+  body:JSON.stringify({ room_id: currentRoomId, content: text })
 });
 
-/*** RENDER MESSAGE ***/
-function addMessage(msg, mine) {
-    const box = document.getElementById("chat-messages");
 
-    let div = document.createElement("div");
-    div.className = mine ? "msg msg-self" : "msg msg-other";
-
-    div.innerHTML = `
-        <div>${msg.content}</div>
-        <div class="msg-time">${new Date(msg.created_at).toLocaleTimeString()}</div>
-    `;
-
-    box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
+  msgInput.value = "";
 }
-/* ================================
-   AUTO REFRESH EVERY 4 SECONDS
-================================ */
-setInterval(() => {
-    if (!OPEN_USER_ID) return;
 
-    fetch(`/api/conversations/${OPEN_USER_ID}`)
-        .then(r => r.json())
-        .then(data => {
-            const box = document.getElementById("chat-messages");
-            box.innerHTML = "";
+/* ---------- RENDER MESSAGE ---------- */
+function renderMessage(m){
+  const div = document.createElement("div");
+  div.className = `msg ${m.sender_role || "user"}`;
 
-            data.messages.forEach(m =>
-                addMessage(m, m.sender_id === CURRENT_ADMIN_ID)
-            );
+  const name = document.createElement("b");
+  name.textContent = m.sender_name || "Unknown";
 
-            box.scrollTop = box.scrollHeight;
-        });
-}, 4000);
+  div.appendChild(name);
+  div.appendChild(document.createElement("br"));
+  div.appendChild(document.createTextNode(m.content || ""));
+
+  chatMessages.appendChild(div);
+}
+
+/* ---------- SOCKET EVENTS ---------- */
+socket.on("new_room_message", data => {
+  if (data.room_id === currentRoomId && data.message) {
+    renderMessage(data.message);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+});
+
+/* ---------- CREATE ROOM ---------- */
+function createRoom(){
+  const name = document.getElementById("roomName").value.trim();
+  const users = [...document.querySelectorAll("#roomModal input:checked")]
+                .map(i => i.value);
+
+  if (!name) {
+    alert("Room name required");
+    return;
+  }
+
+  fetch("/rooms/create", {   // ⚠️ CHANGE THIS AFTER STEP 1
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, users })
+  })
+  .then(r => {
+    if (!r.ok) throw new Error("Create failed");
+    return r.json();
+  })
+  .then(() => location.reload())
+  .catch(() => alert("Room creation failed"));
+}
+
 
 </script>
 

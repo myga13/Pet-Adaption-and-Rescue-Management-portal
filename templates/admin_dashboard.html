@@ -654,7 +654,7 @@
         <span class="icon">🏡</span> Adoption Pets
       </button>
       <button class="admin-menu-btn" data-target="admin-ngo">
-        <span class="icon">✅</span> NGO Verification
+        <span class="icon">✅</span> Reported Pets Verification
       </button>
       <button class="admin-menu-btn" data-target="admin-found">
         <span class="icon">🔍</span> Found Pets
@@ -1379,9 +1379,9 @@
     <!-- ========== NGO VERIFICATION ========== -->
     <div class="admin-content-section" id="admin-ngo">
       <div class="admin-table-card">
-        <h3>NGO Pet Verification Queue</h3>
+        <h3>Pet Verification </h3>
         <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">
-          Pets submitted by portal users for verification through our collaborating NGOs.
+          Pets submitted by portal users for verification through our collaborating .
           Admin can monitor, approve, or request more details.
         </p>
 
@@ -1440,6 +1440,101 @@
     {% endfor %}
   </tbody>
 </table>
+<h2>Lost Pet Requests</h2>
+
+<table class="table" style="width:100%;border-collapse:collapse;margin-top:12px;">
+  <thead>
+    <tr style="background:#f1f5f9;">
+      <th>Pet</th>
+      <th>Finder</th>
+      <th>Email</th>
+      <th>Status</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for r in lost_requests %}
+    <tr>
+      <td>
+  <button
+    class="btn btn-link"
+    onclick="openPetModal({{ r.lost_report.id }})"
+  >
+    {{ r.lost_report.pet_name }}
+  </button>
+</td>
+
+      <td>{{ r.finder_name }}</td>
+      <td>{{ r.finder_email }}</td>
+      <td>{{ r.status }}</td>
+      <td>
+        {% if r.status == 'pending' %}
+          <form action="{{ url_for('main.approve_lost_request', id=r.id) }}" method="POST" style="display:inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+            <button class="btn btn-success">Approve</button>
+          </form>
+
+          <form action="{{ url_for('main.reject_lost_request', id=r.id) }}" method="POST" style="display:inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+            <button class="btn btn-danger">Reject</button>
+          </form>
+        {% else %}
+          —
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<!-- PET DETAILS MODAL -->
+<div id="petModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:3000;">
+  <div style="background:#fff; max-width:600px; margin:5% auto; padding:20px; border-radius:10px; position:relative;">
+    
+    <button onclick="closePetModal()" style="position:absolute; top:10px; right:10px;">✖</button>
+
+    <h3 id="petName"></h3>
+
+    <p><b>Pet Type:</b> <span id="petType"></span></p>
+    <p><b>Description:</b> <span id="petDescription"></span></p>
+    <p><b>Last Seen:</b> <span id="petLocation"></span></p>
+    <p><b>Date Lost:</b> <span id="petDate"></span></p>
+
+    <hr>
+
+    <h4>Owner Information</h4>
+    <p><b>Name:</b> <span id="ownerName"></span></p>
+    <p><b>Phone:</b> <span id="ownerPhone"></span></p>
+    <p><b>Email:</b> <span id="ownerEmail"></span></p>
+    <p><b>Address:</b> <span id="ownerAddress"></span></p>
+
+  </div>
+</div>
+<script>
+function openPetModal(reportId) {
+  fetch(`/admin/lost-pet/${reportId}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("petName").innerText = data.pet_name;
+      document.getElementById("petType").innerText = data.pet_type || "-";
+      document.getElementById("petDescription").innerText = data.description || "-";
+      document.getElementById("petLocation").innerText = data.last_seen_location;
+      document.getElementById("petDate").innerText = data.date_lost || "-";
+
+      document.getElementById("ownerName").innerText = data.owner_name;
+      document.getElementById("ownerPhone").innerText = data.owner_phone;
+      document.getElementById("ownerEmail").innerText = data.owner_email;
+      document.getElementById("ownerAddress").innerText = data.owner_address || "-";
+
+      document.getElementById("petModal").style.display = "block";
+    });
+}
+
+function closePetModal() {
+  document.getElementById("petModal").style.display = "none";
+}
+</script>
+
 
 <div id="found-modal" class="modal-backdrop">
   <div class="modal-card">

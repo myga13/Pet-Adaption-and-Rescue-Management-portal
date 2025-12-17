@@ -99,3 +99,18 @@ def on_private_message(payload):
     except Exception:
         current_app.logger.exception("Failed to emit new_direct_message")
 
+
+from flask_socketio import join_room, leave_room
+
+@socketio.on("join_room")
+def handle_join_room(data):
+    room_id = data.get("room_id")
+    if room_id:
+        join_room(f"room_{room_id}")
+
+@socketio.on("leave_room")
+def handle_leave_room(data):
+    room_id = data.get("room_id")
+    if room_id:
+        leave_room(f"room_{room_id}")
+

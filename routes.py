@@ -23,9 +23,13 @@ from sqlalchemy.exc import SQLAlchemyError
 from types import SimpleNamespace
 from sqlalchemy.orm import joinedload
 import os
-from models import PetRequest, db, Notification
+from models import PetRequest, db, Notification ,LostPetRequest
 from models import Notification
 from flask_wtf.csrf import generate_csrf
+from extensions import csrf
+
+from models import Room, RoomMember, RoomMessage
+
 
 
 from time import time
@@ -77,13 +81,21 @@ def login_required(view):
         return view(*args, **kwargs)
     return wrapped_view
 
+from functools import wraps
+from flask import request, session, redirect, url_for, jsonify, flash
+
 def admin_login_required(view):
-    """For admin-only routes."""
     @wraps(view)
     def wrapped_view(*args, **kwargs):
         if "admin_id" not in session:
+            # API / AJAX request
+            if request.is_json or request.method in ("POST", "PUT", "DELETE"):
+                return jsonify(error="Admin not logged in"), 401
+
+            # Normal browser navigation
             flash("Please log in as admin to access this page.", "warning")
             return redirect(url_for("main.login", next=request.path))
+
         return view(*args, **kwargs)
     return wrapped_view
 
@@ -938,7 +950,11 @@ def admin_dashboard():
     # ------------------------
     # 6. CSRF for forms
     # ------------------------
-
+    lost_requests = (
+        LostPetRequest.query
+        .order_by(LostPetRequest.created_at.desc())
+        .all()
+    )
     requests = PetRequest.query.order_by(PetRequest.created_at.desc()).all()
     # ------------------------
     # 7. Render dashboard
@@ -947,6 +963,7 @@ def admin_dashboard():
         "admin_dashboard.html",
         found_reports=found_reports,
         lost_reports=lost_reports,
+        lost_requests=lost_requests,
         img_filename=img_filename,
         pets=pets,
         webapp_userdetails=webapp_userdetails,
@@ -2177,7 +2194,7 @@ def api_send_message():
         return jsonify({'ok': False, 'error': 'db_error'}), 500
 
 from types import SimpleNamespace
-@bp.route('/admin/chat')
+'''@bp.route('/admin/chat')
 @admin_login_required
 def admin_chat():
     admin = g.admin
@@ -2254,7 +2271,7 @@ def admin_chat():
         token="",   # use JWT if needed later
         open_user_id=request.args.get("open_user_id")
     )
-
+'''
 @bp.route('/request-pet/<int:report_id>',methods=["POST"])
 @login_required
 def request_pet(report_id):
@@ -2288,7 +2305,7 @@ def request_pet(report_id):
     flash("Your request has been sent to admin.", "success")
     return redirect(url_for('main.found_reports'))
 
-@bp.route('/admin/request/<int:id>/approve', methods=["POST"])
+@bp.route('/admin/request/<int:id>/approve', methods=["GET","POST"])
 @admin_login_required
 def approve_request(id):
     r = PetRequest.query.get_or_404(id)
@@ -2308,7 +2325,7 @@ def approve_request(id):
     return redirect(url_for('main.admin_dashboard'))
 
 
-@bp.route('/admin/request/<int:id>/reject',methods=["POST"])
+@bp.route('/admin/request/<int:id>/reject',methods=["GET","POST"])
 @admin_login_required
 def reject_request(id):
     r = PetRequest.query.get_or_404(id)
@@ -2326,3 +2343,335 @@ def reject_request(id):
 
     flash("Request rejected and user notified.", "info")
     return redirect(url_for('main.admin_dashboard'))
+
+
+def get_or_create_room(user_id):
+    room = db.session.execute(
+        text("SELECT id FROM rooms WHERE user_id = :uid"),
+        {"uid": user_id}
+    ).first()
+
+    if room:
+        return room.id
+
+    res = db.session.execute(
+        text("INSERT INTO rooms (user_id) VALUES (:uid)"),
+        {"uid": user_id}
+    )
+    db.session.commit()
+    return res.lastrowid
+def can_access_room(room: Room):
+    # Admin can access everything
+    if g.admin:
+        return True
+
+    # User must be a member
+    if g.user:
+        return RoomMember.query.filter_by(
+            room_id=room.id,
+            user_id=g.user.user_id
+        ).first() is not None
+
+    return False
+
+def resolve_sender(msg: RoomMessage):
+    """
+    Returns (sender_name, sender_role)
+    Works with YOUR existing RoomMessage table.
+    """
+
+    # Try admin first
+    admin = Admin.query.get(msg.sender_id)
+    if admin:
+        return admin.full_name or "Admin", "admin"
+
+    # Else normal user
+    user = UserDetails.query.get(msg.sender_id)
+    if user:
+        return user.user_name or "User", "user"
+
+    return "Unknown", "user"
+
+
+
+@bp.route("/user/send", methods=["POST"])
+@login_required
+def user_send_message():
+    room = get_or_create_room(current_user.id)
+
+    msg = RoomMessage(
+        room_id=room.id,
+        sender_id=current_user.id,
+        sender_role="user",
+        content=request.json["content"]
+    )
+
+    db.session.add(msg)
+    db.session.commit()
+
+    socketio.emit(
+        "new_room_message",
+        serialize_message(msg),
+        room=f"room_{room.id}"
+    )
+
+    return {"ok": True}
+
+@bp.route("/api/rooms/<int:room_id>")
+@login_or_admin_required
+def get_room_messages(room_id):
+    room = Room.query.get_or_404(room_id)
+
+    if not can_access_room(room):
+        abort(403)
+
+    messages = (
+        RoomMessage.query
+        .filter_by(room_id=room.id)
+        .order_by(RoomMessage.created_at.asc())
+        .all()
+    )
+
+    result = []
+    for m in messages:
+        sender_name, sender_role = resolve_sender(m)
+        result.append({
+            "sender_name": sender_name,
+            "sender_role": sender_role,
+            "content": m.content,
+            "created_at": m.created_at.isoformat()
+        })
+
+    return jsonify({ "messages": result })
+
+
+
+
+@bp.route("/rooms/send", methods=["POST"])
+@csrf.exempt
+@login_or_admin_required
+def send_room_message():
+    data = request.get_json(force=True)
+
+    room_id = data.get("room_id")
+    content = (data.get("content") or "").strip()
+
+    if not room_id or not content:
+        return {"error": "invalid payload"}, 400
+
+    room = Room.query.get_or_404(room_id)
+
+    if not can_access_room(room):
+        abort(403)
+
+    sender_id = g.admin.id if g.admin else g.user.user_id
+
+    msg = RoomMessage(
+        room_id=room.id,
+        sender_id=sender_id,
+        content=content,
+        created_at=datetime.utcnow()
+    )
+
+    db.session.add(msg)
+    db.session.commit()
+
+    sender_name, sender_role = resolve_sender(msg)
+
+    socketio.emit(
+        "new_room_message",
+        {
+            "room_id": room.id,
+            "message": {
+                "sender_name": sender_name,
+                "sender_role": sender_role,
+                "content": msg.content
+            }
+        },
+        room=f"room_{room.id}"
+    )
+
+    return {"ok": True}
+
+
+
+
+
+@bp.route("/rooms/create", methods=["POST"])
+@csrf.exempt
+@admin_login_required
+def rooms_create():
+    data = request.get_json(silent=True)
+
+    name = (data.get("name") or "").strip()
+    users = data.get("users")
+
+    if not name:
+        return jsonify(error="Room name required"), 400
+    if not users:
+        return jsonify(error="Select at least one user"), 400
+
+    # 1️⃣ create room
+    res = db.session.execute(text("""
+        INSERT INTO rooms (name, created_by_admin)
+        VALUES (:n, :aid)
+    """), {
+        "n": name,
+        "aid": g.admin.id
+    })
+
+    room_id = res.lastrowid
+
+    # 2️⃣ add users to room
+    for uid in users:
+        db.session.execute(text("""
+            INSERT INTO room_members (room_id, user_id)
+            VALUES (:r, :u)
+        """), {
+            "r": room_id,
+            "u": int(uid)
+        })
+
+    db.session.commit()
+    return jsonify(ok=True, room_id=room_id)
+
+
+@bp.route("/rooms/<int:room_id>/close", methods=["POST"])
+@admin_login_required
+def close_room(room_id):
+    db.session.execute(text("""
+        UPDATE rooms SET is_closed=1 WHERE id=:r
+    """), {"r": room_id})
+    db.session.commit()
+    return jsonify(ok=True)
+
+@bp.route("/debug/rooms-create", methods=["POST"])
+def debug_rooms_create():
+    print("🔥 DEBUG ROUTE HIT")
+    return {"ok": True}
+
+@bp.route("/user/chat")
+@login_required
+def user_chat():
+    user_id = session["user_id"]
+
+    rooms = db.session.execute(text("""
+        SELECT r.id, r.name
+        FROM rooms r
+        JOIN room_members rm ON rm.room_id = r.id
+        WHERE rm.user_id = :uid
+        ORDER BY r.created_at DESC
+    """), {"uid": user_id}).mappings().all()
+
+    return render_template("chat.html", rooms=rooms)
+
+
+
+
+
+    print("DEBUG rooms:", rooms)  # ← ADD THIS TEMPORARILY
+
+    return render_template("user_chat.html", rooms=rooms)
+
+@bp.route("/admin/chat")
+@admin_login_required
+def admin_chat():
+    rooms = Room.query.order_by(Room.id.desc()).all()
+    users = UserDetails.query.order_by(UserDetails.user_id.desc()).all()
+    return render_template("admin_chat.html", rooms=rooms, users=users)
+
+
+@bp.route('/request-lost-pet/<int:report_id>', methods=["POST"])
+@login_required
+def request_lost_pet(report_id):
+    user = g.user
+
+    report = LostPetReport.query.get_or_404(report_id)
+
+    # prevent duplicate request
+    existing = LostPetRequest.query.filter_by(
+        lost_report_id=report_id,
+        finder_id=user.user_id
+    ).first()
+
+    if existing:
+        flash("You have already submitted a request for this pet.", "info")
+        return redirect(url_for('main.lost_reports'))
+
+    req = LostPetRequest(
+        lost_report_id=report_id,
+        finder_id=user.user_id,
+        finder_name=user.user_name,
+        finder_email=user.email,
+        message="Finder claims to have located this pet."
+    )
+
+    db.session.add(req)
+    db.session.commit()
+
+    flash("Your request has been sent to admin.", "success")
+    return redirect(url_for('main.lost_reports'))
+
+@bp.route('/admin/lost-request/<int:id>/approve', methods=["POST"])
+@admin_login_required
+def approve_lost_request(id):
+    r = LostPetRequest.query.get_or_404(id)
+    r.status = "approved"
+    db.session.commit()
+    flash("Request approved.", "success")
+    return redirect(url_for('main.admin_dashboard'))
+
+
+@bp.route('/admin/lost-request/<int:id>/reject', methods=["POST"])
+@admin_login_required
+def reject_lost_request(id):
+    r = LostPetRequest.query.get_or_404(id)
+    r.status = "rejected"
+    db.session.commit()
+    flash("Request rejected.", "info")
+    return redirect(url_for('main.admin_dashboard'))
+
+@bp.route('/admin/lost-pet/<int:id>')
+@admin_login_required
+def get_lost_pet(id):
+    pet = LostPetReport.query.get_or_404(id)
+
+    return {
+        "pet_name": pet.pet_name,
+        "pet_type": pet.pet_type,
+        "description": pet.description,
+        "last_seen_location": pet.last_seen_location,
+        "date_lost": pet.date_lost.strftime("%d %b %Y") if pet.date_lost else None,
+        "owner_name": pet.owner_name,
+        "owner_phone": pet.owner_phone,
+        "owner_email": pet.owner_email,
+        "owner_address": pet.owner_address
+    }
+
+
+@bp.route("/my-requests")
+@login_required
+def my_requests():
+    user_id = g.user.user_id
+
+    # Requests made on FOUND pet reports
+    found_pet_requests = (
+        PetRequest.query
+        .filter_by(user_id=user_id)
+        .order_by(PetRequest.created_at.desc())
+        .all()
+    )
+
+    # Requests made on LOST pet reports
+    lost_pet_requests = (
+        LostPetRequest.query
+        .filter_by(finder_id=user_id)
+        .order_by(LostPetRequest.created_at.desc())
+        .all()
+    )
+
+    return render_template(
+        "my_requests.html",
+        found_pet_requests=found_pet_requests,
+        lost_pet_requests=lost_pet_requests,
+    )
