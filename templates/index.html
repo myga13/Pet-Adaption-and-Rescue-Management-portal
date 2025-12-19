@@ -78,10 +78,12 @@
   /* ===================== */
   /*     PROBLEM SECTION   */
   /* ===================== */
+  
+
 
   .problem-section {
     
-    ;
+    
     margin-top: 40px;
     background: #ffd442;
     background-image: repeating-linear-gradient(
@@ -92,6 +94,37 @@
       rgba(255, 230, 120, 0.35) 240px
     );
   }
+  .inline-more {
+  color: #ff7a00;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inline-more:hover {
+  text-decoration: underline;
+}
+
+.problem-adoption {
+  max-width: 720px;
+  margin: 30px auto 0;
+  text-align: center;
+}
+
+  .more-info {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.35);
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+.more-info ul {
+  margin: 8px 0 8px 18px;
+}
+
+.more-info li {
+  margin-bottom: 6px;
+}
 
   .problem-container {
     display: flex;
@@ -1076,23 +1109,113 @@
 <section class="problem-section">
   <div class="problem-container">
 
+    <!-- LEFT : LOST PETS -->
     <div class="problem-left">
-      <h2>Pet Care</h2>
-      <p>Many families want to adopt but struggle to find trusted sources, clear information, and support after bringing a pet home.</p>
-      
+      <h2>Awareness on Lost Pets</h2>
+      <p>
+        When a pet goes missing, time is critical. PawCare helps pet owners
+        spread accurate information quickly and safely.
+        <span class="inline-more"
+              onclick="toggleInfo('lostMoreInfo', this)">
+          View more
+        </span>
+      </p>
+      <div class="buttons"><a href="{{ url_for('main.report_lost_pet') }}" class="btn btn-primary" 
+        style="text-decoration:none;">Report Lost Pet</a>
+      </div>
+
+      <!-- HIDDEN CONTENT -->
+      <div class="more-info" id="lostMoreInfo" style="display:none;">
+        <p>
+          PawCare provides a structured and verified process for reporting lost pets.
+        </p>
+        <ul>
+          <li>Detailed reports with photos and unique markings</li>
+          <li>Last-seen location and date for better accuracy</li>
+          <li>Admin verification to prevent false alerts</li>
+          <li>Secure messaging to protect owner privacy</li>
+          <li>Status tracking until the pet is found</li>
+        </ul>
+      </div>
     </div>
 
+    <!-- CENTER IMAGE -->
     <div class="problem-image">
-      <img src="{{ url_for('static', filename='images/problem-middle.jpg') }}" alt="Shelter pet waiting">
+      <img src="{{ url_for('static', filename='images/problem-middle.jpg') }}"
+           alt="Lost, found, and adoption support">
     </div>
 
+    <!-- RIGHT : FOUND PETS -->
     <div class="problem-right">
-      <h1></h1>
-      <p>Pet lovers need a simple way to discover verified pets, understand their needs, and feel confident that they’re making the right choice for their family.</p>
+      <h2>Awareness on Found Pets</h2>
+      <p>
+        People who find stray or lost pets want to help,
+        but often don’t know the safest way.
+        <span class="inline-more"
+              onclick="toggleInfo('foundMoreInfo', this)">
+          View more
+        </span>
+      </p>
+      <div class="buttons">
+      <a href="{{ url_for('main.report_found_pet') }}" class="btn btn-primary" 
+      style="text-decoration:none;">Rescue a Pet</a></div>
+
+      <!-- HIDDEN CONTENT -->
+      <div class="more-info" id="foundMoreInfo" style="display:none;">
+        <p>
+          PawCare ensures found pet reporting is safe and responsible.
+        </p>
+        <ul>
+          <li>Upload images and discovery location</li>
+          <li>Admin verification for legitimacy</li>
+          <li>Automatic matching with lost pet reports</li>
+          <li>Secure communication without sharing phone numbers</li>
+          <li>Admin support for claim verification</li>
+        </ul>
+      </div>
     </div>
 
   </div>
+
+  <!-- ADOPTION PETS : BELOW CENTER IMAGE -->
+  <div class="problem-adoption">
+    <h2>Awareness on Adoption Pets</h2>
+    <p>
+      Adoption gives homeless pets a second chance at life.
+      PawCare connects families with verified pets ready for loving homes.
+      <span class="inline-more"
+            onclick="toggleInfo('adoptionMoreInfo', this)">
+        View more
+      </span>
+    </p>
+    <div class="buttons" style="display:flex; justify-content:center;">
+  <a href="{{ url_for('main.adoption_pets') }}"
+     class="btn btn-primary"
+     style="text-decoration:none;">
+     Adopt Now
+  </a>
+</div>
+
+
+    <!-- HIDDEN CONTENT -->
+    <div class="more-info" id="adoptionMoreInfo" style="display:none;">
+      <p>
+        PawCare follows a transparent and ethical adoption process.
+      </p>
+      <ul>
+        <li>Only verified owners, shelters, and NGOs can list pets</li>
+        <li>Detailed profiles include health and behavior information</li>
+        <li>Adoption requests are reviewed before approval</li>
+        <li>Secure messaging before final confirmation</li>
+        <li>Post-adoption guidance for new families</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
+
+
+
 
 <!-- WHAT WE DO + FIND A FRIEND -->
 <section class="market-section" id="services">
@@ -1412,6 +1535,28 @@
       behavior: 'smooth'
     });
   }
+  
+  function toggleInfo(id, btn) {
+    const section = document.getElementById(id);
+
+    if (!section) return;
+
+    if (section.style.display === "none" || section.style.display === "") {
+      section.style.display = "block";
+      btn.textContent = "View Less";
+    } else {
+      section.style.display = "none";
+      btn.textContent = "View More";
+    }
+  }
+  function toggleInfo(id, el) {
+  const box = document.getElementById(id);
+  if (!box) return;
+
+  const open = box.style.display === "block";
+  box.style.display = open ? "none" : "block";
+  el.textContent = open ? " View more" : " View less";
+}
 </script>
 
 {% endblock %}

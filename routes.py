@@ -2377,20 +2377,16 @@ def can_access_room(room: Room):
 def resolve_sender(msg: RoomMessage):
     """
     Returns (sender_name, sender_role)
-    Works with YOUR existing RoomMessage table.
+    Uses sender_role stored in DB (NO GUESSING).
     """
 
-    # Try admin first
-    admin = Admin.query.get(msg.sender_id)
-    if admin:
-        return admin.full_name or "Admin", "admin"
+    if msg.sender_role == "admin":
+        admin = Admin.query.get(msg.sender_id)
+        return admin.full_name if admin else "Admin", "admin"
 
-    # Else normal user
+    # default = user
     user = UserDetails.query.get(msg.sender_id)
-    if user:
-        return user.user_name or "User", "user"
-
-    return "Unknown", "user"
+    return user.user_name if user else "User", "user"
 
 
 
@@ -2464,11 +2460,18 @@ def send_room_message():
     if not can_access_room(room):
         abort(403)
 
-    sender_id = g.admin.id if g.admin else g.user.user_id
+    # ✅ FIX: explicitly set sender_role
+    if g.admin:
+        sender_id = g.admin.id
+        sender_role = "admin"
+    else:
+        sender_id = g.user.user_id
+        sender_role = "user"
 
     msg = RoomMessage(
         room_id=room.id,
         sender_id=sender_id,
+        sender_role=sender_role,   # ✅ IMPORTANT
         content=content,
         created_at=datetime.utcnow()
     )
@@ -2476,14 +2479,12 @@ def send_room_message():
     db.session.add(msg)
     db.session.commit()
 
-    sender_name, sender_role = resolve_sender(msg)
-
     socketio.emit(
         "new_room_message",
         {
             "room_id": room.id,
             "message": {
-                "sender_name": sender_name,
+                "sender_name": g.admin.full_name if g.admin else g.user.user_name,
                 "sender_role": sender_role,
                 "content": msg.content
             }
@@ -2492,8 +2493,6 @@ def send_room_message():
     )
 
     return {"ok": True}
-
-
 
 
 
@@ -2555,13 +2554,16 @@ def debug_rooms_create():
 def user_chat():
     user_id = session["user_id"]
 
-    rooms = db.session.execute(text("""
-        SELECT r.id, r.name
-        FROM rooms r
-        JOIN room_members rm ON rm.room_id = r.id
-        WHERE rm.user_id = :uid
-        ORDER BY r.created_at DESC
-    """), {"uid": user_id}).mappings().all()
+    rooms = (
+    db.session.query(Room)
+    .join(RoomMember, Room.id == RoomMember.room_id)
+    .filter(RoomMember.user_id == g.user.user_id)
+    .options(
+        joinedload(Room.members).joinedload(RoomMember.user)
+    )
+    .order_by(Room.created_at.desc())
+    .all()
+    )
 
     return render_template("chat.html", rooms=rooms)
 

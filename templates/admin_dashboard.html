@@ -379,6 +379,26 @@
     cursor: pointer;
     box-shadow: 0 12px 24px rgba(234, 179, 8, 0.45);
   }
+  .pet-thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  transition: transform .2s ease;
+}
+
+.pet-thumb:hover {
+  transform: scale(1.05);
+}
+
+.no-image {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
 
   .btn-outline {
     border-radius: 999px;
@@ -442,6 +462,107 @@
     font-size: 13px;
     color: var(--text-main);
   }
+  .admin-section {
+  margin-top: 40px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.admin-table th {
+  background: #f1f5f9;
+  padding: 12px;
+  text-align: left;
+  font-weight: 700;
+}
+
+.admin-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pet-thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease;
+}
+
+.pet-thumb:hover {
+  transform: scale(1.06);
+}
+
+.no-image {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.btn-details {
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-details:hover {
+  background: #f8fafc;
+}
+
+.btn-action {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-approve {
+  background: #22c55e;
+  color: white;
+}
+
+.btn-reject {
+  background: #ef4444;
+  color: white;
+}
+
+.status-pill {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.status-pill.pending {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.status-pill.approved {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.status-pill.rejected {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.action-done {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
 
   .admin-quick-list li {
     display: flex;
@@ -491,6 +612,101 @@
   .btn-img-view:hover {
     background: #dbeafe;
   }
+  <style>
+.admin-section {
+  margin-top: 30px;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+}
+
+.admin-section h2 {
+  font-size: 22px;
+  margin-bottom: 14px;
+  color: #0b2c3d;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th {
+  background: #f1f5f9;
+  padding: 12px;
+  text-align: left;
+  font-size: 14px;
+  color: #334;
+}
+
+.admin-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.admin-table tr:hover {
+  background: #f9fafb;
+}
+
+/* Status badges */
+.status-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.status-pill.pending { background: #fff7ed; color: #c2410c; }
+.status-pill.approved { background: #ecfdf5; color: #047857; }
+.status-pill.rejected { background: #fef2f2; color: #b91c1c; }
+
+/* Buttons */
+.btn-action {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-approve { background: #22c55e; color: white; }
+.btn-reject { background: #ef4444; color: white; }
+
+.btn-details {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-details:hover { background: #bae6fd; }
+
+@media(max-width: 900px) {
+  .admin-table thead { display: none; }
+  .admin-table tr {
+    display: block;
+    margin-bottom: 12px;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+  }
+  .admin-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+  }
+}
+
 
   /* Image Modal */
   .img-modal {
@@ -654,7 +870,7 @@
         <span class="icon">🏡</span> Adoption Pets
       </button>
       <button class="admin-menu-btn" data-target="admin-ngo">
-        <span class="icon">✅</span> Reported Pets Verification
+        <span class="icon">✅</span> Pet Requests
       </button>
       <button class="admin-menu-btn" data-target="admin-found">
         <span class="icon">🔍</span> Found Pets
@@ -662,9 +878,9 @@
       <button class="admin-menu-btn" data-target="admin-lost">
         <span class="icon">📍</span> Lost Pets
       </button>
-      <button class="admin-menu-btn" data-target="admin-notify">
+      <!--<button class="admin-menu-btn" data-target="admin-notify">
         <span class="icon">🔔</span> Notification
-      </button>
+      </button>-->
     </nav>
 
     <div class="admin-menu-footer">
@@ -709,21 +925,21 @@
             <div class="admin-welcome-meta">
               <div class="meta-item">
                 Today’s pending tasks
-                <span>{{ pending_lost + pending_found }}</span>
+                <span>{{ pending_lost + pending_found  }}</span>
               </div>
               <!--<div class="meta-item">
                 New registrations this week
                 <span>18</span>
               </div>-->
               <div class="meta-item">
-                Open lost/found cases
+                Lost pet/Found pet cases
                 <span>{{ found_reports | length + lost_reports | length }}</span>
               </div>
             </div>
 
             <div class="admin-welcome-actions">
               <button class="btn-outline"
-                      onclick="window.location.href='{{ url_for('main.index') }}'">
+                      onclick="window.location.href='{{ url_for('main.index')}}'">
                 View User Portal
               </button>
             </div>
@@ -1384,109 +1600,175 @@
           Pets submitted by portal users for verification through our collaborating .
           Admin can monitor, approve, or request more details.
         </p>
+<section class="admin-section">
+  <h2>🐾 Pet Claim Requests</h2>
 
-        <h2 style="margin-top:24px;">Pet Claim Requests</h2>
-<table style="width:100%;border-collapse:collapse;margin-top:12px;">
-  <thead>
-    <tr style="background:#f1f5f9;">
-      <th>User</th>
-      <th>Email</th>
-      <th>Report</th>
-      <th>Date</th>
-      <th>Status</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Requested User</th>
+        <th>Email</th>
+        <th>Pet Reporter</th>
+        <th>Message</th>
+        <th>Date</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
 
-  <tbody>
-    {% for r in requests %}
-    <tr>
-      <td>{{ r.user_name }}</td>
-      <td>{{ r.user_email }}</td>
+    <tbody>
+      {% for r in requests %}
+      <tr>
+        <td>{{ r.user_name }}</td>
+        <td>{{ r.user_email }}</td>
 
-      <!-- BUTTON instead of ID -->
-      <td style="text-align:center;">
-        <button
-          type="button"
-          class="btn-details open-found-modal"
-          data-pet-type="{{ r.report.pet_type }}"
-          data-location="{{ r.report.found_location }}"
-          data-date="{{ r.report.date_found.strftime('%d %b %Y') if r.report.date_found else '-' }}"
-          data-condition="{{ r.report.pet_condition }}"
-          data-finder="{{ r.report.finder_name }}"
-          data-phone="{{ r.report.finder_phone }}"
-          data-email="{{ r.report.finder_email }}"
-          data-img="{{ url_for('main.media', filename=r.report.pet_img) if r.report.pet_img else '' }}"
-        >
-          View #{{ r.report_id }}
-        </button>
-      </td>
+        <td>
+          <button
+            type="button"
+            class="btn-details open-found-modal"
+            data-pet-type="{{ r.report.pet_type }}"
+            data-location="{{ r.report.found_location }}"
+            data-date="{{ r.report.date_found.strftime('%d %b %Y') if r.report.date_found else '-' }}"
+            data-condition="{{ r.report.pet_condition }}"
+            data-finder="{{ r.report.finder_name }}"
+            data-phone="{{ r.report.finder_phone }}"
+            data-email="{{ r.report.finder_email }}"
+            data-img="{{ url_for('main.media', filename=r.report.pet_img) if r.report.pet_img else '' }}"
+          >
+            View details #{{ r.report_id }}
+          </button>
+        </td>
+        <td>{{ r.message or '—' }}</td>
 
-      <td>{{ r.created_at.strftime('%d %b %Y') }}</td>
+        <td>{{ r.created_at.strftime('%d %b %Y') }}</td>
 
-      <td>
-        <span class="status-pill">{{ r.status }}</span>
-      </td>
+        <td>
+          <span class="status-pill {{ r.status }}">{{ r.status }}</span>
+        </td>
 
-      <td>
-        <a href="{{ url_for('main.approve_request', id=r.id) }}">Approve</a>
-        <a href="{{ url_for('main.reject_request', id=r.id) }}">Reject</a>
-      </td>
-    </tr>
-    {% else %}
-    <tr>
-      <td colspan="6" style="text-align:center;">No requests</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-<h2>Lost Pet Requests</h2>
+        <td>
+          <a class="btn-action btn-approve" href="{{ url_for('main.approve_request', id=r.id) }}">Approve</a>
+          <a class="btn-action btn-reject" href="{{ url_for('main.reject_request', id=r.id) }}">Reject</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="6" style="text-align:center;">No claim requests</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+<section class="admin-section">
+  <h2>🚨 Lost Pet Requests</h2>
 
-<table class="table" style="width:100%;border-collapse:collapse;margin-top:12px;">
-  <thead>
-    <tr style="background:#f1f5f9;">
-      <th>Pet</th>
-      <th>Finder</th>
-      <th>Email</th>
-      <th>Status</th>
-      <th>Action</th>
-    </tr>
-  </thead>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Pet Image</th>
+        <th>Pet</th>
+        <th>Finder</th>
+        <th>Email</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
 
-  <tbody>
-    {% for r in lost_requests %}
-    <tr>
-      <td>
-  <button
-    class="btn btn-link"
-    onclick="openPetModal({{ r.lost_report.id }})"
-  >
-    {{ r.lost_report.pet_name }}
-  </button>
-</td>
+    <tbody>
+      {% for r in lost_requests %}
+      <tr>
 
-      <td>{{ r.finder_name }}</td>
-      <td>{{ r.finder_email }}</td>
-      <td>{{ r.status }}</td>
-      <td>
-        {% if r.status == 'pending' %}
-          <form action="{{ url_for('main.approve_lost_request', id=r.id) }}" method="POST" style="display:inline;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
-            <button class="btn btn-success">Approve</button>
-          </form>
+        <!-- 🐾 PET IMAGE -->
+        <td>
+          {% if r.lost_report.pet_img_full %}
+            <img
+              src="{{ url_for('main.media', filename=r.lost_report.pet_img_full) }}"
+              alt="Lost pet image"
+              class="pet-thumb"
+              onclick="openPetModal({{ r.lost_report.id }})"
+            >
+          {% elif r.lost_report.pet_img_face %}
+            <img
+              src="{{ url_for('main.media', filename=r.lost_report.pet_img_face) }}"
+              alt="Lost pet image"
+              class="pet-thumb"
+              onclick="openPetModal({{ r.lost_report.id }})"
+            >
+          {% elif r.lost_report.pet_img_marks %}
+            <img
+              src="{{ url_for('main.media', filename=r.lost_report.pet_img_marks) }}"
+              alt="Lost pet image"
+              class="pet-thumb"
+              onclick="openPetModal({{ r.lost_report.id }})"
+            >
+          {% else %}
+            <span class="no-image">No Image</span>
+          {% endif %}
+        </td>
 
-          <form action="{{ url_for('main.reject_lost_request', id=r.id) }}" method="POST" style="display:inline;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
-            <button class="btn btn-danger">Reject</button>
-          </form>
-        {% else %}
-          —
-        {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+        <!-- 🐶 PET NAME -->
+        <td>
+          <button
+            class="btn-details"
+            onclick="openPetModal({{ r.lost_report.id }})"
+          >
+            {{ r.lost_report.pet_name }}
+          </button>
+        </td>
+
+        <!-- 👤 FINDER -->
+        <td>{{ r.finder_name }}</td>
+        <td>{{ r.finder_email }}</td>
+
+        <!-- 📌 STATUS -->
+        <td>
+          <span class="status-pill {{ r.status }}">
+            {{ r.status }}
+          </span>
+        </td>
+
+        <!-- ✅ ACTIONS -->
+        <td>
+          {% if r.status == 'pending' %}
+            <form
+              action="{{ url_for('main.approve_lost_request', id=r.id) }}"
+              method="POST"
+              style="display:inline;"
+            >
+              <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+              <button class="btn-action btn-approve">
+                Approve
+              </button>
+            </form>
+
+            <form
+              action="{{ url_for('main.reject_lost_request', id=r.id) }}"
+              method="POST"
+              style="display:inline;"
+            >
+              <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+              <button class="btn-action btn-reject">
+                Reject
+              </button>
+            </form>
+          {% else %}
+            <span class="action-done">—</span>
+          {% endif %}
+        </td>
+
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="6" style="text-align:center;">
+          No lost pet requests
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+
 <!-- PET DETAILS MODAL -->
 <div id="petModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:3000;">
   <div style="background:#fff; max-width:600px; margin:5% auto; padding:20px; border-radius:10px; position:relative;">
@@ -1934,6 +2216,7 @@ document.getElementById("found-close").onclick = () =>
       if (label) label.textContent = 'pending';
     }
   }
+  
 
   /**
    * Global click handler (event delegation)
@@ -1953,6 +2236,7 @@ document.getElementById("found-close").onclick = () =>
   });
 
 })();
+
 </script>
 
 

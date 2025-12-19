@@ -10,6 +10,7 @@
   </p>
 
   <form action="{{ url_for('main.admin_login') }}" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
     <div style="margin-bottom:12px;">
       <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Email</label>
       <input type="email" name="email" required

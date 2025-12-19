@@ -3,249 +3,412 @@
 {% block content %}
 
 <style>
-:root {
-  --border:#ddd;
-  --bg-light:#f9fafb;
-  --bg-hover:#e5e7eb;
-  --bg-active:#dbeafe;
-  --admin:#1d4ed8;
-  --user:#047857;
+/* ===== THEME ===== */
+.chat-wrap {
+  display: flex;
+  height: 90vh;
+  background: #e5ddd5;
+  border-radius: 6px;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
 }
 
-.chat-wrapper {
-  display:flex;
-  height:90vh;
-  border:1px solid var(--border);
-  border-radius:6px;
-  overflow:hidden;
+/* ===== SIDEBAR ===== */
+.rooms {
+  width: 30%;
+  background: #fff;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
 }
 
-/* ---------- SIDEBAR ---------- */
-.sidebar {
-  width:30%;
-  background:var(--bg-light);
-  border-right:1px solid var(--border);
-  padding:12px;
-  overflow-y:auto;
+.rooms h3 {
+  margin: 0;
+  padding: 12px;
+  background: #075e54;
+  color: #fff;
 }
 
-.room-item {
-  padding:10px;
-  margin-bottom:6px;
-  border-radius:6px;
-  cursor:pointer;
+.search {
+  padding: 8px;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  outline: none;
 }
-.room-item:hover { background:var(--bg-hover); }
-.room-item.active { background:var(--bg-active); font-weight:bold; }
-.room-item.closed { opacity:.6; }
 
-/* ---------- CHAT ---------- */
-.chat-panel {
-  width:70%;
-  display:flex;
-  flex-direction:column;
+.room-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.room {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.room:hover { background: #f1f1f1; }
+.room.active { background: #dcf8c6; }
+
+.room small {
+  color: #666;
+  font-size: 11px;
+}
+
+.participants-btn {
+  float: right;
+  cursor: pointer;
+}
+
+/* ===== CHAT ===== */
+.chat {
+  width: 70%;
+  display: flex;
+  flex-direction: column;
 }
 
 .chat-header {
-  padding:12px;
-  border-bottom:1px solid var(--border);
-  font-weight:bold;
+  background: #075e54;
+  color: white;
+  padding: 12px;
+  font-weight: bold;
 }
 
 .chat-messages {
-  flex:1;
-  padding:12px;
-  overflow-y:auto;
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  display: none;
+  flex-direction: column;
 }
 
-.msg { margin-bottom:12px; }
-.msg.admin b { color:var(--admin); }
-.msg.user b { color:var(--user); }
+.msg {
+  max-width: 70%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.msg.admin {
+  background: #dcf8c6;
+  align-self: flex-end;
+}
+
+.msg.user {
+  background: #fff;
+  align-self: flex-start;
+}
+
+.msg b {
+  font-size: 12px;
+  display: block;
+}
+
+.msg small {
+  font-size: 10px;
+  color: #666;
+  text-align: right;
+  display: block;
+}
 
 .chat-input {
-  display:none;
-  gap:8px;
-  padding:10px;
-  border-top:1px solid var(--border);
-  background:#f3f4f6;
-}
-.chat-input input {
-  flex:1;
-  padding:8px;
+  display: none;
+  padding: 10px;
+  background: #f0f0f0;
+  border-top: 1px solid #ddd;
 }
 
-/* ---------- MODAL ---------- */
-.modal-backdrop {
-  position:fixed;
-  inset:0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  background:rgba(0,0,0,.4);
+.chat-input input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+}
+
+.chat-input button {
+  margin-left: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: none;
+  background: #075e54;
+  color: white;
+}
+
+/* ===== WELCOME DASHBOARD ===== */
+.welcome {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #efeae2;
+}
+
+.welcome-box {
+  background: white;
+  padding: 40px;
+  border-radius: 10px;
+  text-align: center;
+  width: 420px;
+}
+
+.welcome-box h2 {
+  margin: 0;
+  color: #075e54;
+}
+
+.welcome-box p {
+  color: #666;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+/* ===== MODALS ===== */
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
 }
 
 .modal {
-  width:420px;
-  background:#fff;
-  padding:20px;
-  border-radius:6px;
+  background: white;
+  width: 420px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 16px;
+  border-radius: 6px;
 }
+
+.modal button {
+  width: 100%;
+  padding: 8px;
+  margin-top: 8px;
+  border: none;
+  background: #075e54;
+  color: white;
+  cursor: pointer;
+}
+
+.user-list {
+  max-height: 220px;
+  overflow-y: auto;
+  margin-top: 8px;
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.back-btn {
+  cursor: pointer;
+  margin-right: 10px;
+  font-size: 18px;
+}
+
 </style>
 
-<div class="chat-wrapper">
+<div class="chat-wrap">
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <h3>Rooms</h3>
+<!-- ===== LEFT ===== -->
+<div class="rooms">
+  <h3>
+    Created Rooms
+    <span style="float:right;cursor:pointer" onclick="openCreateRoom()">➕</span>
+  </h3>
+
+  <input class="search" id="roomSearch" placeholder="Search rooms…" onkeyup="filterRooms()">
+
+  <div class="room-list">
     {% for r in rooms %}
-      <div class="room-item {% if r.is_closed %}closed{% endif %}"
-           id="room-{{ r.id }}"
-           onclick="openRoom({{ r.id }}, '{{ r.name }}', {{ r.is_closed|int }})">
-        {{ r.name }} {% if r.is_closed %}(closed){% endif %}
-      </div>
-    {% endfor %}
-    <button style="width:100%;margin-top:10px" onclick="openModal()">➕ Create Room</button>
-  </aside>
+    <div class="room" id="room-{{ r.id }}" onclick="openRoom({{ r.id }}, '{{ r.name }}')">
+      <strong>{{ r.name }}</strong>
+      <span class="participants-btn"
+            onclick="event.stopPropagation();showParticipants({{ r.id }})">👥</span>
+      <br>
+      <small>
+        {{ r.created_at.strftime("%d %b %Y %I:%M %p") }}<br>
+        {% for m in r.members %}
+          {{ m.user.user_name }}{% if not loop.last %}, {% endif %}
+        {% endfor %}
+      </small>
 
-  <!-- CHAT -->
-  <section class="chat-panel">
-    <div class="chat-header" id="chatHeader">Select a room</div>
-    <div class="chat-messages" id="chatMessages"></div>
-    <div class="chat-input" id="chatInput">
-      <input id="msgInput" placeholder="Type message…"
-             onkeydown="if(event.key==='Enter')sendMessage()">
-      <button onclick="sendMessage()">Send</button>
+      <div id="participants-{{ r.id }}" style="display:none">
+        {% for m in r.members %}
+          {{ m.user.user_name }}{% if not loop.last %},{% endif %}
+        {% endfor %}
+      </div>
     </div>
-  </section>
+    {% endfor %}
+  </div>
 </div>
 
-<!-- CREATE ROOM MODAL -->
-<div class="modal-backdrop" id="roomModal">
-  <div class="modal">
-    <h3>Create Room</h3>
-    <input id="roomName" placeholder="Room name" style="width:100%;padding:8px">
+<!-- ===== RIGHT ===== -->
+<div class="chat">
 
-    <div style="max-height:200px;overflow:auto;margin:10px 0">
+  <div class="chat-header">
+  <span class="back-btn" onclick="goBack()">⬅</span>
+  <span id="chatHeaderText">Admin Chats Dashboard</span>
+</div>
+
+  <!-- WELCOME -->
+  <div class="welcome" id="welcomeScreen">
+    <div class="welcome-box">
+      <h2 id="greetingText">Welcome 👋</h2>
+      <p>Select a room to start chatting or create a new one.</p>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="chat-messages" id="chatMessages"></div>
+
+  <div class="chat-input" id="chatInput">
+    <input id="msgInput" placeholder="Type a message">
+    <button onclick="send()">Send</button>
+  </div>
+
+</div>
+</div>
+
+<!-- ===== CREATE ROOM MODAL ===== -->
+<div class="modal-bg" id="createRoomModal">
+  <div class="modal">
+    <h4>Create Room</h4>
+    <input id="roomName" placeholder="Room name" style="width:100%;padding:6px">
+
+    <div class="user-list" id="userList">
       {% for u in users %}
-        <label>
-          <input type="checkbox" value="{{ u.user_id }}"> {{ u.user_name }}
-        </label><br>
+      <label class="user-item">
+        <input type="checkbox" value="{{ u.user_id }}"> {{ u.user_name }}
+      </label>
       {% endfor %}
     </div>
 
-    <div style="text-align:right">
-      <button onclick="closeModal()">Cancel</button>
-      <button onclick="createRoom()">Create</button>
-    </div>
+    <button onclick="createRoom()">Create</button>
+    <button onclick="closeCreateRoom()">Cancel</button>
+  </div>
+</div>
+
+<!-- ===== PARTICIPANTS MODAL ===== -->
+<div class="modal-bg" id="participantsModal">
+  <div class="modal">
+    <h4>Participants</h4>
+    <div id="participantsList"></div>
+    <button onclick="closeParticipants()">Close</button>
   </div>
 </div>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
 <script>
-const socket = io({ transports:["websocket"] });
+const socket = io();
+let ROOM_ID = null;
+let LAST_TS = null;
 
-let currentRoomId = null;
+/* ===== GREETING ===== */
+(function(){
+  const h = new Date().getHours();
+  let t = "Welcome 👋";
+  if (h < 12) t = "Good Morning ☀️ Admin";
+  else if (h < 17) t = "Good Afternoon 🌤️ Admin";
+  else t = "Good Evening 🌙 Admin";
+  greetingText.innerText = t;
+})();
 
-/* ---------- MODAL ---------- */
-const roomModal = document.getElementById("roomModal");
-function openModal(){ roomModal.style.display = "flex"; }
-function closeModal(){ roomModal.style.display = "none"; }
+/* ===== ROOMS ===== */
+function openRoom(id, name) {
+  ROOM_ID = id;
+  LAST_TS = null;
 
-/* ---------- OPEN ROOM ---------- */
-function openRoom(id, name, closed){
-  if (currentRoomId) {
-    socket.emit("leave_room", { room_id: currentRoomId });
-  }
+  document.querySelectorAll(".room").forEach(r=>r.classList.remove("active"));
+  document.getElementById("room-"+id).classList.add("active");
 
-  currentRoomId = id;
+  document.getElementById("chatHeaderText").innerText = name;
 
-  document.querySelectorAll(".room-item").forEach(r => r.classList.remove("active"));
-  document.getElementById(`room-${id}`).classList.add("active");
-
-  chatHeader.textContent = name;
+  welcomeScreen.style.display = "none";
+  chatMessages.style.display = "flex";
+  chatInput.style.display = "flex";
   chatMessages.innerHTML = "";
-  chatInput.style.display = closed ? "none" : "flex";
 
-  socket.emit("join_room", { room_id: id });
-  loadMessages();
+  socket.emit("join_room", { room_id:id });
+  loadMessages(true);
 }
 
-/* ---------- LOAD MESSAGES ---------- */
-function loadMessages(){
-  fetch(`/api/rooms/${currentRoomId}`, { credentials:"same-origin" })
-    .then(r => r.json())
-    .then(d => {
-      chatMessages.innerHTML = "";
-      (d.messages || []).forEach(renderMessage);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    })
-    .catch(err => console.error("Load messages failed:", err));
-}
-
-/* ---------- SEND MESSAGE ---------- */
-function sendMessage(){
-  const text = msgInput.value.trim();
-  if (!text || !currentRoomId) return;
-
+/* ===== SEND ===== */
+function send() {
+  if (!msgInput.value.trim()) return;
   fetch("/rooms/send", {
-  method:"POST",
-  credentials:"same-origin",
-  headers:{ "Content-Type":"application/json" },
-  body:JSON.stringify({ room_id: currentRoomId, content: text })
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ room_id:ROOM_ID, content:msgInput.value })
+  });
+  msgInput.value="";
+}
+
+socket.on("new_room_message", d => {
+  if (d.room_id === ROOM_ID) loadMessages(false);
 });
 
-
-  msgInput.value = "";
+/* ===== LOAD ===== */
+function loadMessages(reset=false){
+  fetch(`/api/rooms/${ROOM_ID}`)
+    .then(r=>r.json())
+    .then(d=>{
+      if(reset) chatMessages.innerHTML="";
+      d.messages.forEach(m=>{
+        if(!LAST_TS || m.created_at > LAST_TS){
+          render(m);
+          LAST_TS = m.created_at;
+        }
+      });
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
 }
 
-/* ---------- RENDER MESSAGE ---------- */
-function renderMessage(m){
+function render(m){
   const div = document.createElement("div");
-  div.className = `msg ${m.sender_role || "user"}`;
-
-  const name = document.createElement("b");
-  name.textContent = m.sender_name || "Unknown";
-
-  div.appendChild(name);
-  div.appendChild(document.createElement("br"));
-  div.appendChild(document.createTextNode(m.content || ""));
-
+  div.className = "msg " + m.sender_role;
+  div.innerHTML = `
+    <b>${m.sender_role === "admin" ? "Admin" : m.sender_name}</b>
+    ${m.content}
+    <small>${new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</small>
+  `;
   chatMessages.appendChild(div);
 }
 
-/* ---------- SOCKET EVENTS ---------- */
-socket.on("new_room_message", data => {
-  if (data.room_id === currentRoomId && data.message) {
-    renderMessage(data.message);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
-});
+/* ===== MODALS ===== */
+function openCreateRoom(){ createRoomModal.style.display="flex"; }
+function closeCreateRoom(){ createRoomModal.style.display="none"; }
 
-/* ---------- CREATE ROOM ---------- */
 function createRoom(){
-  const name = document.getElementById("roomName").value.trim();
-  const users = [...document.querySelectorAll("#roomModal input:checked")]
-                .map(i => i.value);
+  const name = roomName.value.trim();
+  const users = [...userList.querySelectorAll("input:checked")].map(i=>i.value);
+  if(!name || !users.length) return alert("Room name & users required");
 
-  if (!name) {
-    alert("Room name required");
-    return;
-  }
-
-  fetch("/rooms/create", {   // ⚠️ CHANGE THIS AFTER STEP 1
-    method: "POST",
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, users })
-  })
-  .then(r => {
-    if (!r.ok) throw new Error("Create failed");
-    return r.json();
-  })
-  .then(() => location.reload())
-  .catch(() => alert("Room creation failed"));
+  fetch("/rooms/create",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ name, users })
+  }).then(()=>location.reload());
 }
 
+function showParticipants(id){
+  participantsList.innerText =
+    document.getElementById("participants-"+id).innerText || "No users";
+  participantsModal.style.display="flex";
+}
+function closeParticipants(){ participantsModal.style.display="none"; }
+function goBack() {
+  // Option 1: Go to Admin Dashboard (recommended)
+  window.location.href = "/admin/dashboard";
+
+  // Option 2: Browser back (if you prefer)
+  // window.history.back();
+}
 
 </script>
 

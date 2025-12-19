@@ -3,86 +3,167 @@
 {% block content %}
 
 <style>
+/* ===== WHATSAPP THEME ===== */
 .chat-wrap {
   display: flex;
   height: 90vh;
-  border: 1px solid #ddd;
+  background: #e5ddd5;
   border-radius: 6px;
   overflow: hidden;
-}
-.rooms {
-  width: 30%;
-  border-right: 1px solid #ddd;
-  background: #f9fafb;
-  overflow-y: auto;
-}
-.room {
-  padding: 12px;
-  cursor: pointer;
-  border-bottom: 1px solid #eee;
-}
-.room:hover { background: #e5e7eb; }
-.room.active {
-  background: #dbeafe;
-  font-weight: bold;
+  font-family: Arial, sans-serif;
+  border: 1px solid #ddd;
 }
 
+/* ===== LEFT : ROOMS ===== */
+.rooms {
+  width: 30%;
+  background: #fff;
+  border-right: 1px solid #ddd;
+  overflow-y: auto;
+}
+
+.rooms h3 {
+  margin: 0;
+  padding: 12px;
+  background: #075e54;
+  color: #fff;
+}
+
+.room {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.room:hover { background: #f1f1f1; }
+.room.active { background: #dcf8c6; }
+
+.room small {
+  font-size: 11px;
+  color: #667781;
+}
+
+/* ===== RIGHT : CHAT ===== */
 .chat {
   width: 70%;
   display: flex;
   flex-direction: column;
 }
+
 .chat-header {
   padding: 12px;
-  border-bottom: 1px solid #ddd;
+  background: #075e54;
+  color: #fff;
   font-weight: bold;
 }
+
 .chat-messages {
   flex: 1;
-  padding: 12px;
+  padding: 15px;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== MESSAGE BUBBLES ===== */
+.msg {
+  max-width: 70%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.msg.me {
+  align-self: flex-end;
+  background: #dcf8c6;
+}
+
+.msg.other {
+  align-self: flex-start;
   background: #fff;
 }
-.msg {
-  margin-bottom: 12px;
-}
+
 .msg b {
-  color: #1f2937;
+  font-size: 12px;
+  display: block;
+  margin-bottom: 2px;
 }
+
+.msg.admin b { color: #b91c1c; }
+.msg.user b { color: #075e54; }
+
+.msg small {
+  font-size: 11px;
+  color: #666;
+  text-align: right;
+  display: block;
+  margin-top: 4px;
+}
+
+/* ===== INPUT ===== */
 .chat-input {
-  display: flex;
+  display: none;
   padding: 10px;
+  background: #f0f0f0;
   border-top: 1px solid #ddd;
-  background: #f3f4f6;
 }
+
 .chat-input input {
   flex: 1;
   padding: 8px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
 }
+
 .chat-input button {
   margin-left: 8px;
   padding: 8px 16px;
+  border-radius: 20px;
+  border: none;
+  background: #075e54;
+  color: white;
+  cursor: pointer;
 }
 </style>
 
 <div class="chat-wrap">
 
-  <!-- LEFT: ROOMS -->
+  <!-- ===== LEFT : ROOMS ===== -->
   <div class="rooms">
-    <h3 style="padding:10px;">My Rooms</h3>
+    <h3>My Chats</h3>
 
     {% for r in rooms %}
       <div class="room"
-           id="room-{{ r.id }}"
-           onclick="openRoom({{ r.id }}, '{{ r.name }}')">
-        {{ r.name }}
+           id="room-{{ r['id'] }}"
+           onclick="openRoom({{ r['id'] }}, '{{ r['name'] }}')">
+
+        <strong>{{ r['name'] }}</strong><br>
+
+        <small>
+          Created:
+          {{ r['created_at'].strftime("%d %b %Y %H:%M") }}<br>
+
+          Admin |
+          {% if r['members']|length == 1 %}
+            User: {{ r['members'][0]['user_name'] }}
+          {% elif r['members']|length > 1 %}
+            Users:
+            {% for m in r['members'] %}
+              {{ m['user_name'] }}{% if not loop.last %}, {% endif %}
+            {% endfor %}
+          {% else %}
+            No users
+          {% endif %}
+        </small>
+
       </div>
     {% else %}
-      <p style="padding:10px;color:#777;">No active chats</p>
+      <p style="padding:10px;color:#777;">No chats available</p>
     {% endfor %}
   </div>
 
-  <!-- RIGHT: CHAT -->
+  <!-- ===== RIGHT : CHAT ===== -->
   <div class="chat">
     <div class="chat-header" id="chatHeader">
       Select a room
@@ -90,37 +171,41 @@
 
     <div class="chat-messages" id="chatMessages"></div>
 
-    <div class="chat-input" id="chatInput" style="display:none;">
-      <input id="msgInput" placeholder="Type your message...">
+    <div class="chat-input" id="chatInput">
+      <input id="msgInput" placeholder="Type a message">
       <button onclick="send()">Send</button>
     </div>
   </div>
+
 </div>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
 <script>
 const socket = io();
 let ROOM_ID = null;
 let LAST_TS = null;
 
-/* OPEN ROOM (ONLY ON CLICK) */
+/* CURRENT USER */
+const CURRENT_USER = "{{ g.user.user_name }}";
+
+/* ===== OPEN ROOM ===== */
 function openRoom(id, name) {
   ROOM_ID = id;
   LAST_TS = null;
 
-  document.querySelectorAll(".room")
-    .forEach(r => r.classList.remove("active"));
+  document.querySelectorAll(".room").forEach(r => r.classList.remove("active"));
   document.getElementById("room-" + id).classList.add("active");
 
   chatHeader.innerText = name;
   chatInput.style.display = "flex";
+  chatMessages.innerHTML = "";
 
   socket.emit("join_room", { room_id: id });
-
-  loadMessages(true);   // full load once
+  loadMessages(true);
 }
 
-/* SEND MESSAGE */
+/* ===== SEND MESSAGE ===== */
 function send() {
   const text = msgInput.value.trim();
   if (!text || !ROOM_ID) return;
@@ -129,28 +214,26 @@ function send() {
     method: "POST",
     credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      room_id: ROOM_ID,
-      content: text
-    })
+    body: JSON.stringify({ room_id: ROOM_ID, content: text })
   });
 
   msgInput.value = "";
 }
 
-/* REAL-TIME SOCKET */
-socket.on("new_room_message", d => {
-  if (d.room_id === ROOM_ID) {
-    loadMessages(false);   // append only
-  }
+msgInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") send();
 });
 
-/* LOAD / REFRESH MESSAGES */
+/* ===== SOCKET ===== */
+socket.on("new_room_message", d => {
+  if (d.room_id === ROOM_ID) loadMessages(false);
+});
+
+/* ===== LOAD MESSAGES ===== */
 function loadMessages(reset=false) {
   fetch(`/api/rooms/${ROOM_ID}`, { credentials: "same-origin" })
     .then(r => r.json())
     .then(d => {
-
       if (reset) chatMessages.innerHTML = "";
 
       d.messages.forEach(m => {
@@ -164,22 +247,28 @@ function loadMessages(reset=false) {
     });
 }
 
-/* AUTO REFRESH (FAILSAFE) */
-setInterval(() => {
-  if (ROOM_ID) loadMessages(false);
-}, 3000);
-
-/* RENDER MESSAGE */
+/* ===== RENDER MESSAGE ===== */
 function render(m) {
   const div = document.createElement("div");
-  div.className = "msg " + m.sender_role;
+
+  const isMe = m.sender_name === CURRENT_USER;
+  div.className = "msg " + (isMe ? "me" : "other") + " " + m.sender_role;
+
+  const displayName = isMe
+    ? "You"
+    : (m.sender_role === "admin" ? "Admin" : m.sender_name);
+
+  const time = new Date(m.created_at + "Z")
+    .toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
   div.innerHTML = `
-    <b>${m.sender_name}</b><br>
+    <b>${displayName}</b>
     ${m.content}
+    <small>${time}</small>
   `;
+
   chatMessages.appendChild(div);
 }
 </script>
-
 
 {% endblock %}

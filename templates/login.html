@@ -191,6 +191,8 @@
 
     <!-- ADMIN LOGIN (separate form that posts to admin_login) -->
     <form action="{{ url_for('main.admin_login') }}" method="post" id="adminLoginForm" style="display:none;" aria-hidden="true">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+
       <input type="hidden" name="next" value="{{ next }}">
       <input type="hidden" name="role" value="admin">
 

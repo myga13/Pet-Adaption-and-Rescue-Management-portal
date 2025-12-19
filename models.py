@@ -335,6 +335,13 @@ class Room(db.Model):
     )
     is_closed = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    members = db.relationship(
+        "RoomMember",
+        backref="room",
+        cascade="all, delete-orphan",
+        lazy="joined"
+    )
+    admin = db.relationship("Admin", lazy="joined")
 
 
 class RoomMember(db.Model):
@@ -350,6 +357,7 @@ class RoomMember(db.Model):
         db.ForeignKey("webapp_userdetails.user_id", ondelete="CASCADE"),
         primary_key=True
     )
+    user = db.relationship("UserDetails", lazy="joined")
 
 
 class RoomMessage(db.Model):
@@ -358,14 +366,16 @@ class RoomMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     room_id = db.Column(
         db.Integer,
-        db.ForeignKey("rooms.id", ondelete="CASCADE")
+        db.ForeignKey("rooms.id", ondelete="CASCADE"),
+        nullable=False
     )
-    sender_id = db.Column(
-        db.Integer,
-        db.ForeignKey("webapp_userdetails.user_id")
-    )
+
+    sender_id = db.Column(db.Integer, nullable=False)
+    sender_role = db.Column(db.String(10), nullable=False)  # admin | user
+
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 
 
 from datetime import datetime

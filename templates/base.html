@@ -232,8 +232,9 @@
     </div>
 
     <nav class="nav-links" role="navigation" aria-label="Main navigation">
-     <a class="" href="{{ url_for('main.found_reports') }}">Found Your Pets</a>
-     <a class="" href="{{ url_for('main.lost_reports') }}">Losted Pets</a>
+     <a class="" href="{{ url_for('main.found_reports') }}">Found  Pets</a>
+     <a class="" href="{{ url_for('main.lost_reports') }}">Lost Pets</a>
+     <a class="" href="{{ url_for('main.my_requests') }}">My Requests</a>
     </nav>
 
     <div class="profile-area" aria-hidden="{{ 'false' if g.user else 'true' }}">
@@ -380,6 +381,7 @@
               <a class="btn-pop btn-edit" href="{{ url_for('main.edit_user', user_id=g.user.user_id) }}">Edit Profile</a>
               <a class="btn-pop btn-edit" href="{{ url_for('main.my_pets') }}">My Pets</a>
               <a class="btn-pop btn-edit" href="{{ url_for('main.adoption_pets') }}">Adoption Pets</a>
+               <a class="btn-pop btn-edit" href="{{ url_for('main.user_chat') }}">Room chats</a>
               <a class="btn-pop btn-logout" href="{{ url_for('main.logout') }}">Logout</a>
             </div>
           </div>
