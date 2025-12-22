@@ -136,7 +136,7 @@
     {% for r in rooms %}
       <div class="room"
            id="room-{{ r['id'] }}"
-           onclick="openRoom({{ r['id'] }}, '{{ r['name'] }}')">
+           onclick="openRoom({{ r['id'] }}, &quot;{{ r['name'] }}&quot;)">
 
         <strong>{{ r['name'] }}</strong><br>
 
@@ -271,4 +271,4 @@ function render(m) {
 }
 </script>
 
-{% endblock %}
+{% endblock %}  display users who are partipating in chat

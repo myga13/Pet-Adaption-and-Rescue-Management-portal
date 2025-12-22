@@ -1595,13 +1595,13 @@
     <!-- ========== NGO VERIFICATION ========== -->
     <div class="admin-content-section" id="admin-ngo">
       <div class="admin-table-card">
-        <h3>Pet Verification </h3>
+        <h3>🐾 Pet Claim Requests </h3>
         <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">
           Pets submitted by portal users for verification through our collaborating .
           Admin can monitor, approve, or request more details.
         </p>
 <section class="admin-section">
-  <h2>🐾 Pet Claim Requests</h2>
+  <h2>🐾 Found Pet Requests</h2>
 
   <table class="admin-table">
     <thead>
@@ -1666,7 +1666,7 @@
     <thead>
       <tr>
         <th>Pet Image</th>
-        <th>Pet</th>
+        <th>Pet Details</th>
         <th>Finder</th>
         <th>Email</th>
         <th>Status</th>
@@ -1685,21 +1685,21 @@
               src="{{ url_for('main.media', filename=r.lost_report.pet_img_full) }}"
               alt="Lost pet image"
               class="pet-thumb"
-              onclick="openPetModal({{ r.lost_report.id }})"
+              onclick="openPetModal('{{ r.lost_report.id | tojson }}')"
             >
           {% elif r.lost_report.pet_img_face %}
             <img
               src="{{ url_for('main.media', filename=r.lost_report.pet_img_face) }}"
               alt="Lost pet image"
               class="pet-thumb"
-              onclick="openPetModal({{ r.lost_report.id }})"
+              onclick="openPetModal('{{ r.lost_report.id | tojson }}')"
             >
           {% elif r.lost_report.pet_img_marks %}
             <img
               src="{{ url_for('main.media', filename=r.lost_report.pet_img_marks) }}"
               alt="Lost pet image"
               class="pet-thumb"
-              onclick="openPetModal({{ r.lost_report.id }})"
+              onclick="openPetModal('{{ r.lost_report.id | tojson }}')"
             >
           {% else %}
             <span class="no-image">No Image</span>
@@ -1710,7 +1710,7 @@
         <td>
           <button
             class="btn-details"
-            onclick="openPetModal({{ r.lost_report.id }})"
+            onclick="openPetModal('{{ r.lost_report.id | tojson }}')"
           >
             {{ r.lost_report.pet_name }}
           </button>

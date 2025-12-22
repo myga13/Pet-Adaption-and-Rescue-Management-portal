@@ -81,8 +81,77 @@ def login_required(view):
         return view(*args, **kwargs)
     return wrapped_view
 
-from functools import wraps
-from flask import request, session, redirect, url_for, jsonify, flash
+# --------------------------------------------------
+# ALL PETS PAGE
+# --------------------------------------------------
+@bp.route("/lost-pet/<int:report_id>")
+@login_required
+def lost_pet_detail(report_id):
+    report = LostPetReport.query.get_or_404(report_id)
+    return render_template("lost_pet_detail.html", report=report)
+ 
+@bp.route("/found-pet/<int:report_id>")
+@login_required
+def found_pet_detail(report_id):
+    report = FoundPetReport.query.get_or_404(report_id)
+    return render_template("found_pet_detail.html", report=report)
+
+@bp.route("/all-pets")
+@login_required
+def all_pets():
+    pets = []
+
+    # ---------------- ADOPTION PETS ----------------
+    adoption_entries = (
+        AdoptionList.query
+        .options(joinedload(AdoptionList.pet))
+        .filter(AdoptionList.status == "pending")
+        .all()
+    )
+
+    for entry in adoption_entries:
+        pet = entry.pet
+        pets.append({
+            "type": "adoption",
+            "title": pet.pet_name,
+            "img": pet.pet_img,
+            "view_url": url_for("main.view_pet", pet_id=pet.pet_id),
+            "action_url": url_for("main.request_adoption", pet_id=pet.pet_id),
+            "chat_url": url_for("main.chat_with_pet_owner", pet_id=pet.pet_id),
+        })
+
+    # ---------------- LOST PETS ----------------
+    lost_reports = (
+        LostPetReport.query
+        .filter(LostPetReport.status == "accepted")
+        .all()
+    )# ---------------- LOST PETS ----------------
+    for r in lost_reports:
+        img = r.pet_img_full or r.pet_img_face or r.pet_img_marks
+        pets.append({
+            "type": "lost",
+            "title": r.pet_name or "Lost Pet",
+            "img": img,
+            "view_url": url_for("main.lost_pet_detail", report_id=r.id),  # ✅ FIX
+            "action_url": url_for("main.request_lost_pet", report_id=r.id),
+        })
+# ---------------- FOUND PETS ----------------
+    found_reports = (
+        FoundPetReport.query
+        .filter(FoundPetReport.status == "accepted")
+        .all()
+    )
+
+    for f in found_reports:
+        pets.append({
+            "type": "found",
+            "title": f.pet_type or "Found Pet",
+            "img": f.pet_img,
+            "view_url": url_for("main.found_pet_detail", report_id=f.id),  # ✅ FIX
+        "action_url": url_for("main.request_pet", report_id=f.id),
+    })
+
+    return render_template("all_pets.html", pets=pets)
 
 def admin_login_required(view):
     @wraps(view)
@@ -2566,10 +2635,6 @@ def user_chat():
     )
 
     return render_template("chat.html", rooms=rooms)
-
-
-
-
 
     print("DEBUG rooms:", rooms)  # ← ADD THIS TEMPORARILY
 

@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% block title %}All Pets{% endblock %}
+
+{% block content %}
+<style>
+:root{
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --border:#e2e8f0;
+  --shadow:0 12px 28px rgba(0,0,0,.12);
+}
+
+body{
+  background:var(--bg);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text);
+}
+
+.container{
+  max-width:1200px;
+  margin:30px auto;
+  padding:16px;
+}
+
+.topbar{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  background:#fff;
+  padding:14px;
+  border-radius:14px;
+  box-shadow:var(--shadow);
+}
+
+.topbar input{
+  min-width:220px;
+}
+
+h2{
+  margin:24px 4px 8px;
+  font-size:26px;
+  font-weight:800;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:18px;
+  margin-top:18px;
+}
+
+/* CARD */
+.card{
+  background:var(--card);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+  transition:transform .25s ease, box-shadow .25s ease;
+}
+
+.card:hover{
+  transform:translateY(-6px);
+  box-shadow:0 18px 40px rgba(0,0,0,.16);
+}
+
+.card img{
+  width:100%;
+  height:200px;
+  object-fit:cover;
+}
+
+.card-body{
+  padding:14px;
+  text-align:center;
+}
+
+/* BADGES */
+.badge{
+  font-size:12px;
+  font-weight:800;
+  padding:5px 12px;
+  border-radius:999px;
+  display:inline-block;
+  margin-bottom:6px;
+}
+
+.adoption{background:#dcfce7;color:#166534}
+.lost{background:#fee2e2;color:#991b1b}
+.found{background:#e0e7ff;color:#1e3a8a}
+
+/* TITLE */
+.card-body h3{
+  font-size:18px;
+  font-weight:700;
+  margin:8px 0 4px;
+}
+
+/* ACTIONS */
+.actions{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+/* BUTTONS */
+.btn{
+  padding:8px 16px;
+  border-radius:999px;
+  font-weight:700;
+  border:none;
+  cursor:pointer;
+  font-size:14px;
+  transition:all .2s ease;
+}
+
+.btn:hover{
+  opacity:.9;
+  transform:translateY(-1px);
+}
+
+.btn-outline{
+  border:1px solid var(--border);
+  background:#fff;
+  color:#0f172a;
+  text-decoration:none;
+}
+
+.btn-green{background:#22c55e;color:#fff}
+.btn-red{background:#ef4444;color:#fff}
+.btn-blue{background:#3b82f6;color:#fff}
+
+/* INPUTS */
+input{
+  padding:8px 12px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  outline:none;
+}
+
+input:focus{
+  border-color:#6366f1;
+}
+
+/* RESPONSIVE */
+@media(max-width:640px){
+  .topbar{
+    flex-direction:column;
+    align-items:stretch;
+  }
+}
+</style>
+
+
+<div class="container">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+  <button onclick="history.back()" class="btn btn-outline">← Back</button>
+
+  <input id="search" type="text" placeholder="Search pets...">
+</div>
+
+<h2>🐾 All Pets</h2>
+
+
+  <!-- PET GRID -->
+  <div class="grid" id="grid">
+
+    {% for p in pets %}
+    <div class="card"
+         data-name="{{ p.title|lower }}"
+         data-type="{{ p.type }}">
+
+      {% if p.img %}
+        <img src="{{ url_for('main.media', filename=p.img) }}" alt="Pet image">
+      {% endif %}
+
+      <div class="card-body">
+
+        <!-- TYPE BADGE -->
+        <span class="badge {{ p.type }}">{{ p.type|capitalize }}</span>
+
+        <h3>{{ p.title }}</h3>
+
+        <div class="actions">
+
+          <!-- VIEW DETAILS (WORKS FOR ALL) -->
+          <a href="{{ p.view_url }}" class="btn btn-outline">
+            View Details
+          </a>
+
+          <!-- ACTION BUTTONS (BACKEND-POWERED) -->
+          {% if p.type == "adoption" %}
+            <form method="POST" action="{{ p.action_url }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-green">
+                Request Adoption
+              </button>
+            </form>
+
+
+          {% elif p.type == "lost" %}
+            <form method="POST" action="{{ p.action_url }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-red">
+                I Found This Pet
+              </button>
+            </form>
+
+          {% elif p.type == "found" %}
+            <form method="POST" action="{{ p.action_url }}">
+ <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button class="btn btn-blue">Contact Finder</button>
+</form>
+
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+  </div>
+</div>
+
+<!-- SEARCH + FILTER -->
+<script>
+const search=document.getElementById("search");
+const filter=document.getElementById("filter");
+const cards=document.querySelectorAll(".card");
+
+function apply(){
+  const q=search.value.toLowerCase();
+  const t=filter.value;
+  cards.forEach(c=>{
+    const ok=c.dataset.name.includes(q)&&(!t||c.dataset.type===t);
+    c.style.display=ok?"":"none";
+  });
+}
+search.oninput=filter.onchange=apply;
+</script>
+
+{% endblock %}
