@@ -1209,8 +1209,9 @@
       </ul>
     </div>
   </div>
+{% if current_user.is_authenticated %}
 
-  <!-- All pets section -->
+<!-- All pets section -->
 <section style="
   padding:80px 15px;
   background:
@@ -1260,7 +1261,6 @@
       flex-wrap:wrap;
     ">
 
-      <!-- BUTTON TEMPLATE -->
       <a href="{{ url_for('main.all_pets') }}"
          onmouseover="this.style.transform='translateY(-6px) scale(1.04)';this.style.boxShadow='0 25px 50px rgba(22,163,74,0.45)'"
          onmouseout="this.style.transform='none';this.style.boxShadow='0 16px 34px rgba(22,163,74,0.3)'"
@@ -1332,6 +1332,9 @@
     </div>
   </div>
 </section>
+
+{% endif %}
+
 
 
 
