@@ -226,7 +226,7 @@
 
   <!-- TOP BANNER NAVBAR -->
   <header class="banner" role="banner">
-    <div class="brand" aria-hidden="true" onclick="window.location.href='{{ url_for("main.index") }}'" style="cursor: pointer;">
+    <div class="brand" aria-hidden="true" onclick="window.location.href='{{ url_for('main.index') }}'" style="cursor: pointer;">
       <div class="logo">🐾</div>
       <div>PawCare</div>
     </div>
@@ -390,7 +390,7 @@
         <div id="popoverOverlay" class="popover-overlay" tabindex="-1" aria-hidden="true"></div>
 
       {% else %}
-        <a class="profile-btn" href="{{ url_for('main.login') }}">Sign In</a>
+        <a class="profile-btn" href="{{ url_for('main.login') }}" style="text-decoration: none;">Sign In</a>
       {% endif %}
     </div>
   </header>

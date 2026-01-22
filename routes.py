@@ -66,6 +66,62 @@ bp = Blueprint("main", __name__)
 
 ALLOWED_EXT = {"jpg", "jpeg", "png", "gif"}
 
+from flask import jsonify, request
+from werkzeug.security import check_password_hash
+
+@bp.route("/api/login", methods=["POST"])
+def api_login():
+    from models import UserDetails  # ✅ correct model
+
+    email = request.form.get("email")
+    password = request.form.get("password")
+
+    if not email or not password:
+        return jsonify({"message": "Missing credentials"}), 400
+
+    user = UserDetails.query.filter_by(email=email).first()
+
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    # ⚠️ check how password is stored
+    if check_password_hash(user.password, password):
+        return jsonify({
+            "status": "success",
+            "user_id": user.user_id,
+            "username": user.user_name,
+            "email": user.email
+        }), 200
+
+    return jsonify({"message": "Invalid password"}), 401
+from flask import jsonify, request
+from models import PetDetails, UserDetails
+
+@bp.route("/api/my-pets/<int:user_id>", methods=["GET"])
+def api_my_pets(user_id):
+    pets = PetDetails.query.filter_by(pet_owner_id=user_id).all()
+
+    pet_list = []
+    for pet in pets:
+        pet_list.append({
+            "pet_id": pet.pet_id,
+            "pet_name": pet.pet_name,
+            "pet_type": pet.pet_type,
+            "pet_breed": pet.pet_breed,
+            "pet_colour": pet.pet_colour,
+            "pet_age": pet.pet_age,
+            "pet_gender": pet.pet_male_female.value,
+            "pet_image": pet.pet_img,
+            "created_at": pet.created_at.strftime("%Y-%m-%d")
+        })
+
+    return jsonify({
+        "status": "success",
+        "total_pets": len(pet_list),
+        "pets": pet_list
+    }), 200
+
+
 
 # ============================
 #  AUTH DECORATORS & HELPERS
@@ -96,9 +152,12 @@ def found_pet_detail(report_id):
     report = FoundPetReport.query.get_or_404(report_id)
     return render_template("found_pet_detail.html", report=report)
 
+
 @bp.route("/all-pets")
 @login_required
 def all_pets():
+    import random
+
     pets = []
 
     # ---------------- ADOPTION PETS ----------------
@@ -125,17 +184,19 @@ def all_pets():
         LostPetReport.query
         .filter(LostPetReport.status == "accepted")
         .all()
-    )# ---------------- LOST PETS ----------------
+    )
+
     for r in lost_reports:
         img = r.pet_img_full or r.pet_img_face or r.pet_img_marks
         pets.append({
             "type": "lost",
             "title": r.pet_name or "Lost Pet",
             "img": img,
-            "view_url": url_for("main.lost_pet_detail", report_id=r.id),  # ✅ FIX
+            "view_url": url_for("main.lost_pet_detail", report_id=r.id),
             "action_url": url_for("main.request_lost_pet", report_id=r.id),
         })
-# ---------------- FOUND PETS ----------------
+
+    # ---------------- FOUND PETS ----------------
     found_reports = (
         FoundPetReport.query
         .filter(FoundPetReport.status == "accepted")
@@ -147,11 +208,16 @@ def all_pets():
             "type": "found",
             "title": f.pet_type or "Found Pet",
             "img": f.pet_img,
-            "view_url": url_for("main.found_pet_detail", report_id=f.id),  # ✅ FIX
-        "action_url": url_for("main.request_pet", report_id=f.id),
-    })
+            "view_url": url_for("main.found_pet_detail", report_id=f.id),
+            "action_url": url_for("main.request_pet", report_id=f.id),
+        })
 
+    # ---------------- SHUFFLE ----------------
+    random.shuffle(pets)
+
+    # ---------------- RETURN ----------------
     return render_template("all_pets.html", pets=pets)
+
 
 def admin_login_required(view):
     @wraps(view)
