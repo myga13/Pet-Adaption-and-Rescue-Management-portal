@@ -8,3 +8,5 @@ Werkzeug
 Pillow
 gunicorn
 eventlet
+flask-socketio
+python-socketio
