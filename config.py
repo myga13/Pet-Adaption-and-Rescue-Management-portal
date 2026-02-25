@@ -8,10 +8,10 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
     
-    # PostgreSQL connection
+    # MySQL connection
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         "SQLALCHEMY_DATABASE_URI",
-        "postgresql://localhost/petrecueandadaptionmanagementportal"
+        "mysql+pymysql://root:root@127.0.0.1:3306/petrecueandadaptionmanagementportal"
     )
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
