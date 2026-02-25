@@ -1,0 +1,10 @@
+Flask>=2.2
+Flask-SQLAlchemy
+Flask-Migrate
+Flask-WTF
+python-dotenv
+pymysql
+Werkzeug
+Pillow
+gunicorn
+eventlet

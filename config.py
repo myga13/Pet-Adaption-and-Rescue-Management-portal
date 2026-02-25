@@ -1,12 +1,16 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
-    SECRET_KEY = "my-secret-key"
+    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
     
     # MySQL connection
-    SQLALCHEMY_DATABASE_URI = (
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        "SQLALCHEMY_DATABASE_URI",
         "mysql+pymysql://root:root@127.0.0.1:3306/petrecueandadaptionmanagementportal"
     )
 
