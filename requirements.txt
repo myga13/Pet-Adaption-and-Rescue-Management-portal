@@ -3,7 +3,7 @@ Flask-SQLAlchemy
 Flask-Migrate
 Flask-WTF
 python-dotenv
-pymysql
+psycopg2-binary
 Werkzeug
 Pillow
 gunicorn
